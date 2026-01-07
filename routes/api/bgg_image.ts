@@ -1,4 +1,4 @@
-import { DOMParser } from "@b-fuze/deno-dom";
+import { DOMParser } from "linkedom";
 
 const CACHE = new Map<string, string>();
 
