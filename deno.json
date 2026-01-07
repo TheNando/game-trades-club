@@ -13,7 +13,8 @@
     "fresh": "jsr:@fresh/core@^2.2.0",
     "preact": "npm:preact@^10.27.2",
     "@preact/signals": "npm:@preact/signals@^2.5.0",
-    "@std/csv": "jsr:@std/csv@^1.0.0"
+    "@std/csv": "jsr:@std/csv@^1.0.0",
+    "@b-fuze/deno-dom": "jsr:@b-fuze/deno-dom@^0.1.48"
   },
   "compilerOptions": {
     "lib": ["dom", "dom.asynciterable", "dom.iterable", "deno.ns"],

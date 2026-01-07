@@ -1,6 +1,6 @@
 import { parse } from "@std/csv";
 
-interface BoardGame {
+export interface BoardGame {
   id: string;
   name: string;
   yearpublished: string;
