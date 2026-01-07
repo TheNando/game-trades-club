@@ -1,12 +1,9 @@
-import { useSignal } from "@preact/signals";
 import { define } from "../utils.ts";
-// import Counter from "../islands/Counter.tsx";
 
 import { getTopGames } from "../utils/games.ts";
 
 export default define.page(async function Home(ctx) {
   const games = await getTopGames();
-  // const count = useSignal(3);
 
   ctx.state.title = "Top 100 Board Games";
 
