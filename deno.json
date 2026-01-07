@@ -7,38 +7,18 @@
     "start": "deno serve -A _fresh/server.js",
     "update": "deno run -A -r jsr:@fresh/update ."
   },
-  "lint": {
-    "rules": {
-      "tags": [
-        "fresh",
-        "recommended"
-      ]
-    }
-  },
-  "exclude": [
-    "**/_fresh/*"
-  ],
+  "lint": { "rules": { "tags": ["fresh", "recommended"] } },
+  "exclude": ["**/_fresh/*"],
   "imports": {
-    "fresh": "jsr:@fresh/core@^2.0.0-alpha.60",
-    "preact": "npm:preact@^10.27.1",
-    "@preact/signals": "npm:@preact/signals@^2.3.1"
+    "fresh": "jsr:@fresh/core@^2.2.0",
+    "preact": "npm:preact@^10.27.2",
+    "@preact/signals": "npm:@preact/signals@^2.5.0",
+    "@std/csv": "jsr:@std/csv@^1.0.0"
   },
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "dom.asynciterable",
-      "dom.iterable",
-      "deno.ns"
-    ],
+    "lib": ["dom", "dom.asynciterable", "dom.iterable", "deno.ns"],
     "jsx": "precompile",
     "jsxImportSource": "preact",
-    "jsxPrecompileSkipElements": [
-      "a",
-      "img",
-      "source",
-      "body",
-      "html",
-      "head"
-    ]
+    "jsxPrecompileSkipElements": [ "a", "img", "source", "body", "html", "head", "title", "meta", "script", "link", "style", "base", "noscript", "template"]
   }
 }
