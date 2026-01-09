@@ -22,7 +22,9 @@ export const handler = async (req: Request): Promise<Response> => {
     const response = await fetch(bggUrl);
 
     if (!response.ok) {
-      return new Response(`Failed to fetch BGG page: ${response.status}`, { status: 502 });
+      return new Response(`Failed to fetch BGG page: ${response.status}`, {
+        status: 502,
+      });
     }
 
     const html = await response.text();
@@ -32,7 +34,9 @@ export const handler = async (req: Request): Promise<Response> => {
       return new Response("Failed to parse HTML", { status: 500 });
     }
 
-    const preloadLink = doc.querySelector("link[rel='preload'][as='image'][href*='itemrep']");
+    const preloadLink = doc.querySelector(
+      "link[rel='preload'][as='image'][href*='itemrep']",
+    );
     let imgSrc = preloadLink?.getAttribute("href");
 
     if (!imgSrc) {

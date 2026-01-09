@@ -43,17 +43,20 @@ export default function GameId({ id }: GameIdProps) {
 
       {hovered && (
         <div class="absolute z-50 left-full top-0 ml-2 p-2 bg-white border border-gray-200 rounded shadow-xl w-40 h-40 flex items-center justify-center">
-          {loading ? (
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          ) : imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={`Game ${id}`}
-              class="w-full h-full object-contain"
-            />
-          ) : (
-            <span class="text-xs text-gray-500 text-center">No image</span>
-          )}
+          {loading
+            ? (
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900">
+              </div>
+            )
+            : imageUrl
+            ? (
+              <img
+                src={imageUrl}
+                alt={`Game ${id}`}
+                class="w-full h-full object-contain"
+              />
+            )
+            : <span class="text-xs text-gray-500 text-center">No image</span>}
         </div>
       )}
     </div>
