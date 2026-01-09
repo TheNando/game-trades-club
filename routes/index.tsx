@@ -12,7 +12,8 @@ export default define.page(function LandingPage(ctx) {
         <div class="hero-content text-center relative z-10">
           <div class="max-w-3xl">
             <h1 class="text-5xl font-extrabold mb-6 leading-tight">
-              Trade Board Games{" "}
+              Trade Board Games
+              <br />
               <span class="text-primary">Locally & Safely</span>
             </h1>
             <p class="py-6 text-xl text-base-content/80 mb-8">
@@ -197,11 +198,6 @@ export default define.page(function LandingPage(ctx) {
             - All right reserved by Game Trades Club
           </p>
         </aside>
-        <nav class="grid-flow-col gap-4 md:place-self-center md:justify-self-end">
-          {/* Social icons placeholders */}
-          <a class="link link-hover">Twitter</a>
-          <a class="link link-hover">Instagram</a>
-        </nav>
       </footer>
     </div>
   );
