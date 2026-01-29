@@ -28,7 +28,7 @@ export default define.page(function LandingPage(ctx) {
                 Browse Games
               </a>
               <a
-                href="/list"
+                href="/signup"
                 class="btn btn-secondary btn-lg shadow-lg hover:scale-105 transition-transform"
               >
                 List a Game
@@ -61,7 +61,7 @@ export default define.page(function LandingPage(ctx) {
               class="mask mask-heart bg-lime-400"
             />
           </div>
-          <div class="absolute bottom-10 right-10 rotate-[-12deg] text-9xl">
+          <div class="absolute bottom-10 right-10 -rotate-12 text-9xl">
             🎲
           </div>
         </div>
@@ -183,7 +183,7 @@ export default define.page(function LandingPage(ctx) {
             games today.
           </p>
           <a
-            href="/list"
+            href="/signup"
             class="btn btn-lg btn-active bg-white text-primary border-none hover:bg-gray-100"
           >
             Get Started for Free
