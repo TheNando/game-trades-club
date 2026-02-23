@@ -3,7 +3,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite",
-		"server": "bun run src/server/index.ts",
+		"server": "bun run server/index.ts",
 		"build": "vite build",
 		"preview": "vite preview"
 	},
