@@ -33,6 +33,7 @@ export function Home() {
 						</div>
 					</div>
 				</div>
+
 				{/* Background Decorative Pattern */}
 				<div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
 					<div class="rating gap-1 absolute top-10 left-10 rotate-12">
