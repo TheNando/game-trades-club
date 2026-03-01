@@ -1,5 +1,5 @@
-import { db } from '../db/client';
-import { findTradeByIdForUser } from './tradesRepo';
+import { db } from './client';
+import { findTradeByIdForUser } from './tradesTable';
 
 export type Offer = {
   id: string;
@@ -93,7 +93,7 @@ export function updateOffer(userId: string, offerId: string, input: UpdateOfferI
   return Number(result.changes) > 0;
 }
 
-export function deleteOffer(userId: string, offerId: string): boolean {
+export function removeOffer(userId: string, offerId: string): boolean {
   const result = deleteStmt.run(offerId, userId);
   return Number(result.changes) > 0;
 }

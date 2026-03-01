@@ -1,4 +1,4 @@
-import { db } from '../db/client';
+import { db } from './client';
 
 export type WishlistItem = {
   id: string;

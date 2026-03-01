@@ -1,4 +1,4 @@
-import { db } from '../db/client';
+import { db } from './client';
 
 export type Trade = {
   id: string;
@@ -90,7 +90,7 @@ export function updateTrade(userId: string, tradeId: string, input: UpdateTradeI
   return Number(result.changes) > 0;
 }
 
-export function deleteTrade(userId: string, tradeId: string): boolean {
+export function removeTrade(userId: string, tradeId: string): boolean {
   const result = deleteStmt.run(tradeId, userId);
   return Number(result.changes) > 0;
 }

@@ -1,5 +1,6 @@
-import { requireAuth } from '../middleware/requireAuth';
-import { createWishlistItem, deleteWishlistItem, listWishlistByUser, updateWishlistItem } from '../repos/wishlistRepo';
+import { BunRequest } from 'bun';
+import { createWishlistItem, deleteWishlistItem, listWishlistByUser, updateWishlistItem } from '../db/wishlistTable';
+import { RouteDependencies } from '../middleware/dependencies';
 import { badRequest, json, notFound, readJson } from '../utils/http';
 import { randomToken } from '../utils/security';
 
@@ -9,51 +10,62 @@ type WishlistBody = {
   notes?: string;
 };
 
-export async function handleWishlistRoutes(request: Request, url: URL): Promise<Response | null> {
-  if (!url.pathname.startsWith('/api/wishlist')) return null;
+function matchWishlistId(url: URL) {
+  return url.pathname.match(/^\/api\/wishlist\/([^/]+)$/)?.[1];
+}
 
-  const auth = requireAuth(request);
-  if (auth instanceof Response) return auth;
+export async function getWishlist(
+  _: BunRequest<"/api/wishlist">,
+  { auth }: RouteDependencies
+) {
+  return json({ items: listWishlistByUser(auth.userId) });
+}
 
-  if (request.method === 'GET' && url.pathname === '/api/wishlist') {
-    return json({ items: listWishlistByUser(auth.userId) });
-  }
+export async function postWishlist(
+  request: BunRequest<"/api/wishlist">,
+  { auth }: RouteDependencies
+) {
+  const body = await readJson<WishlistBody>(request);
+  if (!body?.gameTitle) return badRequest('gameTitle is required');
 
-  if (request.method === 'POST' && url.pathname === '/api/wishlist') {
-    const body = await readJson<WishlistBody>(request);
-    if (!body?.gameTitle) return badRequest('gameTitle is required');
+  const item = createWishlistItem(auth.userId, {
+    id: randomToken(18),
+    gameTitle: body.gameTitle,
+    platform: body.platform,
+    notes: body.notes,
+  });
 
-    const item = createWishlistItem(auth.userId, {
-      id: randomToken(18),
-      gameTitle: body.gameTitle,
-      platform: body.platform,
-      notes: body.notes,
-    });
+  return json({ item }, { status: 201 });
+}
 
-    return json({ item }, { status: 201 });
-  }
+export async function patchWishlist(
+  request: BunRequest<"/api/wishlist">,
+  { auth, url }: RouteDependencies
+) {
+  const listId = matchWishlistId(url);
 
-  const idMatch = url.pathname.match(/^\/api\/wishlist\/([^/]+)$/);
-  const itemId = idMatch?.[1];
-  if (!itemId) return null;
+  if (!listId) return badRequest('Invalid wishlist ID');
 
-  if (request.method === 'PATCH') {
-    const body = await readJson<WishlistBody>(request);
-    if (!body) return badRequest('Invalid JSON body');
+  const body = await readJson<WishlistBody>(request);
+  if (!body) return badRequest('Invalid JSON body');
 
-    const updated = updateWishlistItem(auth.userId, itemId, {
-      gameTitle: body.gameTitle,
-      platform: body.platform,
-      notes: body.notes,
-    });
+  const updated = updateWishlistItem(auth.userId, listId, {
+    gameTitle: body.gameTitle,
+    platform: body.platform,
+    notes: body.notes,
+  });
 
-    return updated ? new Response(null, { status: 204 }) : notFound();
-  }
+  return updated ? new Response(null, { status: 204 }) : notFound();
+}
 
-  if (request.method === 'DELETE') {
-    const deleted = deleteWishlistItem(auth.userId, itemId);
-    return deleted ? new Response(null, { status: 204 }) : notFound();
-  }
+export async function deleteWishlist(
+  _: BunRequest<"/api/wishlist">,
+  { auth, url }: RouteDependencies
+) {
+  const listId = matchWishlistId(url);
 
-  return null;
+  if (!listId) return badRequest('Invalid wishlist ID');
+
+  const deleted = deleteWishlistItem(auth.userId, listId);
+  return deleted ? new Response(null, { status: 204 }) : notFound();
 }

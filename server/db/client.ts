@@ -8,6 +8,6 @@ mkdirSync(dirname(databasePath), { recursive: true });
 const schemaSql = readFileSync(new URL('./schema.sql', import.meta.url), 'utf8');
 
 const db = new Database(databasePath, { create: true, strict: true });
-db.exec(schemaSql);
+db.run(schemaSql);
 
 export { db };
