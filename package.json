@@ -5,9 +5,9 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
+		"dev": "bunx concurrently \"bun run server\" \"bun run client\"",
+		"client": "vite -- --host 0.0.0.0",
 		"server": "bun run server/index.ts",
-		"build": "vite build",
 		"preview": "vite preview"
 	},
 	"dependencies": {
