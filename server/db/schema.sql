@@ -56,6 +56,14 @@ CREATE TABLE IF NOT EXISTS wishlist_items (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS games (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  image_url TEXT,
+  year INTEGER,
+  is_expansion INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 
@@ -63,3 +71,4 @@ CREATE INDEX IF NOT EXISTS idx_trades_user_id ON trades(user_id);
 CREATE INDEX IF NOT EXISTS idx_offers_user_id ON offers(user_id);
 CREATE INDEX IF NOT EXISTS idx_offers_trade_id ON offers(trade_id);
 CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON wishlist_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_games_name ON games(name);
