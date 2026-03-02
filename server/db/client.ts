@@ -1,11 +1,12 @@
 import { Database } from 'bun:sqlite';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdir } from "node:fs/promises";
 import { dirname } from 'node:path';
+import schema from "./schema.sql" with { type: "file" };
 
 const databasePath = process.env.DATABASE_PATH ?? './data/app.db';
-mkdirSync(dirname(databasePath), { recursive: true });
+await mkdir(dirname(databasePath), { recursive: true });
 
-const schemaSql = readFileSync(new URL('./schema.sql', import.meta.url), 'utf8');
+const schemaSql = await Bun.file(schema).text();
 
 const db = new Database(databasePath, { create: true, strict: true });
 db.run(schemaSql);

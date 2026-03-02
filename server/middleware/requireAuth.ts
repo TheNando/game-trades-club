@@ -6,6 +6,8 @@ export type AuthContext = {
   sessionId: string;
 };
 
+export const isAuthContext = (obj: any): obj is AuthContext => typeof obj.userId === 'string' && typeof obj.sessionId === 'string';
+
 export function requireAuth(request: Request): AuthContext | Response {
   const sessionId = getSessionIdFromRequest(request);
   if (!sessionId) return unauthorized();

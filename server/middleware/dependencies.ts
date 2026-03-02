@@ -1,18 +1,26 @@
-import { AuthContext, requireAuth } from "./requireAuth";
+import { AuthContext, isAuthContext, requireAuth } from "./requireAuth";
 
 export type RouteDependencies = {
     auth: AuthContext;
     url: URL;
 };
 
+export const NO_AUTH = { authorized: false };
+
+const fakeAuth: AuthContext = {
+    userId: '',
+    sessionId: ''
+};
+
 export function withDeps(
-    fn: (request: Bun.BunRequest<string>, deps: RouteDependencies) => Promise<Response>
+    fn: (request: Bun.BunRequest<string>, deps: RouteDependencies) => Promise<Response>,
+    { authorized } = { authorized: true }
 ) {
     return function (request: Bun.BunRequest<string>) {
-        const auth = requireAuth(request);
+        // Create fake authorization for routes that do not require authorization
+        const auth = authorized ? requireAuth(request) : fakeAuth;
 
-        // All routes require auth
-        if (auth instanceof Response) return auth;
+        if (!isAuthContext(auth)) return auth;
 
         const args: RouteDependencies = {
             auth,

@@ -1,4 +1,4 @@
-import { withDeps } from './middleware/dependencies';
+import { NO_AUTH, withDeps } from './middleware/dependencies';
 import { getAuthGoogleCallback, getAuthGoogleStart, getMe, postAuthLogout } from './routes/auth';
 import { deleteOffer, getOffers, patchOffer, postOffer } from './routes/offers';
 import { deleteTrade, getTrades, patchTrade, postTrade } from './routes/trades';
@@ -11,10 +11,10 @@ Bun.serve({
   port,
   routes: {
     "/api/auth/google/callback": {
-      GET: withDeps(getAuthGoogleCallback)
+      GET: withDeps(getAuthGoogleCallback, NO_AUTH)
     },
     "/api/auth/google/start": {
-      GET: withDeps(getAuthGoogleStart)
+      GET: withDeps(getAuthGoogleStart, NO_AUTH)
     },
     "/api/auth/logout": {
       POST: withDeps(postAuthLogout)
