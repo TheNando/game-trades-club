@@ -25,7 +25,7 @@ export function Home() {
 								Browse Games
 							</a>
 							<a
-								href="/signup"
+								href="/add-listing"
 								class="btn btn-secondary btn-lg shadow-lg hover:scale-105 transition-transform"
 							>
 								List a Game

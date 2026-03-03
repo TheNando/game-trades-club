@@ -1,8 +1,10 @@
 import { NO_AUTH, withDeps } from './middleware/dependencies';
 import { getAuthGoogleCallback, getAuthGoogleStart, getMe, postAuthLogout } from './routes/auth';
-import { deleteOffer, getOffers, patchOffer, postOffer } from './routes/offers';
-import { deleteTrade, getTrades, patchTrade, postTrade } from './routes/trades';
-import { deleteWishlist, getWishlist, patchWishlist, postWishlist } from './routes/wishlist';
+import { getGames } from './routes/games';
+import { deleteListing, getListings, patchListing, postListing } from './routes/listings';
+// import { deleteOffer, getOffers, patchOffer, postOffer } from './routes/offers';
+// import { deleteTrade, getTrades, patchTrade, postTrade } from './routes/trades';
+// import { deleteWishlist, getWishlist, patchWishlist, postWishlist } from './routes/wishlist';
 import { json } from './utils/http';
 
 const port = Number(process.env.PORT ?? 3000);
@@ -22,27 +24,36 @@ Bun.serve({
     "/api/health": {
       GET: json({ ok: true })
     },
+    "/api/games": {
+      GET: withDeps(getGames, NO_AUTH)
+    },
     "/api/me": {
       GET: withDeps(getMe)
     },
-    "/api/offers": {
-      DELETE: withDeps(deleteOffer),
-      GET: withDeps(getOffers),
-      PATCH: withDeps(patchOffer),
-      POST: withDeps(postOffer),
+    "/api/listings": {
+      DELETE: withDeps(deleteListing),
+      GET: withDeps(getListings),
+      PATCH: withDeps(patchListing),
+      POST: withDeps(postListing),
     },
-    "/api/trades": {
-      DELETE: withDeps(deleteTrade),
-      GET: withDeps(getTrades),
-      PATCH: withDeps(patchTrade),
-      POST: withDeps(postTrade),
-    },
-    "/api/wishlist": {
-      DELETE: withDeps(deleteWishlist),
-      GET: withDeps(getWishlist),
-      PATCH: withDeps(patchWishlist),
-      POST: withDeps(postWishlist),
-    },
+    // "/api/offers": {
+    //   DELETE: withDeps(deleteOffer),
+    //   GET: withDeps(getOffers),
+    //   PATCH: withDeps(patchOffer),
+    //   POST: withDeps(postOffer),
+    // },
+    // "/api/trades": {
+    //   DELETE: withDeps(deleteTrade),
+    //   GET: withDeps(getTrades),
+    //   PATCH: withDeps(patchTrade),
+    //   POST: withDeps(postTrade),
+    // },
+    // "/api/wishlist": {
+    //   DELETE: withDeps(deleteWishlist),
+    //   GET: withDeps(getWishlist),
+    //   PATCH: withDeps(patchWishlist),
+    //   POST: withDeps(postWishlist),
+    // },
   },
   fetch() {
     return json({ error: 'Not found' }, { status: 404 });
