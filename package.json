@@ -8,7 +8,8 @@
 		"dev": "bunx concurrently \"bun run server\" \"bun run client\"",
 		"client": "vite -- --host 0.0.0.0",
 		"server": "bun run server/index.ts",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"test": "bun test"
 	},
 	"dependencies": {
 		"@std/csv": "npm:@jsr/std__csv",

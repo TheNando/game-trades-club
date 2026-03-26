@@ -6,7 +6,7 @@ export type Offer = {
   user_id: string;
   trade_id: string | null;
   message: string | null;
-  price_cents: number | null;
+  price: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -25,20 +25,20 @@ type UpdateOfferInput = {
 };
 
 // const listStmt = db.query<Offer, [string]>(
-//   `SELECT id, user_id, trade_id, message, price_cents, created_at, updated_at
+//   `SELECT id, user_id, trade_id, message, price, created_at, updated_at
 //    FROM offers
 //    WHERE user_id = ?
 //    ORDER BY created_at DESC`
 // );
 
 // const findStmt = db.query<Offer, [string, string]>(
-//   `SELECT id, user_id, trade_id, message, price_cents, created_at, updated_at
+//   `SELECT id, user_id, trade_id, message, price, created_at, updated_at
 //    FROM offers
 //    WHERE id = ? AND user_id = ?`
 // );
 
 // const createStmt = db.query(
-//   `INSERT INTO offers (id, user_id, trade_id, message, price_cents)
+//   `INSERT INTO offers (id, user_id, trade_id, message, price)
 //    VALUES (?, ?, ?, ?, ?)`
 // );
 
@@ -46,7 +46,7 @@ type UpdateOfferInput = {
 //   `UPDATE offers
 //    SET trade_id = COALESCE(?, trade_id),
 //        message = COALESCE(?, message),
-//        price_cents = COALESCE(?, price_cents),
+//        price = COALESCE(?, price),
 //        updated_at = CURRENT_TIMESTAMP
 //    WHERE id = ? AND user_id = ?`
 // );

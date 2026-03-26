@@ -25,14 +25,15 @@ export function AddListing() {
 	const [user, setUser] = useState<CurrentUser | null>(null);
 	const [loadingUser, setLoadingUser] = useState(true);
 
-	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
 	const [condition, setCondition] = useState('good');
+	const [price, setPrice] = useState('');
+	const [imageUrl, setImageUrl] = useState('');
+	const [imageThumbnailUrl, setImageThumbnailUrl] = useState('');
 
 	const [gameQuery, setGameQuery] = useState('');
 	const [gameResults, setGameResults] = useState<GameSearchResult[]>([]);
 	const [selectedGame, setSelectedGame] = useState<GameSearchResult | null>(null);
-	const [showGameMenu, setShowGameMenu] = useState(false);
 	const [loadingGames, setLoadingGames] = useState(false);
 	const [gameError, setGameError] = useState('');
 
@@ -116,7 +117,6 @@ export function AddListing() {
 	const selectGame = (game: GameSearchResult) => {
 		setSelectedGame(game);
 		setGameQuery(formatGameLabel(game));
-		setShowGameMenu(false);
 		setGameResults([]);
 		setGameError('');
 	};
@@ -135,6 +135,12 @@ export function AddListing() {
 			return;
 		}
 
+		const normalizedPrice = price.trim();
+		if (!/^\d+$/.test(normalizedPrice)) {
+			setSubmitError('Enter price in dollars.');
+			return;
+		}
+
 		setSubmitting(true);
 
 		try {
@@ -143,10 +149,12 @@ export function AddListing() {
 				credentials: 'include',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({
-					title: title.trim(),
 					description: description.trim(),
 					game_id: String(selectedGame.id),
 					condition,
+					price: normalizedPrice,
+					image_url: imageUrl.trim(),
+					image_thumbnail_url: imageThumbnailUrl.trim(),
 					status: 'open',
 				}),
 			});
@@ -159,7 +167,7 @@ export function AddListing() {
 
 			if (!response.ok) {
 				try {
-					const errorBody = (await response.json()) as { error?: string };
+					const errorBody = (await response.json()) as { error?: string; };
 					setSubmitError(errorBody.error ?? 'Unable to create listing.');
 				} catch {
 					setSubmitError('Unable to create listing.');
@@ -167,9 +175,11 @@ export function AddListing() {
 				return;
 			}
 
-			setTitle('');
 			setDescription('');
 			setCondition('good');
+			setPrice('');
+			setImageUrl('');
+			setImageThumbnailUrl('');
 			setGameQuery('');
 			setSelectedGame(null);
 			setGameResults([]);
@@ -187,7 +197,7 @@ export function AddListing() {
 				<div class="mb-8">
 					<h1 class="text-3xl font-bold">Add A Listing</h1>
 					<p class="text-base-content/70 mt-2">
-						Choose your game, add details, and publish your listing.
+						Choose your game, add pricing and images, and publish your listing.
 					</p>
 				</div>
 
@@ -210,90 +220,56 @@ export function AddListing() {
 				) : (
 					<form class="card bg-base-200 shadow-md" onSubmit={submitListing}>
 						<div class="card-body gap-4">
-							<div class="form-control">
-								<label class="label" for="listing-title">
-									<span class="label-text font-semibold">Listing title</span>
-								</label>
+							<fieldset class="fieldset">
+								{/* Game */}
+								<legend class="fieldset-legend">Game</legend>
 								<input
-									id="listing-title"
-									class="input input-bordered w-full"
+									id="listing-game"
+									list="game-list"
+									class="input input-bordered"
 									type="text"
 									required
-									maxLength={120}
-									placeholder="Example: Catan complete set"
-									value={title}
-									onInput={(event) =>
-										setTitle((event.currentTarget as HTMLInputElement).value)
-									}
-								/>
-							</div>
-
-							<div class="form-control">
-								<label class="label" for="listing-game">
-									<span class="label-text font-semibold">Game</span>
-								</label>
-								<div class="relative">
-									<input
-										id="listing-game"
-										class="input input-bordered w-full"
-										type="text"
-										required
-										placeholder="Search game names (min 2 characters)"
-										value={gameQuery}
-										onFocus={() => setShowGameMenu(true)}
-										onBlur={() =>
-											window.setTimeout(() => setShowGameMenu(false), 120)
+									placeholder="Search game names (min 2 characters)"
+									value={selectedGame ? formatGameLabel(selectedGame) : gameQuery}
+									onInput={(event) => {
+										// Check for matching game if datalist option selected
+										const gameId = parseInt((event.currentTarget as HTMLInputElement).value, 10);
+										const game = gameResults.find(g => g.id === gameId);
+										if (game) {
+											setSelectedGame(game);
 										}
-										onInput={(event) => {
+										// Query for matching games if text typed
+										else {
 											setGameQuery((event.currentTarget as HTMLInputElement).value);
 											setSelectedGame(null);
-											setShowGameMenu(true);
-										}}
-									/>
+										}
+									}}
+								/>
+								<p class="label">
+									{selectedGame
+										? `✅ Game selected`
+										: 'Search and choose one result.'}
 
-									{showGameMenu && gameQuery.trim().length >= 2 ? (
-										<ul class="absolute z-20 mt-2 max-h-64 w-full overflow-y-auto rounded-box border border-base-300 bg-base-100 p-2 shadow-lg">
-											{loadingGames ? (
-												<li class="px-2 py-2 text-sm opacity-70">Searching games...</li>
-											) : gameError ? (
-												<li class="px-2 py-2 text-sm text-error">{gameError}</li>
-											) : gameResults.length === 0 ? (
-												<li class="px-2 py-2 text-sm opacity-70">No games found.</li>
-											) : (
-												gameResults.map((game) => (
-													<li key={game.id}>
-														<button
-															type="button"
-															class="btn btn-ghost btn-sm w-full justify-start normal-case"
-															onMouseDown={(event) => {
-																event.preventDefault();
-																selectGame(game);
-															}}
-														>
-															{formatGameLabel(game)}
-														</button>
-													</li>
-												))
-											)}
-										</ul>
-									) : null}
-								</div>
-								<label class="label">
-									<span class="label-text-alt">
-										{selectedGame
-											? `Selected: ${formatGameLabel(selectedGame)}`
-											: 'Search and choose one exact game result.'}
-									</span>
-								</label>
-							</div>
+								</p>
+								<datalist id="game-list">
+									{loadingGames ? (
+										<option value="_loading">Searching games...</option>
+									) : gameError ? (
+										<option value="_error">{gameError}</option>
+									) : gameResults.length === 0 ? (
+										<option value="_empty">No games found.</option>
+									) : (
+										gameResults.map((game) => (
+											<option key={game.id} value={game.id} label={formatGameLabel(game)} />
+										))
+									)}
+								</datalist>
 
-							<div class="form-control">
-								<label class="label" for="listing-condition">
-									<span class="label-text font-semibold">Condition</span>
-								</label>
+								{/* Condition */}
+								<legend class="fieldset-legend">Condition</legend>
 								<select
 									id="listing-condition"
-									class="select select-bordered w-full"
+									class="select select-bordered"
 									value={condition}
 									onInput={(event) =>
 										setCondition((event.currentTarget as HTMLSelectElement).value)
@@ -305,23 +281,35 @@ export function AddListing() {
 									<option value="fair">Fair</option>
 									<option value="poor">Poor</option>
 								</select>
-							</div>
 
-							<div class="form-control">
-								<label class="label" for="listing-description">
-									<span class="label-text font-semibold">Description</span>
-								</label>
-								<textarea
-									id="listing-description"
+								{/* Price */}
+								<legend class="fieldset-legend">Price ($)</legend>
+								<input
+									id="listing-price"
+									class="input input-bordered"
+									type="number"
+									inputMode="numeric"
+									min="0"
+									step="1"
+									required
+									placeholder="25"
+									value={price}
+									onInput={(event) =>
+										setPrice((event.currentTarget as HTMLInputElement).value)
+									}
+								/>
+
+								{/* Description */}
+								<legend class="fieldset-legend">Description</legend>
+								<textarea id="listing-description"
 									class="textarea textarea-bordered min-h-32"
 									maxLength={1200}
 									placeholder="Include box condition, missing pieces, edition notes, and meetup preferences."
 									value={description}
 									onInput={(event) =>
 										setDescription((event.currentTarget as HTMLTextAreaElement).value)
-									}
-								/>
-							</div>
+									}></textarea>
+							</fieldset>
 
 							{submitError ? (
 								<div class="alert alert-error">
