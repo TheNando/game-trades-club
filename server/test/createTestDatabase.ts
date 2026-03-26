@@ -19,3 +19,21 @@ export function seedUser(database: Database, userId = 'user-1') {
 
   return { id: userId };
 }
+
+export function seedListing(
+  database: Database,
+  {
+    id = 'listing-1',
+    userId = 'user-1',
+    gameId = 1,
+  }: { id?: string; userId?: string; gameId?: number } = {}
+) {
+  database
+    .query(
+      `INSERT INTO listings (id, user_id, description, game_id, condition, price, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(id, userId, 'Seed listing', gameId, 'good', 20, 'open');
+
+  return { id, user_id: userId };
+}

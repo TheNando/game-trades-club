@@ -42,6 +42,18 @@ CREATE TABLE IF NOT EXISTS listings (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS listing_images (
+  id TEXT PRIMARY KEY,
+  listing_id TEXT NOT NULL,
+  owner_id TEXT NOT NULL,
+  original_filename TEXT NOT NULL,
+  stored_filename TEXT NOT NULL,
+  mime_type TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE,
+  FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- CREATE TABLE IF NOT EXISTS offers (
 --   id TEXT PRIMARY KEY,
 --   user_id TEXT NOT NULL,
@@ -72,6 +84,8 @@ CREATE INDEX IF NOT EXISTS idx_games_name ON games(name);
 
 CREATE INDEX IF NOT EXISTS idx_listings_user_id ON listings(user_id);
 CREATE INDEX IF NOT EXISTS idx_listings_game_id ON listings(game_id);
+CREATE INDEX IF NOT EXISTS idx_listing_images_listing_id ON listing_images(listing_id);
+CREATE INDEX IF NOT EXISTS idx_listing_images_owner_id ON listing_images(owner_id);
 
 -- CREATE INDEX IF NOT EXISTS idx_offers_user_id ON offers(user_id);
 -- CREATE INDEX IF NOT EXISTS idx_offers_trade_id ON offers(trade_id);
