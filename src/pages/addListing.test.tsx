@@ -87,7 +87,7 @@ describe('<AddListing />', () => {
 
     fireEvent.change(input, { target: { files } });
 
-    expect(screen.getByText('You can upload up to 3 images.')).toBeInTheDocument();
+    expect(screen.getByText('You can upload up to 3 images.')).not.toBeNull();
   });
 
   test('creates the listing before uploading images and exposes retry/cancel controls after a partial failure', async () => {
@@ -118,9 +118,9 @@ describe('<AddListing />', () => {
     fireEvent.submit(screen.getByRole('button', { name: 'Publish listing' }).closest('form')!);
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 2 uploaded')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Retry failed uploads' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Cancel remaining uploads' })).toBeInTheDocument();
+      expect(screen.getByText('1 of 2 uploaded')).not.toBeNull();
+      expect(screen.getByRole('button', { name: 'Retry failed uploads' })).not.toBeNull();
+      expect(screen.getByRole('button', { name: 'Cancel remaining uploads' })).not.toBeNull();
     });
   });
 
@@ -152,7 +152,7 @@ describe('<AddListing />', () => {
     fireEvent.submit(screen.getByRole('button', { name: 'Publish listing' }).closest('form')!);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Cancel remaining uploads' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Cancel remaining uploads' })).not.toBeNull();
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel remaining uploads' }));
@@ -160,7 +160,7 @@ describe('<AddListing />', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Retry failed uploads' })).toBeNull();
       expect(screen.queryByRole('button', { name: 'Cancel remaining uploads' })).toBeNull();
-      expect(screen.getByText('Listing created. Remaining image uploads cancelled.')).toBeInTheDocument();
+      expect(screen.getByText('Listing created. Remaining image uploads cancelled.')).not.toBeNull();
     });
   });
 });
