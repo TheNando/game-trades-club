@@ -1,4 +1,11 @@
 import { useEffect, useState } from 'preact/hooks';
+import {
+	cancelPendingUploads,
+	createUploadItems,
+	runUploadQueue,
+	type UploadItem,
+	validateSelectedImages,
+} from './addListingUploads';
 
 type CurrentUser = {
 	id: string;
@@ -17,8 +24,39 @@ type GamesResponse = {
 	items: GameSearchResult[];
 };
 
+type ListingResponse = {
+	item: {
+		id: string;
+	};
+};
+
 function formatGameLabel(game: GameSearchResult): string {
 	return `${game.name} (${game.year ?? 'Unknown'})`;
+}
+
+async function uploadListingImage(listingId: string, file: File) {
+	const formData = new FormData();
+	formData.set('listing_id', listingId);
+	formData.append('image', file);
+
+	const response = await fetch('/api/listing-images', {
+		method: 'POST',
+		credentials: 'include',
+		body: formData,
+	});
+
+	if (response.status === 401) {
+		throw new Error('You must sign in before uploading images.');
+	}
+
+	if (!response.ok) {
+		try {
+			const errorBody = (await response.json()) as { error?: string; };
+			throw new Error(errorBody.error ?? 'Unable to upload image.');
+		} catch (error) {
+			throw error instanceof Error ? error : new Error('Unable to upload image.');
+		}
+	}
 }
 
 export function AddListing() {
@@ -28,8 +66,6 @@ export function AddListing() {
 	const [description, setDescription] = useState('');
 	const [condition, setCondition] = useState('good');
 	const [price, setPrice] = useState('');
-	const [imageUrl, setImageUrl] = useState('');
-	const [imageThumbnailUrl, setImageThumbnailUrl] = useState('');
 
 	const [gameQuery, setGameQuery] = useState('');
 	const [gameResults, setGameResults] = useState<GameSearchResult[]>([]);
@@ -37,9 +73,15 @@ export function AddListing() {
 	const [loadingGames, setLoadingGames] = useState(false);
 	const [gameError, setGameError] = useState('');
 
+	const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+	const [uploadItems, setUploadItems] = useState<UploadItem[]>([]);
+	const [createdListingId, setCreatedListingId] = useState<string | null>(null);
+	const [uploadFlowCancelled, setUploadFlowCancelled] = useState(false);
+
 	const [submitError, setSubmitError] = useState('');
 	const [submitSuccess, setSubmitSuccess] = useState('');
-	const [submitting, setSubmitting] = useState(false);
+	const [creatingListing, setCreatingListing] = useState(false);
+	const [uploadingImages, setUploadingImages] = useState(false);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -114,6 +156,18 @@ export function AddListing() {
 		};
 	}, [gameQuery]);
 
+	useEffect(() => {
+		if (selectedGame) return;
+
+		const gameId = Number.parseInt(gameQuery, 10);
+		if (!Number.isInteger(gameId)) return;
+
+		const matchedGame = gameResults.find((game) => game.id === gameId);
+		if (!matchedGame) return;
+
+		setSelectedGame(matchedGame);
+	}, [gameQuery, gameResults, selectedGame]);
+
 	const selectGame = (game: GameSearchResult) => {
 		setSelectedGame(game);
 		setGameQuery(formatGameLabel(game));
@@ -125,10 +179,40 @@ export function AddListing() {
 		window.location.href = '/api/auth/google/start';
 	};
 
+	const resetForm = () => {
+		setDescription('');
+		setCondition('good');
+		setPrice('');
+		setGameQuery('');
+		setGameResults([]);
+		setSelectedGame(null);
+		setSelectedFiles([]);
+		setUploadItems([]);
+		setCreatedListingId(null);
+		setUploadFlowCancelled(false);
+	};
+
+	const handleFileChange = (event: Event) => {
+		const files = Array.from((event.currentTarget as HTMLInputElement).files ?? []);
+		const validation = validateSelectedImages(files);
+
+		if (!validation.ok) {
+			setSelectedFiles([]);
+			setUploadItems([]);
+			setSubmitError(validation.message);
+			return;
+		}
+
+		setSubmitError('');
+		setSelectedFiles(files);
+		setUploadItems(createUploadItems(files));
+	};
+
 	const submitListing = async (event: Event) => {
 		event.preventDefault();
 		setSubmitError('');
 		setSubmitSuccess('');
+		setUploadFlowCancelled(false);
 
 		if (!selectedGame) {
 			setSubmitError('Select a game from the search results first.');
@@ -141,7 +225,13 @@ export function AddListing() {
 			return;
 		}
 
-		setSubmitting(true);
+		const validation = validateSelectedImages(selectedFiles);
+		if (!validation.ok) {
+			setSubmitError(validation.message);
+			return;
+		}
+
+		setCreatingListing(true);
 
 		try {
 			const response = await fetch('/api/listings', {
@@ -153,8 +243,6 @@ export function AddListing() {
 					game_id: String(selectedGame.id),
 					condition,
 					price: normalizedPrice,
-					image_url: imageUrl.trim(),
-					image_thumbnail_url: imageThumbnailUrl.trim(),
 					status: 'open',
 				}),
 			});
@@ -175,21 +263,87 @@ export function AddListing() {
 				return;
 			}
 
-			setDescription('');
-			setCondition('good');
-			setPrice('');
-			setImageUrl('');
-			setImageThumbnailUrl('');
-			setGameQuery('');
-			setSelectedGame(null);
-			setGameResults([]);
-			setSubmitSuccess('Listing created successfully.');
+			const body = (await response.json()) as ListingResponse;
+			setCreatedListingId(body.item.id);
+
+			if (selectedFiles.length === 0) {
+				resetForm();
+				setSubmitSuccess('Listing created successfully.');
+				return;
+			}
+
+			setUploadingImages(true);
+			const nextItems = createUploadItems(selectedFiles);
+			setUploadItems(nextItems);
+
+			const result = await runUploadQueue({
+				items: nextItems,
+				listingId: body.item.id,
+				uploadImage: ({ listingId, file }) => uploadListingImage(listingId, file),
+				onItemsChange: setUploadItems,
+			});
+
+			setUploadItems(result);
+
+			if (result.some((item) => item.status === 'failed')) {
+				setUploadFlowCancelled(false);
+				setSubmitError('Listing created. Some images still need attention.');
+				return;
+			}
+
+			resetForm();
+			setSubmitSuccess('Listing and images created successfully.');
 		} catch {
 			setSubmitError('Unable to create listing.');
 		} finally {
-			setSubmitting(false);
+			setCreatingListing(false);
+			setUploadingImages(false);
 		}
 	};
+
+	const retryFailedUploads = async () => {
+		if (!createdListingId) return;
+
+		setSubmitError('');
+		setSubmitSuccess('');
+		setUploadFlowCancelled(false);
+		setUploadingImages(true);
+
+		try {
+			const result = await runUploadQueue({
+				items: uploadItems,
+				listingId: createdListingId,
+				uploadImage: ({ listingId, file }) => uploadListingImage(listingId, file),
+				onItemsChange: setUploadItems,
+			});
+
+			setUploadItems(result);
+
+			if (result.some((item) => item.status === 'failed')) {
+				setUploadFlowCancelled(false);
+				setSubmitError('Listing created. Some images still need attention.');
+				return;
+			}
+
+			resetForm();
+			setSubmitSuccess('Listing and images created successfully.');
+		} finally {
+			setUploadingImages(false);
+		}
+	};
+
+	const cancelRemainingUploads = () => {
+		setUploadItems((items) => cancelPendingUploads(items));
+		setUploadFlowCancelled(true);
+		setSubmitError('');
+		setSubmitSuccess('Listing created. Remaining image uploads cancelled.');
+	};
+
+	const uploadedCount = uploadItems.filter((item) => item.status === 'uploaded').length;
+	const totalUploads = uploadItems.length;
+	const hasFailedUpload =
+		uploadItems.some((item) => item.status === 'failed') && !uploadFlowCancelled;
+	const isSubmitting = creatingListing || uploadingImages;
 
 	return (
 		<div class="min-h-screen bg-base-100 font-sans">
@@ -221,10 +375,10 @@ export function AddListing() {
 					<form class="card bg-base-200 shadow-md" onSubmit={submitListing}>
 						<div class="card-body gap-4">
 							<fieldset class="fieldset">
-								{/* Game */}
-								<legend class="fieldset-legend">Game</legend>
+								<label class="label" for="listing-game">Game</label>
 								<input
 									id="listing-game"
+									aria-label="Game"
 									list="game-list"
 									class="input input-bordered"
 									type="text"
@@ -232,24 +386,23 @@ export function AddListing() {
 									placeholder="Search game names (min 2 characters)"
 									value={selectedGame ? formatGameLabel(selectedGame) : gameQuery}
 									onInput={(event) => {
-										// Check for matching game if datalist option selected
-										const gameId = parseInt((event.currentTarget as HTMLInputElement).value, 10);
-										const game = gameResults.find(g => g.id === gameId);
+										const nextValue = (event.currentTarget as HTMLInputElement).value;
+										const gameId = Number.parseInt(nextValue, 10);
+										const game = gameResults.find((item) => item.id === gameId);
+
 										if (game) {
-											setSelectedGame(game);
+											selectGame(game);
+											return;
 										}
-										// Query for matching games if text typed
-										else {
-											setGameQuery((event.currentTarget as HTMLInputElement).value);
-											setSelectedGame(null);
-										}
+
+										setGameQuery(nextValue);
+										setSelectedGame(null);
 									}}
 								/>
 								<p class="label">
 									{selectedGame
-										? `✅ Game selected`
+										? 'Game selected'
 										: 'Search and choose one result.'}
-
 								</p>
 								<datalist id="game-list">
 									{loadingGames ? (
@@ -265,10 +418,10 @@ export function AddListing() {
 									)}
 								</datalist>
 
-								{/* Condition */}
-								<legend class="fieldset-legend">Condition</legend>
+								<label class="label" for="listing-condition">Condition</label>
 								<select
 									id="listing-condition"
+									aria-label="Condition"
 									class="select select-bordered"
 									value={condition}
 									onInput={(event) =>
@@ -282,10 +435,10 @@ export function AddListing() {
 									<option value="poor">Poor</option>
 								</select>
 
-								{/* Price */}
-								<legend class="fieldset-legend">Price ($)</legend>
+								<label class="label" for="listing-price">Price ($)</label>
 								<input
 									id="listing-price"
+									aria-label="Price ($)"
 									class="input input-bordered"
 									type="number"
 									inputMode="numeric"
@@ -299,17 +452,54 @@ export function AddListing() {
 									}
 								/>
 
-								{/* Description */}
-								<legend class="fieldset-legend">Description</legend>
-								<textarea id="listing-description"
+								<label class="label" for="listing-description">Description</label>
+								<textarea
+									id="listing-description"
+									aria-label="Description"
 									class="textarea textarea-bordered min-h-32"
 									maxLength={1200}
 									placeholder="Include box condition, missing pieces, edition notes, and meetup preferences."
 									value={description}
 									onInput={(event) =>
 										setDescription((event.currentTarget as HTMLTextAreaElement).value)
-									}></textarea>
+									}
+								/>
+
+								<label class="label" for="listing-images">Images</label>
+								<input
+									id="listing-images"
+									aria-label="Images"
+									class="file-input file-input-bordered"
+									type="file"
+									multiple
+									accept=".webp,.png,.jpg,.jpeg,image/webp,image/png,image/jpeg"
+									onChange={handleFileChange}
+								/>
+								<p class="label">Add up to 3 images in webp, png, or jpg format.</p>
 							</fieldset>
+
+							{creatingListing ? (
+								<div class="alert">
+									<span>Creating listing...</span>
+								</div>
+							) : null}
+
+							{totalUploads > 0 ? (
+								<div class="card bg-base-100 shadow-sm">
+									<div class="card-body gap-2">
+										<h2 class="card-title text-base">Image uploads</h2>
+										<p>{uploadedCount} of {totalUploads} uploaded</p>
+										<ul class="space-y-2">
+											{uploadItems.map((item) => (
+												<li key={item.file.name} class="flex items-center justify-between gap-3">
+													<span>{item.file.name}</span>
+													<span class="capitalize">{item.status}</span>
+												</li>
+											))}
+										</ul>
+									</div>
+								</div>
+							) : null}
 
 							{submitError ? (
 								<div class="alert alert-error">
@@ -323,9 +513,30 @@ export function AddListing() {
 								</div>
 							) : null}
 
+							{hasFailedUpload ? (
+								<div class="card-actions justify-end">
+									<button
+										type="button"
+										class="btn btn-outline"
+										onClick={retryFailedUploads}
+										disabled={uploadingImages}
+									>
+										Retry failed uploads
+									</button>
+									<button
+										type="button"
+										class="btn btn-ghost"
+										onClick={cancelRemainingUploads}
+										disabled={uploadingImages}
+									>
+										Cancel remaining uploads
+									</button>
+								</div>
+							) : null}
+
 							<div class="card-actions justify-end">
-								<button type="submit" class="btn btn-primary" disabled={submitting}>
-									{submitting ? 'Publishing...' : 'Publish listing'}
+								<button type="submit" class="btn btn-primary" disabled={isSubmitting}>
+									{isSubmitting ? 'Publishing...' : 'Publish listing'}
 								</button>
 							</div>
 						</div>
