@@ -1,5 +1,6 @@
 import { NO_AUTH, withDeps } from './middleware/dependencies';
 import { getAuthGoogleCallback, getAuthGoogleStart, getMe, postAuthLogout } from './routes/auth';
+import { getBggImage } from './routes/bgg';
 import { getGames } from './routes/games';
 import { postListingImage } from './routes/listingImages';
 import { deleteListing, getListings, patchListing, postListing } from './routes/listings';
@@ -21,6 +22,9 @@ Bun.serve({
     },
     "/api/auth/logout": {
       POST: withDeps(postAuthLogout)
+    },
+    "/api/bgg/image": {
+      GET: withDeps(getBggImage)
     },
     "/api/health": {
       GET: json({ ok: true })

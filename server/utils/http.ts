@@ -24,6 +24,10 @@ export function serverError(message = 'Internal server error'): Response {
   return json({ error: message }, { status: 500 });
 }
 
+export function badGateway(message = 'Bad gateway'): Response {
+  return json({ error: message }, { status: 502 });
+}
+
 export async function readJson<T>(request: Request): Promise<T | null> {
   try {
     return (await request.json()) as T;
