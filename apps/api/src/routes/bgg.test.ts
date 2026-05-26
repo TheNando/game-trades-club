@@ -117,8 +117,9 @@ describe('createGetBggImage', () => {
       cacheMaxEntries: 1,
       fetchFn: async (input) => {
         fetchCount += 1;
-        const url = typeof input === 'string' ? input : input.toString();
-        const id = url.split('/').at(-1);
+        const url = input;
+        const parts = url.split('/');
+        const id = parts[parts.length - 1];
 
         return new Response(
           `<meta property="og:image" content="https://cf.geekdo-images.com/game-${id}-${fetchCount}/image">`,

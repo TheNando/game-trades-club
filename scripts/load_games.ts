@@ -1,6 +1,6 @@
 import { parse } from "@std/csv/parse";
 import gamesCsv from "./bgg.csv" with { type: "file" };
-import { createGamesBatch, type CreateGameInput } from "../server/db/gamesTable";
+import { createGamesBatch, type CreateGameInput } from "../apps/api/src/db/gamesTable";
 
 const BATCH_SIZE = 50;
 const PROGRESS_INTERVAL = 5;
@@ -76,4 +76,3 @@ for (let i = 0; i < total; i += BATCH_SIZE) {
 if (nextProgress <= 100) {
     console.log(`100% complete (${inserted}/${total})`);
 }
-

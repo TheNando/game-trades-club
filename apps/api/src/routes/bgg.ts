@@ -10,7 +10,7 @@ const PRELOAD_GEEKDO_IMAGE_URL_RE =
 type GetBggImageOptions = {
   cacheMaxEntries?: number;
   cacheTtlMs?: number;
-  fetchFn?: typeof fetch;
+  fetchFn?: (input: string) => Promise<Response>;
   now?: () => number;
 };
 

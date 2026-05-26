@@ -2,11 +2,21 @@
 
 Preact frontend with a Bun API backend using Bun SQLite and Google OAuth.
 
+## Repo Layout
+
+- `apps/web` contains the Preact/Vite client
+- `apps/api` contains the Bun API and SQLite access layer
+- `scripts` contains one-off utilities like game imports
+- `docs` contains design notes and implementation plans
+
 ## App Commands
 
-- `bun run dev` starts the Vite frontend (`http://localhost:5173`)
+- `bun run dev` starts both the web app and API
+- `bun run client` starts the Vite frontend (`http://localhost:5173`)
 - `bun run server` starts the Bun API (`http://localhost:3000`)
 - `bun run build` builds the frontend bundle
+- `bun run typecheck` runs TypeScript checks for both apps
+- `bun run test` runs the test suite
 
 Vite is configured to proxy `/api/*` requests to `http://localhost:3000` during local development.
 
@@ -35,9 +45,8 @@ Copy `.env.example` to `.env` and set:
 - `GET /api/auth/google/callback`
 - `POST /api/auth/logout`
 - `GET /api/me`
-- `GET|POST /api/trades`
-- `PATCH|DELETE /api/trades/:id`
-- `GET|POST /api/offers`
-- `PATCH|DELETE /api/offers/:id`
-- `GET|POST /api/wishlist`
-- `PATCH|DELETE /api/wishlist/:id`
+- `GET /api/bgg/image`
+- `GET /api/games`
+- `GET|POST /api/listings`
+- `PATCH|DELETE /api/listings/:id`
+- `POST /api/listing-images`
