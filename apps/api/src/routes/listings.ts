@@ -1,5 +1,7 @@
 import { BunRequest } from 'bun';
-import { createListing, listListingsByUser, removeListing, updateListing } from '../db/listingsTable';
+import { db } from '../db/client';
+import { createListingsStore } from '../db/listingsTable';
+import { syncGameCreditsIfMissing } from '../bgg/syncGameCredits';
 import { RouteDependencies } from '../middleware/dependencies';
 import { badRequest, json, notFound, readJson } from '../utils/http';
 import { randomToken } from '../utils/security';
@@ -22,6 +24,20 @@ type ParsedCreateListingBody = {
   price: number;
   status: 'open' | 'pending' | 'complete';
 };
+
+type ListingsStore = Pick<
+  ReturnType<typeof createListingsStore>,
+  'createListing' | 'listListingsByUser' | 'removeListing' | 'updateListing'
+>;
+
+type CreatePostListingOptions = {
+  createListingId?: () => string;
+  listingsStore?: ListingsStore;
+  logger?: Pick<Console, 'error'>;
+  syncGameCreditsIfMissing?: (gameId: number) => Promise<boolean>;
+};
+
+const defaultListingsStore = createListingsStore(db);
 
 function matchListingId(url: URL) {
   return url.pathname.match(/^\/api\/listings\/([^/]+)$/)?.[1];
@@ -76,23 +92,38 @@ export async function getListings(
   _: BunRequest<'/api/listings'>,
   { auth }: RouteDependencies
 ) {
-  return json({ items: listListingsByUser(auth.userId) });
+  return json({ items: defaultListingsStore.listListingsByUser(auth.userId) });
 }
 
-export async function postListing(
-  request: BunRequest<'/api/listings'>,
-  { auth }: RouteDependencies
-) {
-  const parsed = parseCreateListingBody(await readJson<ListingBody>(request));
-  if (parsed instanceof Response) return parsed;
+export function createPostListing({
+  createListingId = () => randomToken(18),
+  listingsStore = defaultListingsStore,
+  logger = console,
+  syncGameCreditsIfMissing: syncCreditsIfMissing = syncGameCreditsIfMissing,
+}: CreatePostListingOptions = {}) {
+  return async function postListing(
+    request: BunRequest<'/api/listings'>,
+    { auth }: RouteDependencies
+  ) {
+    const parsed = parseCreateListingBody(await readJson<ListingBody>(request));
+    if (parsed instanceof Response) return parsed;
 
-  const listing = createListing(auth.userId, {
-    id: randomToken(18),
-    ...parsed,
-  });
+    const listing = listingsStore.createListing(auth.userId, {
+      id: createListingId(),
+      ...parsed,
+    });
 
-  return json({ item: listing }, { status: 201 });
+    try {
+      await syncCreditsIfMissing(parsed.game_id);
+    } catch (error) {
+      logger.error(`Unable to sync game credits for game ${parsed.game_id}`, error);
+    }
+
+    return json({ item: listing }, { status: 201 });
+  };
 }
+
+export const postListing = createPostListing();
 
 export async function patchListing(
   request: BunRequest<'/api/listings'>,
@@ -114,10 +145,10 @@ export async function patchListing(
     return badRequest('price must be zero or greater');
   }
 
-  const updated = updateListing(auth.userId, listingId, {
+  const updated = defaultListingsStore.updateListing(auth.userId, listingId, {
     description: body.description === undefined ? undefined : normalizeOptionalText(body.description),
-    game_id: gameId ?? undefined,
     condition: body.condition,
+    game_id: gameId ?? undefined,
     price: price ?? undefined,
     status: body.status,
   });
@@ -132,6 +163,6 @@ export async function deleteListing(
   const listingId = matchListingId(url);
   if (!listingId) return badRequest('Invalid trade ID');
 
-  const deleted = removeListing(auth.userId, listingId);
+  const deleted = defaultListingsStore.removeListing(auth.userId, listingId);
   return deleted ? new Response(null, { status: 204 }) : notFound();
 }

@@ -1,7 +1,7 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 import { createListingsStore } from '../db/listingsTable';
 import { createTestDatabase, seedUser } from '../test/createTestDatabase';
-import { parseCreateListingBody } from './listings';
+import { createPostListing, parseCreateListingBody } from './listings';
 
 describe('parseCreateListingBody', () => {
   test('ignores abandoned image fields', () => {
@@ -68,5 +68,92 @@ describe('createListingsStore', () => {
       price: 30,
       status: 'open',
     });
+  });
+});
+
+describe('createPostListing', () => {
+  test('syncs missing game credits after creating a listing', async () => {
+    const syncGameCredits = mock(async () => true);
+    const postListing = createPostListing({
+      createListingId: () => 'listing-1',
+      listingsStore: {
+        createListing: () => ({
+          id: 'listing-1',
+          user_id: 'user-1',
+          description: 'Near mint copy',
+          game_id: 7,
+          condition: 'good',
+          price: 30,
+          status: 'open',
+          created_at: '2026-01-01 00:00:00',
+          updated_at: '2026-01-01 00:00:00',
+        }),
+      } as never,
+      syncGameCreditsIfMissing: syncGameCredits,
+    });
+
+    const request = new Request('http://example.test/api/listings', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        description: 'Near mint copy',
+        game_id: 7,
+        condition: 'good',
+        price: 30,
+        status: 'open',
+      }),
+    });
+
+    const response = await postListing(request as never, {
+      auth: { userId: 'user-1', sessionId: 'session-1' },
+      url: new URL(request.url),
+    });
+
+    expect(response.status).toBe(201);
+    expect(syncGameCredits).toHaveBeenCalledWith(7);
+  });
+
+  test('still creates the listing when the credit sync fails', async () => {
+    const syncGameCredits = mock(async () => {
+      throw new Error('bgg unavailable');
+    });
+    const logger = { error: mock(() => undefined) };
+    const postListing = createPostListing({
+      createListingId: () => 'listing-1',
+      listingsStore: {
+        createListing: () => ({
+          id: 'listing-1',
+          user_id: 'user-1',
+          description: null,
+          game_id: 7,
+          condition: 'good',
+          price: 30,
+          status: 'open',
+          created_at: '2026-01-01 00:00:00',
+          updated_at: '2026-01-01 00:00:00',
+        }),
+      } as never,
+      logger,
+      syncGameCreditsIfMissing: syncGameCredits,
+    });
+
+    const request = new Request('http://example.test/api/listings', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        game_id: 7,
+        condition: 'good',
+        price: 30,
+        status: 'open',
+      }),
+    });
+
+    const response = await postListing(request as never, {
+      auth: { userId: 'user-1', sessionId: 'session-1' },
+      url: new URL(request.url),
+    });
+
+    expect(response.status).toBe(201);
+    expect(logger.error).toHaveBeenCalled();
   });
 });

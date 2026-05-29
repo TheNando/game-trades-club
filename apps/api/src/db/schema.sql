@@ -29,6 +29,81 @@ CREATE TABLE IF NOT EXISTS games (
   is_expansion INTEGER NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS publishers (
+  id INTEGER PRIMARY KEY,
+  bgg_id INTEGER,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS designers (
+  id INTEGER PRIMARY KEY,
+  bgg_id INTEGER,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS artists (
+  id INTEGER PRIMARY KEY,
+  bgg_id INTEGER,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY,
+  bgg_id INTEGER,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS mechanics (
+  id INTEGER PRIMARY KEY,
+  bgg_id INTEGER,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS game_publishers (
+  game_id INTEGER NOT NULL,
+  publisher_id INTEGER NOT NULL,
+  PRIMARY KEY (game_id, publisher_id),
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+  FOREIGN KEY (publisher_id) REFERENCES publishers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS game_designers (
+  game_id INTEGER NOT NULL,
+  designer_id INTEGER NOT NULL,
+  PRIMARY KEY (game_id, designer_id),
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+  FOREIGN KEY (designer_id) REFERENCES designers(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS game_artists (
+  game_id INTEGER NOT NULL,
+  artist_id INTEGER NOT NULL,
+  PRIMARY KEY (game_id, artist_id),
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+  FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS game_categories (
+  game_id INTEGER NOT NULL,
+  category_id INTEGER NOT NULL,
+  PRIMARY KEY (game_id, category_id),
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS game_mechanics (
+  game_id INTEGER NOT NULL,
+  mechanic_id INTEGER NOT NULL,
+  PRIMARY KEY (game_id, mechanic_id),
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+  FOREIGN KEY (mechanic_id) REFERENCES mechanics(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS listings (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
@@ -81,6 +156,16 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 
 CREATE INDEX IF NOT EXISTS idx_games_name ON games(name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_publishers_bgg_id ON publishers(bgg_id) WHERE bgg_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_designers_bgg_id ON designers(bgg_id) WHERE bgg_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_artists_bgg_id ON artists(bgg_id) WHERE bgg_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_bgg_id ON categories(bgg_id) WHERE bgg_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mechanics_bgg_id ON mechanics(bgg_id) WHERE bgg_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_game_publishers_publisher_id ON game_publishers(publisher_id);
+CREATE INDEX IF NOT EXISTS idx_game_designers_designer_id ON game_designers(designer_id);
+CREATE INDEX IF NOT EXISTS idx_game_artists_artist_id ON game_artists(artist_id);
+CREATE INDEX IF NOT EXISTS idx_game_categories_category_id ON game_categories(category_id);
+CREATE INDEX IF NOT EXISTS idx_game_mechanics_mechanic_id ON game_mechanics(mechanic_id);
 
 CREATE INDEX IF NOT EXISTS idx_listings_user_id ON listings(user_id);
 CREATE INDEX IF NOT EXISTS idx_listings_game_id ON listings(game_id);

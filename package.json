@@ -1,39 +1,39 @@
 {
-	"name": "game-trades-club",
-	"version": "1.0.0",
-	"packageManager": "bun@1.3.9",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"dev": "bunx concurrently \"bun run server\" \"bun run client\"",
-		"client": "cd apps/web && bunx vite --host 0.0.0.0",
-		"server": "bun run apps/api/src/index.ts",
-		"build": "cd apps/web && bunx vite build",
-		"preview": "cd apps/web && bunx vite preview",
-		"typecheck": "bunx tsc --noEmit -p apps/web/tsconfig.json && bunx tsc --noEmit -p apps/api/tsconfig.json",
-		"test": "bun test --preload ./apps/web/test/setup.ts"
-	},
-	"dependencies": {
-		"@std/csv": "npm:@jsr/std__csv",
-		"preact": "^10.26.9",
-		"preact-iso": "^2.11.1"
-	},
-	"devDependencies": {
-		"@happy-dom/global-registrator": "^20.8.8",
-		"@preact/preset-vite": "^2.10.2",
-		"@tailwindcss/vite": "^4.2.0",
-		"@testing-library/jest-dom": "^6.9.1",
-		"@testing-library/preact": "^3.2.4",
-		"@testing-library/user-event": "^14.6.1",
-		"@types/bun": "^1.3.9",
-		"daisyui": "^5.5.19",
-		"eslint": "^10.0.1",
-		"eslint-config-preact": "^2.0.0",
-		"tailwindcss": "^4.2.0",
-		"typescript": "^5.9.3",
-		"vite": "^7.0.4"
-	},
-	"eslintConfig": {
-		"extends": "preact"
-	}
+  "name": "game-trades-club",
+  "version": "1.0.0",
+  "packageManager": "bun@1.3.9",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bunx concurrently \"bun run server\" \"bun run client\"",
+    "client": "cd apps/web && bunx vite --host 0.0.0.0",
+    "server": "bun run apps/api/src/index.ts",
+    "build": "cd apps/web && bunx vite build",
+    "preview": "cd apps/web && bunx vite preview",
+    "typecheck": "bunx tsc --noEmit -p apps/web/tsconfig.json && bunx tsc --noEmit -p apps/api/tsconfig.json",
+    "test": "bun test --preload ./apps/web/test/setup.ts"
+  },
+  "dependencies": {
+    "@std/csv": "npm:@jsr/std__csv",
+    "preact": "^10.26.9",
+    "preact-iso": "^2.11.1"
+  },
+  "devDependencies": {
+    "@happy-dom/global-registrator": "^20.8.8",
+    "@preact/preset-vite": "^2.10.2",
+    "@tailwindcss/vite": "^4.2.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/preact": "^3.2.4",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/bun": "^1.3.9",
+    "daisyui": "^5.5.19",
+    "eslint": "^10.0.1",
+    "eslint-config-preact": "^2.0.0",
+    "tailwindcss": "^4.2.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.0.4"
+  },
+  "eslintConfig": {
+    "extends": "preact"
+  }
 }
