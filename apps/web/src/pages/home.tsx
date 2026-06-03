@@ -1,202 +1,321 @@
-
 export function Home() {
 	return (
-		<div class="min-h-screen bg-base-100 font-sans">
-			{/* Navbar Placeholder - assuming a layout handles this, but adding a simple header if not */}
+		<div class="min-h-screen bg-base-100 text-base-content">
+			{/* ── Hero ──────────────────────────────────────────────────── */}
+			<section class="relative overflow-hidden bg-base-200 bg-paper grain">
+				<div class="absolute inset-0 bg-dotgrid opacity-[0.35] pointer-events-none" />
+				<div class="relative z-10 max-w-6xl mx-auto px-4 md:px-8 pt-16 pb-24 md:pt-24 md:pb-32 grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+					<div class="lg:col-span-7 rise-in">
+						<span class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-base-300/80 bg-base-100/70 backdrop-blur text-xs font-medium tracking-wide text-base-content/75">
+							<span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+							A friendly trading community
+						</span>
 
-			{/* Hero Section */}
-			<section class="hero min-h-[70vh] bg-base-200 relative overflow-hidden">
-				<div class="hero-content text-center relative z-10">
-					<div class="max-w-3xl">
-						<h1 class="text-5xl font-extrabold mb-6 leading-tight">
-							Trade Board Games
+						<h1 class="font-display mt-5 text-[3.25rem] sm:text-6xl lg:text-[5.25rem] leading-[0.95] font-medium tracking-tight">
+							Trade board games
 							<br />
-							<span class="text-primary">Locally & Safely</span>
+							with neighbors you'll{' '}
+							<span class="font-display-wonk italic deco-underline text-primary">actually meet</span>.
 						</h1>
-						<p class="py-6 text-xl text-base-content/80 mb-8">
-							Skip the shipping fees and risks. Meet at your verified local game
-							shop to exchange games with players in your community.
+
+						<p class="mt-6 max-w-xl text-lg text-base-content/75 leading-relaxed">
+							No shipping anxiety. No mystery sellers. Swap games with people in your
+							city and hand them off at a local game shop you already know and trust.
 						</p>
-						<div class="flex justify-center gap-4">
+
+						<div class="mt-8 flex flex-wrap items-center gap-3">
 							<a
 								href="/games"
-								class="btn btn-primary btn-lg shadow-lg hover:scale-105 transition-transform"
+								class="btn btn-primary btn-lg rounded-xl shadow-sm hover:shadow-md transition-all"
 							>
-								Browse Games
+								Browse games
+								<svg viewBox="0 0 24 24" class="w-4 h-4 ml-1 fill-none stroke-current" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6" />
+								</svg>
 							</a>
 							<a
 								href="/add-listing"
-								class="btn btn-secondary btn-lg shadow-lg hover:scale-105 transition-transform"
+								class="btn btn-ghost btn-lg rounded-xl border border-base-300 hover:bg-base-100"
 							>
-								List a Game
+								List a game
+							</a>
+						</div>
+
+						<dl class="mt-10 grid grid-cols-3 gap-3 sm:gap-6 max-w-md">
+							{[
+								{ k: 'Local', v: 'Meet within your city' },
+								{ k: '$0', v: 'No shipping, ever' },
+								{ k: 'Verified', v: 'Trusted game shops' },
+							].map((s) => (
+								<div key={s.k} class="border-l-2 border-primary/60 pl-3">
+									<dt class="font-display text-2xl sm:text-3xl font-medium leading-none">{s.k}</dt>
+									<dd class="mt-1 text-xs sm:text-sm text-base-content/65 leading-snug">{s.v}</dd>
+								</div>
+							))}
+						</dl>
+					</div>
+
+					{/* Stacked "listing cards" composition */}
+					<div class="lg:col-span-5 relative h-[420px] sm:h-[480px] hidden md:block">
+						<HeroStack />
+					</div>
+				</div>
+			</section>
+
+			{/* ── How it works ─────────────────────────────────────────── */}
+			<section id="how-it-works" class="py-20 md:py-28 px-4 md:px-8">
+				<div class="max-w-6xl mx-auto">
+					<div class="flex items-end justify-between gap-6 flex-wrap mb-12">
+						<div>
+							<p class="text-xs uppercase tracking-[0.22em] text-primary/80 font-semibold">
+								How it works
+							</p>
+							<h2 class="font-display text-4xl md:text-5xl font-medium mt-3 max-w-xl leading-tight">
+								Three friendly steps, zero shipping labels.
+							</h2>
+						</div>
+						<p class="text-base-content/65 max-w-sm">
+							Built around the simplest, most human way to swap a game: agree online,
+							meet in person.
+						</p>
+					</div>
+
+					<ol class="grid md:grid-cols-3 gap-5 lg:gap-7">
+						<Step
+							n="01"
+							title="List what's on your shelf"
+							body="Snap a couple of photos, jot down condition and price, and your listing is live in under a minute."
+							tone="primary"
+						/>
+						<Step
+							n="02"
+							title="Match with a neighbor"
+							body="Get a message from someone nearby who wants the game. Pick a time and a shop that works for both of you."
+							tone="secondary"
+						/>
+						<Step
+							n="03"
+							title="Hand it off at the shop"
+							body="Meet at a verified local store, give the game a quick look together, and walk out with your trade."
+							tone="accent"
+						/>
+					</ol>
+				</div>
+			</section>
+
+			{/* ── Why us ───────────────────────────────────────────────── */}
+			<section class="px-4 md:px-8 pb-20 md:pb-28">
+				<div class="max-w-6xl mx-auto rounded-3xl border border-base-300 bg-base-200/60 overflow-hidden">
+					<div class="grid md:grid-cols-[1.1fr_1fr]">
+						<div class="p-8 md:p-12 bg-base-200/80 border-b md:border-b-0 md:border-r border-base-300">
+							<p class="text-xs uppercase tracking-[0.22em] text-base-content/55 font-semibold">
+								The old way
+							</p>
+							<h3 class="font-display text-3xl md:text-4xl mt-2 leading-tight text-base-content/70">
+								Ship blindly to a stranger and hope for the best.
+							</h3>
+							<ul class="mt-6 space-y-3 text-base-content/65">
+								{[
+									'Shipping a heavy box costs more than the game',
+									'Damage and lost packages are on you',
+									'You never actually meet another player',
+									'Days or weeks before anything happens',
+								].map((t) => (
+									<li key={t} class="flex gap-3">
+										<span class="mt-2 w-1.5 h-1.5 rounded-full bg-base-content/30 flex-none" />
+										<span>{t}</span>
+									</li>
+								))}
+							</ul>
+						</div>
+
+						<div class="p-8 md:p-12 relative">
+							<p class="text-xs uppercase tracking-[0.22em] text-primary font-semibold">
+								The Club way
+							</p>
+							<h3 class="font-display text-3xl md:text-4xl mt-2 leading-tight">
+								Trade in person with someone from{' '}
+								<span class="text-primary">your own scene</span>.
+							</h3>
+							<ul class="mt-6 space-y-3">
+								{[
+									{ k: 'Zero shipping cost', v: 'Always free — you meet up' },
+									{ k: 'Inspect before you trade', v: 'See the box, count the pieces' },
+									{ k: 'Real community', v: 'Faces, not usernames' },
+									{ k: 'Same-week swaps', v: 'Most trades happen within days' },
+								].map((row) => (
+									<li key={row.k} class="flex items-start gap-3">
+										<span class="mt-1 inline-flex w-5 h-5 rounded-md bg-primary/15 text-primary items-center justify-center flex-none">
+											<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none stroke-current" stroke-width="3">
+												<path stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" />
+											</svg>
+										</span>
+										<span>
+											<span class="font-medium">{row.k}.</span>{' '}
+											<span class="text-base-content/70">{row.v}</span>
+										</span>
+									</li>
+								))}
+							</ul>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			{/* ── Trust strip ──────────────────────────────────────────── */}
+			<section class="px-4 md:px-8 pb-20 md:pb-28">
+				<div class="max-w-6xl mx-auto flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-10">
+					<div class="flex-1">
+						<p class="text-xs uppercase tracking-[0.22em] text-base-content/55 font-semibold">
+							Pickups happen at
+						</p>
+						<p class="font-display text-2xl md:text-3xl mt-1 leading-tight">
+							Verified local game stores in your city.
+						</p>
+					</div>
+					<div class="flex flex-wrap gap-2 md:justify-end">
+						{['Friendly Local Game Store', 'Café & Board Game Bar', 'Hobby Shop', 'Community Library'].map((label) => (
+							<span
+								key={label}
+								class="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-base-300 bg-base-200/60 text-sm text-base-content/75"
+							>
+								<span class="w-1.5 h-1.5 rounded-full bg-secondary" />
+								{label}
+							</span>
+						))}
+					</div>
+				</div>
+			</section>
+
+			{/* ── Final CTA ────────────────────────────────────────────── */}
+			<section class="px-4 md:px-8 pb-20 md:pb-28">
+				<div class="relative max-w-6xl mx-auto rounded-3xl overflow-hidden bg-primary text-primary-content grain">
+					<div class="absolute inset-0 opacity-25 bg-dotgrid pointer-events-none" />
+					<div class="relative z-10 px-8 py-14 md:px-14 md:py-20 grid md:grid-cols-[1.4fr_1fr] gap-8 items-center">
+						<div>
+							<h2 class="font-display text-4xl md:text-5xl font-medium leading-tight">
+								Your shelf has stories left to tell.
+							</h2>
+							<p class="mt-4 text-primary-content/85 max-w-md">
+								Hand a beloved game to someone who'll play it tonight. Join the
+								Club — it takes a minute, and your first listing is on the house.
+							</p>
+						</div>
+						<div class="flex flex-wrap gap-3 md:justify-end">
+							<a
+								href="/add-listing"
+								class="btn btn-lg rounded-xl bg-base-100 text-primary border-none hover:bg-base-100/90"
+							>
+								List your first game
+							</a>
+							<a
+								href="/games"
+								class="btn btn-lg btn-ghost rounded-xl border border-primary-content/30 text-primary-content hover:bg-primary-content/10"
+							>
+								Browse trades
 							</a>
 						</div>
 					</div>
 				</div>
-
-				{/* Background Decorative Pattern */}
-				<div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-					<div class="rating gap-1 absolute top-10 left-10 rotate-12">
-						<input
-							type="radio"
-							name="rating-3"
-							class="mask mask-heart bg-red-400"
-						/>
-						<input
-							type="radio"
-							name="rating-3"
-							class="mask mask-heart bg-orange-400"
-							checked
-						/>
-						<input
-							type="radio"
-							name="rating-3"
-							class="mask mask-heart bg-yellow-400"
-						/>
-						<input
-							type="radio"
-							name="rating-3"
-							class="mask mask-heart bg-lime-400"
-						/>
-					</div>
-					<div class="absolute bottom-10 right-10 -rotate-12 text-9xl">
-						🎲
-					</div>
-				</div>
 			</section>
 
-			{/* How It Works Section */}
-			<section class="py-20 px-4 bg-base-100">
-				<div class="max-w-5xl mx-auto text-center">
-					<h2 class="text-4xl font-bold mb-16">How It Works</h2>
-					<div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-						{/* Step 1 */}
-						<div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
-							<div class="card-body items-center text-center">
-								<div class="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-4 text-3xl">
-									📝
-								</div>
-								<h3 class="card-title text-2xl mb-2">1. List Your Game</h3>
-								<p>
-									Post the games you want to sell or trade. It's free and takes
-									seconds.
-								</p>
-							</div>
-						</div>
-						{/* Step 2 */}
-						<div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
-							<div class="card-body items-center text-center">
-								<div class="w-16 h-16 rounded-full bg-secondary/20 flex items-center justify-center mb-4 text-3xl">
-									🤝
-								</div>
-								<h3 class="card-title text-2xl mb-2">2. Connect</h3>
-								<p>Chat with local gamers who are interested in your trade.</p>
-							</div>
-						</div>
-						{/* Step 3 */}
-						<div class="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow">
-							<div class="card-body items-center text-center">
-								<div class="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center mb-4 text-3xl">
-									🏪
-								</div>
-								<h3 class="card-title text-2xl mb-2">3. Meet Up</h3>
-								<p>
-									Meet at a verified local game store to complete the swap
-									safely.
-								</p>
-							</div>
-						</div>
+			{/* ── Footer ───────────────────────────────────────────────── */}
+			<footer class="border-t border-base-300 bg-base-200/60">
+				<div class="max-w-6xl mx-auto px-4 md:px-8 py-10 grid sm:grid-cols-2 gap-6 items-center">
+					<div>
+						<p class="font-display text-xl">
+							Game Trades<span class="text-primary">.</span>Club
+						</p>
+						<p class="text-sm text-base-content/60 mt-1">
+							A community for trading board games, the human way.
+						</p>
 					</div>
-				</div>
-			</section>
-
-			{/* Why Use Us (Comparison) Section */}
-			<section class="py-20 px-4 bg-neutral text-neutral-content">
-				<div class="max-w-4xl mx-auto">
-					<h2 class="text-4xl font-bold mb-12 text-center">
-						Why Game Trades Club?
-					</h2>
-
-					<div class="overflow-x-auto">
-						<table class="table table-lg text-lg">
-							{/* head */}
-							<thead class="text-neutral-content/60 text-lg">
-								<tr>
-									<th class="w-1/3"></th>
-									<th class="text-center text-error">Generic Online Market</th>
-									<th class="text-center text-success font-bold bg-base-100/10 rounded-t-lg">
-										Game Trades Club
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-								{/* row 1 */}
-								<tr>
-									<th class="font-bold">Shipping Costs</th>
-									<td class="text-center text-error/80">
-										Expensive & Variable
-									</td>
-									<td class="text-center text-success font-bold bg-base-100/5">
-										$0.00 (Always)
-									</td>
-								</tr>
-								{/* row 2 */}
-								<tr>
-									<th class="font-bold">Risk</th>
-									<td class="text-center text-error/80">
-										Lost packages, damage
-									</td>
-									<td class="text-center text-success font-bold bg-base-100/5">
-										Inspect before listing
-									</td>
-								</tr>
-								{/* row 3 */}
-								<tr>
-									<th class="font-bold">Waiting Time</th>
-									<td class="text-center text-error/80">Days or Weeks</td>
-									<td class="text-center text-success font-bold bg-base-100/5">
-										Instant Exchange
-									</td>
-								</tr>
-								{/* row 4 */}
-								<tr>
-									<th class="font-bold">Community</th>
-									<td class="text-center text-error/80">Anonymous</td>
-									<td class="text-center text-success font-bold bg-base-100/5 rounded-b-lg">
-										Support Local Stores
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</section>
-
-			{/* Final CTA */}
-			<section class="py-24 bg-primary text-primary-content text-center">
-				<div class="max-w-2xl mx-auto px-4">
-					<h2 class="text-4xl font-bold mb-6">Ready to clear your shelf?</h2>
-					<p class="text-xl mb-8 opacity-90">
-						Join thousands of local gamers and find a new home for your board
-						games today.
+					<p class="text-sm text-base-content/55 sm:text-right">
+						© {new Date().getFullYear()} Game Trades Club · Made for tabletop people.
 					</p>
-					<a
-						href="/signup"
-						class="btn btn-lg btn-active bg-white text-primary border-none hover:bg-gray-100"
-					>
-						Get Started for Free
-					</a>
 				</div>
-			</section>
-
-			<footer class="footer items-center p-4 bg-base-300 text-base-content">
-				<aside class="items-center grid-flow-col">
-					<p>
-						Copyright © {new Date().getFullYear()}{" "}
-						- All right reserved by Game Trades Club
-					</p>
-				</aside>
 			</footer>
+		</div>
+	);
+}
+
+type StepProps = { n: string; title: string; body: string; tone: 'primary' | 'secondary' | 'accent' };
+
+function Step({ n, title, body, tone }: StepProps) {
+	const ring =
+		tone === 'primary' ? 'text-primary' : tone === 'secondary' ? 'text-secondary' : 'text-accent';
+	return (
+		<li class="group relative rounded-2xl border border-base-300 bg-base-100 p-6 md:p-7 hover:border-base-content/30 transition-colors">
+			<div class="flex items-start justify-between gap-3">
+				<span class={`font-display text-5xl md:text-6xl font-medium leading-none ${ring}`}>{n}</span>
+				<span class="mt-2 h-px flex-1 bg-base-300 group-hover:bg-base-content/30 transition-colors" />
+			</div>
+			<h3 class="font-display text-2xl mt-5 leading-snug">{title}</h3>
+			<p class="mt-3 text-base-content/70 leading-relaxed">{body}</p>
+		</li>
+	);
+}
+
+function HeroStack() {
+	return (
+		<div class="absolute inset-0">
+			<MiniCard
+				style={{ top: '8%', left: '8%', '--r': '-7deg' } as any}
+				className="float-y"
+				title="Wingspan"
+				meta="Like new · $42"
+				accent="secondary"
+				emoji="🪶"
+			/>
+			<MiniCard
+				style={{ top: '22%', right: '6%', '--r': '6deg', animationDelay: '1.2s' } as any}
+				className="float-y"
+				title="Brass: Birmingham"
+				meta="Good · trade"
+				accent="primary"
+				emoji="🏭"
+			/>
+			<MiniCard
+				style={{ bottom: '6%', left: '18%', '--r': '-2deg', animationDelay: '2.4s' } as any}
+				className="float-y"
+				title="Catan"
+				meta="Open box · $25"
+				accent="accent"
+				emoji="🐑"
+			/>
+		</div>
+	);
+}
+
+type MiniCardProps = {
+	title: string;
+	meta: string;
+	accent: 'primary' | 'secondary' | 'accent';
+	emoji: string;
+	style?: Record<string, string>;
+	className?: string;
+};
+
+function MiniCard({ title, meta, accent, emoji, style, className = '' }: MiniCardProps) {
+	const tint =
+		accent === 'primary'
+			? 'bg-primary/15 text-primary'
+			: accent === 'secondary'
+				? 'bg-secondary/15 text-secondary'
+				: 'bg-accent/20 text-accent-content';
+	return (
+		<div
+			class={`absolute w-56 sm:w-64 rounded-2xl border border-base-300 bg-base-100 shadow-lg p-4 rotate-[var(--r,0deg)] ${className}`}
+			style={style}
+		>
+			<div class={`aspect-[4/3] rounded-xl grid place-items-center text-5xl ${tint}`}>
+				<span aria-hidden="true">{emoji}</span>
+			</div>
+			<div class="mt-3 flex items-baseline justify-between gap-2">
+				<p class="font-display text-lg leading-tight truncate">{title}</p>
+				<span class="text-[10px] uppercase tracking-wider text-base-content/55">Listing</span>
+			</div>
+			<p class="text-sm text-base-content/65 mt-0.5">{meta}</p>
 		</div>
 	);
 }
