@@ -8,12 +8,53 @@ function createDeps(url: string) {
   };
 }
 
+type StubGame = {
+  id: number;
+  name: string;
+  image_url: string | null;
+  year: number | null;
+  is_expansion: number;
+};
+
+function createGamesStoreStub(initial: Record<number, StubGame | null> = {}) {
+  const games = new Map<number, StubGame | null>(
+    Object.entries(initial).map(([key, value]) => [Number(key), value])
+  );
+  const updates: Array<{ id: number; url: string; }> = [];
+
+  return {
+    games,
+    updates,
+    store: {
+      findGameById(id: number) {
+        return games.get(id) ?? null;
+      },
+      updateGameImageUrl(id: number, imageUrl: string) {
+        updates.push({ id, url: imageUrl });
+        const existing = games.get(id);
+        if (existing) games.set(id, { ...existing, image_url: imageUrl });
+      },
+    },
+  };
+}
+
+function xmlWithImage(url: string) {
+  return `<?xml version="1.0" encoding="utf-8"?>
+    <items termsofuse="https://boardgamegeek.com/xmlapi/termsofuse">
+      <item type="boardgame" id="42">
+        <thumbnail>https://cf.geekdo-images.com/thumb/img.jpg</thumbnail>
+        <image>${url}</image>
+      </item>
+    </items>`;
+}
+
 describe('createGetBggImage', () => {
   test('rejects non-numeric ids', async () => {
     const handler = createGetBggImage({
       fetchFn: async () => {
         throw new Error('fetch should not be called');
       },
+      gamesStore: createGamesStoreStub().store,
     });
 
     const request = new Request('http://example.test/api/bgg/image?id=abc');
@@ -23,21 +64,39 @@ describe('createGetBggImage', () => {
     expect(await response.json()).toEqual({ error: 'Invalid id parameter' });
   });
 
-  test('returns not found when BGG returns 404', async () => {
+  test('returns the image URL from the games table without calling BGG', async () => {
+    const { store } = createGamesStoreStub({
+      42: {
+        id: 42,
+        name: 'Catan',
+        image_url: 'https://cf.geekdo-images.com/cached/img.jpg',
+        year: 1995,
+        is_expansion: 0,
+      },
+    });
+
     const handler = createGetBggImage({
-      fetchFn: async () => new Response('missing', { status: 404 }),
+      fetchFn: async () => {
+        throw new Error('fetch should not be called');
+      },
+      gamesStore: store,
     });
 
     const request = new Request('http://example.test/api/bgg/image?id=42');
     const response = await handler(request as never, createDeps(request.url));
 
-    expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ error: 'Game not found on BGG' });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      url: 'https://cf.geekdo-images.com/cached/img.jpg',
+    });
   });
 
   test('returns bad gateway when BGG returns a non-404 failure', async () => {
     const handler = createGetBggImage({
       fetchFn: async () => new Response('broken', { status: 503 }),
+      gamesStore: createGamesStoreStub({
+        42: { id: 42, name: 'Catan', image_url: null, year: 1995, is_expansion: 0 },
+      }).store,
     });
 
     const request = new Request('http://example.test/api/bgg/image?id=42');
@@ -47,17 +106,17 @@ describe('createGetBggImage', () => {
     expect(await response.json()).toEqual({ error: 'Failed to fetch BGG page' });
   });
 
-  test('extracts the first geekdo image URL from the page HTML', async () => {
-    const html = `
-      <html>
-        <head>
-          <link rel="preload" as="image" href="https://cf.geekdo-images.com/cover-image-1/original/img12345">
-          <meta property="og:image" content="https://cf.geekdo-images.com/cover-image-2/original/img67890">
-        </head>
-      </html>
-    `;
+  test('extracts the image URL from the BGG XML API and persists it on the game', async () => {
+    const stub = createGamesStoreStub({
+      42: { id: 42, name: 'Catan', image_url: null, year: 1995, is_expansion: 0 },
+    });
+
     const handler = createGetBggImage({
-      fetchFn: async () => new Response(html, { status: 200 }),
+      fetchFn: async () =>
+        new Response(xmlWithImage('https://cf.geekdo-images.com/cover/original.jpg'), {
+          status: 200,
+        }),
+      gamesStore: stub.store,
     });
 
     const request = new Request('http://example.test/api/bgg/image?id=42');
@@ -65,7 +124,46 @@ describe('createGetBggImage', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      url: 'https://cf.geekdo-images.com/cover-image-1/original/img12345',
+      url: 'https://cf.geekdo-images.com/cover/original.jpg',
+    });
+    expect(stub.updates).toEqual([
+      { id: 42, url: 'https://cf.geekdo-images.com/cover/original.jpg' },
+    ]);
+  });
+
+  test('decodes XML entities in the image URL', async () => {
+    const handler = createGetBggImage({
+      fetchFn: async () =>
+        new Response(xmlWithImage('https://cf.geekdo-images.com/img?a=1&amp;b=2'), {
+          status: 200,
+        }),
+      gamesStore: createGamesStoreStub().store,
+    });
+
+    const request = new Request('http://example.test/api/bgg/image?id=42');
+    const response = await handler(request as never, createDeps(request.url));
+
+    expect(await response.json()).toEqual({
+      url: 'https://cf.geekdo-images.com/img?a=1&b=2',
+    });
+  });
+
+  test('falls back to the thumbnail when no <image> tag is present', async () => {
+    const xml = `<items><item type="boardgame" id="42">
+      <thumbnail>https://cf.geekdo-images.com/thumb/only.jpg</thumbnail>
+    </item></items>`;
+
+    const handler = createGetBggImage({
+      fetchFn: async () => new Response(xml, { status: 200 }),
+      gamesStore: createGamesStoreStub().store,
+    });
+
+    const request = new Request('http://example.test/api/bgg/image?id=42');
+    const response = await handler(request as never, createDeps(request.url));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      url: 'https://cf.geekdo-images.com/thumb/only.jpg',
     });
   });
 
@@ -77,10 +175,11 @@ describe('createGetBggImage', () => {
       fetchFn: async () => {
         fetchCount += 1;
         return new Response(
-          `<meta property="og:image" content="https://cf.geekdo-images.com/game-${fetchCount}/image">`,
+          xmlWithImage(`https://cf.geekdo-images.com/game-${fetchCount}/image`),
           { status: 200 },
         );
       },
+      gamesStore: createGamesStoreStub().store,
       now: () => now,
     });
 
@@ -111,43 +210,55 @@ describe('createGetBggImage', () => {
     expect(fetchCount).toBe(2);
   });
 
-  test('evicts the oldest cache entry when the cache reaches its size limit', async () => {
+  test('coalesces concurrent requests for the same id into a single fetch', async () => {
     let fetchCount = 0;
     const handler = createGetBggImage({
-      cacheMaxEntries: 1,
-      fetchFn: async (input) => {
+      fetchFn: async () => {
         fetchCount += 1;
-        const url = input;
-        const parts = url.split('/');
-        const id = parts[parts.length - 1];
-
-        return new Response(
-          `<meta property="og:image" content="https://cf.geekdo-images.com/game-${id}-${fetchCount}/image">`,
-          { status: 200 },
-        );
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        return new Response(xmlWithImage('https://cf.geekdo-images.com/once/img.jpg'), {
+          status: 200,
+        });
       },
+      gamesStore: createGamesStoreStub().store,
     });
 
-    const firstRequest = new Request('http://example.test/api/bgg/image?id=42');
-    const secondRequest = new Request('http://example.test/api/bgg/image?id=84');
+    const request = new Request('http://example.test/api/bgg/image?id=42');
+    const [a, b, c] = await Promise.all([
+      handler(request as never, createDeps(request.url)),
+      handler(request as never, createDeps(request.url)),
+      handler(request as never, createDeps(request.url)),
+    ]);
 
-    await handler(firstRequest as never, createDeps(firstRequest.url));
-    await handler(secondRequest as never, createDeps(secondRequest.url));
-
-    const third = await handler(firstRequest as never, createDeps(firstRequest.url));
-
-    expect(third.status).toBe(200);
-    expect(await third.json()).toEqual({
-      url: 'https://cf.geekdo-images.com/game-42-3/image',
-    });
-    expect(fetchCount).toBe(3);
+    expect(a.status).toBe(200);
+    expect(b.status).toBe(200);
+    expect(c.status).toBe(200);
+    expect(fetchCount).toBe(1);
   });
 
-  test('returns not found when no geekdo image URL exists in the page', async () => {
+  test('caches negative results to avoid re-fetching missing images', async () => {
+    let fetchCount = 0;
     const handler = createGetBggImage({
-      fetchFn: async () => new Response('<html><head></head><body>No image</body></html>', {
-        status: 200,
-      }),
+      fetchFn: async () => {
+        fetchCount += 1;
+        return new Response('<items></items>', { status: 200 });
+      },
+      gamesStore: createGamesStoreStub().store,
+    });
+
+    const request = new Request('http://example.test/api/bgg/image?id=42');
+    const first = await handler(request as never, createDeps(request.url));
+    const second = await handler(request as never, createDeps(request.url));
+
+    expect(first.status).toBe(404);
+    expect(second.status).toBe(404);
+    expect(fetchCount).toBe(1);
+  });
+
+  test('returns not found when no image URL exists in the XML response', async () => {
+    const handler = createGetBggImage({
+      fetchFn: async () => new Response('<items></items>', { status: 200 }),
+      gamesStore: createGamesStoreStub().store,
     });
 
     const request = new Request('http://example.test/api/bgg/image?id=42');

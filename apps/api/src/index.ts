@@ -2,7 +2,7 @@ import { NO_AUTH, withDeps } from './middleware/dependencies';
 import { getAuthGoogleCallback, getAuthGoogleStart, getMe, postAuthLogout } from './routes/auth';
 import { getBggImage } from './routes/bgg';
 import { getGames } from './routes/games';
-import { postListingImage } from './routes/listingImages';
+import { getListingImage, postListingImage } from './routes/listingImages';
 import { deleteListing, getListings, patchListing, postListing } from './routes/listings';
 // import { deleteOffer, getOffers, patchOffer, postOffer } from './routes/offers';
 // import { deleteTrade, getTrades, patchTrade, postTrade } from './routes/trades';
@@ -37,12 +37,15 @@ Bun.serve({
     },
     "/api/listings": {
       DELETE: withDeps(deleteListing),
-      GET: withDeps(getListings),
+      GET: withDeps(getListings, NO_AUTH),
       PATCH: withDeps(patchListing),
       POST: withDeps(postListing),
     },
     "/api/listing-images": {
       POST: withDeps(postListingImage),
+    },
+    "/api/listing-images/:id": {
+      GET: withDeps(getListingImage, NO_AUTH),
     },
     // "/api/offers": {
     //   DELETE: withDeps(deleteOffer),

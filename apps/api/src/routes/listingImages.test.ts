@@ -1,11 +1,16 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createListingImagesStore } from '../db/listingImagesTable';
 import { createListingsStore } from '../db/listingsTable';
-import { createTestDatabase, seedListing, seedUser } from '../test/createTestDatabase';
-import { createPostListingImage } from './listingImages';
+import {
+  createTestDatabase,
+  seedListing,
+  seedListingImage,
+  seedUser,
+} from '../test/createTestDatabase';
+import { createGetListingImage, createPostListingImage } from './listingImages';
 
 async function createUploadDir() {
   return mkdtemp(join(tmpdir(), 'listing-images-'));
@@ -191,3 +196,155 @@ describe('createPostListingImage', () => {
     await rm(uploadDir, { recursive: true, force: true });
   });
 });
+
+describe('createGetListingImage', () => {
+  function buildRequest(imageId: string) {
+    const request = new Request(`http://example.test/api/listing-images/${imageId}`);
+    return {
+      request,
+      deps: {
+        auth: { userId: '', sessionId: '' },
+        url: new URL(request.url),
+      },
+    };
+  }
+
+  function buildVariantRequest(imageId: string, variant: string) {
+    const request = new Request(
+      `http://example.test/api/listing-images/${imageId}?variant=${variant}`
+    );
+    return {
+      request,
+      deps: {
+        auth: { userId: '', sessionId: '' },
+        url: new URL(request.url),
+      },
+    };
+  }
+
+  test('streams the image bytes with the stored mime type and immutable cache header', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    seedListingImage(database, {
+      storedFilename: 'photo.jpg',
+      mimeType: 'image/jpeg',
+    });
+    const uploadDir = await createUploadDir();
+    await writeFile(join(uploadDir, 'photo.jpg'), 'jpeg-bytes');
+
+    const handler = createGetListingImage({
+      listingImagesStore: createListingImagesStore(database),
+      uploadDir,
+    });
+
+    const { request, deps } = buildRequest('image-1');
+    const response = await handler(request as never, deps);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/jpeg');
+    expect(response.headers.get('cache-control')).toBe(
+      'public, max-age=31536000, immutable'
+    );
+    const bodyText = new TextDecoder().decode(new Uint8Array(await response.arrayBuffer()));
+    expect(bodyText).toBe('jpeg-bytes');
+
+    await rm(uploadDir, { recursive: true, force: true });
+  });
+
+  test('serves the webp thumbnail when variant=thumb and a thumb is recorded', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    seedListingImage(database, {
+      storedFilename: 'photo.jpg',
+      thumbStoredFilename: 'photo_thumb.webp',
+      mimeType: 'image/jpeg',
+    });
+    const uploadDir = await createUploadDir();
+    await writeFile(join(uploadDir, 'photo.jpg'), 'jpeg-bytes');
+    await writeFile(join(uploadDir, 'photo_thumb.webp'), 'webp-bytes');
+
+    const handler = createGetListingImage({
+      listingImagesStore: createListingImagesStore(database),
+      uploadDir,
+    });
+
+    const { request, deps } = buildVariantRequest('image-1', 'thumb');
+    const response = await handler(request as never, deps);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/webp');
+    const bodyText = new TextDecoder().decode(new Uint8Array(await response.arrayBuffer()));
+    expect(bodyText).toBe('webp-bytes');
+
+    await rm(uploadDir, { recursive: true, force: true });
+  });
+
+  test('falls back to the original image when variant=thumb but no thumb is recorded', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    seedListingImage(database, {
+      storedFilename: 'photo.jpg',
+      mimeType: 'image/jpeg',
+    });
+    const uploadDir = await createUploadDir();
+    await writeFile(join(uploadDir, 'photo.jpg'), 'jpeg-bytes');
+
+    const handler = createGetListingImage({
+      listingImagesStore: createListingImagesStore(database),
+      uploadDir,
+    });
+
+    const { request, deps } = buildVariantRequest('image-1', 'thumb');
+    const response = await handler(request as never, deps);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe('image/jpeg');
+    const bodyText = new TextDecoder().decode(new Uint8Array(await response.arrayBuffer()));
+    expect(bodyText).toBe('jpeg-bytes');
+
+    await rm(uploadDir, { recursive: true, force: true });
+  });
+
+  test('returns 404 when the image row is missing', async () => {
+    const database = await createTestDatabase();
+    const uploadDir = await createUploadDir();
+    const handler = createGetListingImage({
+      listingImagesStore: createListingImagesStore(database),
+      uploadDir,
+    });
+
+    const { request, deps } = buildRequest('does-not-exist');
+    const response = await handler(request as never, deps);
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'Image not found' });
+
+    await rm(uploadDir, { recursive: true, force: true });
+  });
+
+  test('returns 404 when the row exists but the file is missing', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    seedListingImage(database, { storedFilename: 'missing.png' });
+    const uploadDir = await createUploadDir();
+
+    const handler = createGetListingImage({
+      listingImagesStore: createListingImagesStore(database),
+      uploadDir,
+    });
+
+    const { request, deps } = buildRequest('image-1');
+    const response = await handler(request as never, deps);
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'Image not found' });
+
+    await rm(uploadDir, { recursive: true, force: true });
+  });
+});
+
+

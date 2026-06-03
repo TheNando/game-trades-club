@@ -41,6 +41,10 @@ export function createGamesStore(database: typeof db) {
      WHERE id = ?`
   );
 
+  const updateImageUrlStmt = database.query(
+    `UPDATE games SET image_url = ? WHERE id = ?`
+  );
+
   const searchByNameStmt = database.prepare<GameSearchResult, [string, string, string, number]>(
     `SELECT id, name, year
      FROM games
@@ -82,6 +86,9 @@ export function createGamesStore(database: typeof db) {
     findGameById(gameId: number) {
       return findByIdStmt.get(gameId) ?? null;
     },
+    updateGameImageUrl(gameId: number, imageUrl: string) {
+      updateImageUrlStmt.run(imageUrl, gameId);
+    },
     searchGamesByName(query: string, limit = 25): GameSearchResult[] {
       const trimmed = query.trim();
       if (!trimmed) return [];
@@ -98,4 +105,5 @@ export const {
   createGamesBatch,
   findGameById,
   searchGamesByName,
+  updateGameImageUrl,
 } = gamesStore;

@@ -1,4 +1,5 @@
 import { BunRequest } from 'bun';
+import { join } from 'node:path';
 import { db } from '../db/client';
 import { createListingImagesStore } from '../db/listingImagesTable';
 import { createListingsStore } from '../db/listingsTable';
@@ -13,6 +14,7 @@ import { badRequest, json, notFound, serverError } from '../utils/http';
 
 type ListingsStore = Pick<ReturnType<typeof createListingsStore>, 'findListingByIdForUser'>;
 type ListingImagesStore = Pick<ReturnType<typeof createListingImagesStore>, 'createListingImage'>;
+type ListingImagesReadStore = Pick<ReturnType<typeof createListingImagesStore>, 'findListingImageById'>;
 
 type CreatePostListingImageOptions = {
   listingsStore?: ListingsStore;
@@ -20,8 +22,17 @@ type CreatePostListingImageOptions = {
   uploadDir?: string;
 };
 
+type CreateGetListingImageOptions = {
+  listingImagesStore?: ListingImagesReadStore;
+  uploadDir?: string;
+};
+
 const defaultListingsStore = createListingsStore(db);
 const defaultListingImagesStore = createListingImagesStore(db);
+
+function matchListingImageId(url: URL) {
+  return url.pathname.match(/^\/api\/listing-images\/([^/]+)$/)?.[1];
+}
 
 export function createPostListingImage({
   listingsStore = defaultListingsStore,
@@ -60,15 +71,58 @@ export function createPostListingImage({
         owner_id: auth.userId,
         original_filename: savedFile.originalFilename,
         stored_filename: savedFile.storedFilename,
+        thumb_stored_filename: savedFile.thumbStoredFilename,
+        width: savedFile.width,
+        height: savedFile.height,
         mime_type: savedFile.mimeType,
       });
 
       return json({ item }, { status: 201 });
     } catch {
       await removeListingImageFile(savedFile.absolutePath);
+      if (savedFile.thumbAbsolutePath) {
+        await removeListingImageFile(savedFile.thumbAbsolutePath);
+      }
       return serverError('Unable to save image');
     }
   };
 }
 
 export const postListingImage = createPostListingImage();
+
+const IMMUTABLE_IMAGE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+
+export function createGetListingImage({
+  listingImagesStore = defaultListingImagesStore,
+  uploadDir = getListingImageUploadDir(),
+}: CreateGetListingImageOptions = {}) {
+  return async function getListingImage(
+    _: BunRequest<'/api/listing-images/:id'>,
+    { url }: RouteDependencies
+  ) {
+    const imageId = matchListingImageId(url);
+    if (!imageId) return notFound('Image not found');
+
+    const image = listingImagesStore.findListingImageById(imageId);
+    if (!image) return notFound('Image not found');
+
+    const variant = url.searchParams.get('variant');
+    const wantsThumb = variant === 'thumb' && image.thumb_stored_filename !== null;
+    const storedFilename = wantsThumb
+      ? image.thumb_stored_filename!
+      : image.stored_filename;
+    const contentType = wantsThumb ? 'image/webp' : image.mime_type;
+
+    const file = Bun.file(join(uploadDir, storedFilename));
+    if (!(await file.exists())) return notFound('Image not found');
+
+    return new Response(file.stream(), {
+      headers: {
+        'content-type': contentType,
+        'cache-control': IMMUTABLE_IMAGE_CACHE_CONTROL,
+      },
+    });
+  };
+}
+
+export const getListingImage = createGetListingImage();

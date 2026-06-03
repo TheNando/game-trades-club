@@ -114,7 +114,8 @@ CREATE TABLE IF NOT EXISTS listings (
   status TEXT NOT NULL DEFAULT 'open',
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS listing_images (
@@ -123,6 +124,9 @@ CREATE TABLE IF NOT EXISTS listing_images (
   owner_id TEXT NOT NULL,
   original_filename TEXT NOT NULL,
   stored_filename TEXT NOT NULL,
+  thumb_stored_filename TEXT,
+  width INTEGER,
+  height INTEGER,
   mime_type TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE,
@@ -171,6 +175,7 @@ CREATE INDEX IF NOT EXISTS idx_listings_user_id ON listings(user_id);
 CREATE INDEX IF NOT EXISTS idx_listings_game_id ON listings(game_id);
 CREATE INDEX IF NOT EXISTS idx_listing_images_listing_id ON listing_images(listing_id);
 CREATE INDEX IF NOT EXISTS idx_listing_images_owner_id ON listing_images(owner_id);
+CREATE INDEX IF NOT EXISTS idx_listing_images_listing_created ON listing_images(listing_id, created_at, id);
 
 -- CREATE INDEX IF NOT EXISTS idx_offers_user_id ON offers(user_id);
 -- CREATE INDEX IF NOT EXISTS idx_offers_trade_id ON offers(trade_id);

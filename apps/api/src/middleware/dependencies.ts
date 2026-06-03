@@ -12,11 +12,11 @@ const fakeAuth: AuthContext = {
   sessionId: ''
 };
 
-export function withDeps(
-  fn: (request: Bun.BunRequest<string>, deps: RouteDependencies) => Promise<Response>,
+export function withDeps<T extends string>(
+  fn: (request: Bun.BunRequest<T>, deps: RouteDependencies) => Promise<Response>,
   { authorized } = { authorized: true }
 ) {
-  return function (request: Bun.BunRequest<string>) {
+  return function (request: Bun.BunRequest<T>) {
     // Create fake authorization for routes that do not require authorization
     const auth = authorized ? requireAuth(request) : fakeAuth;
 

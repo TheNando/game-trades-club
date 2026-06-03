@@ -27,7 +27,7 @@ type ParsedCreateListingBody = {
 
 type ListingsStore = Pick<
   ReturnType<typeof createListingsStore>,
-  'createListing' | 'listListingsByUser' | 'removeListing' | 'updateListing'
+  'createListing' | 'listAllListings' | 'removeListing' | 'updateListing'
 >;
 
 type CreatePostListingOptions = {
@@ -90,9 +90,9 @@ export function parseCreateListingBody(
 
 export async function getListings(
   _: BunRequest<'/api/listings'>,
-  { auth }: RouteDependencies
+  __: RouteDependencies
 ) {
-  return json({ items: defaultListingsStore.listListingsByUser(auth.userId) });
+  return json({ items: defaultListingsStore.listAllListings() });
 }
 
 export function createPostListing({

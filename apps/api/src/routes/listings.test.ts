@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { createListingsStore } from '../db/listingsTable';
-import { createTestDatabase, seedUser } from '../test/createTestDatabase';
+import { createTestDatabase, seedGame, seedListingImage, seedUser } from '../test/createTestDatabase';
 import { createPostListing, parseCreateListingBody } from './listings';
 
 describe('parseCreateListingBody', () => {
@@ -30,6 +30,7 @@ describe('createListingsStore', () => {
   test('creates a listing without image columns', async () => {
     const database = await createTestDatabase();
     const user = seedUser(database);
+    seedGame(database, 7);
     const listings = createListingsStore(database);
 
     const created = listings.createListing(user.id, {
@@ -45,7 +46,8 @@ describe('createListingsStore', () => {
       id: 'listing-1',
       user_id: user.id,
       description: 'Near mint copy',
-      game_id: 7,
+      game: { id: 7, name: 'Game 7' },
+      cover_image: null,
       condition: 'like_new',
       price: 30,
       status: 'open',
@@ -69,6 +71,93 @@ describe('createListingsStore', () => {
       status: 'open',
     });
   });
+
+  test('returns the joined game id and name when listing user listings', async () => {
+    const database = await createTestDatabase();
+    const user = seedUser(database);
+    seedGame(database, 42);
+    const listings = createListingsStore(database);
+
+    listings.createListing(user.id, {
+      id: 'listing-1',
+      description: null,
+      game_id: 42,
+      condition: 'good',
+      price: 20,
+      status: 'open',
+    });
+
+    const [listing] = listings.listListingsByUser(user.id);
+    expect(listing.game).toEqual({ id: 42, name: 'Game 42' });
+  });
+
+  test('listAllListings returns listings across all users', async () => {
+    const database = await createTestDatabase();
+    seedUser(database, 'user-1');
+    seedUser(database, 'user-2');
+    seedGame(database, 1);
+    const listings = createListingsStore(database);
+
+    listings.createListing('user-1', {
+      id: 'listing-a',
+      description: null,
+      game_id: 1,
+      condition: 'good',
+      price: 10,
+      status: 'open',
+    });
+    listings.createListing('user-2', {
+      id: 'listing-b',
+      description: null,
+      game_id: 1,
+      condition: 'good',
+      price: 20,
+      status: 'open',
+    });
+
+    const all = listings.listAllListings();
+    const userIds = all.map((listing) => listing.user_id).sort();
+    expect(userIds).toEqual(['user-1', 'user-2']);
+  });
+
+  test('returns the earliest listing image as the cover image', async () => {
+    const database = await createTestDatabase();
+    const user = seedUser(database);
+    seedGame(database, 1);
+    const listings = createListingsStore(database);
+
+    listings.createListing(user.id, {
+      id: 'listing-1',
+      description: null,
+      game_id: 1,
+      condition: 'good',
+      price: 20,
+      status: 'open',
+    });
+
+    seedListingImage(database, {
+      id: 'image-late',
+      listingId: 'listing-1',
+      ownerId: user.id,
+      storedFilename: 'late.png',
+      mimeType: 'image/png',
+      createdAt: '2026-02-01 00:00:00',
+    });
+    seedListingImage(database, {
+      id: 'image-early',
+      listingId: 'listing-1',
+      ownerId: user.id,
+      storedFilename: 'early.jpg',
+      mimeType: 'image/jpeg',
+      createdAt: '2026-01-01 00:00:00',
+    });
+
+    const listing = listings.findListingByIdForUser('listing-1', user.id);
+    expect(listing?.cover_image).toEqual({
+      id: 'image-early',
+      has_thumb: false,
+    });
+  });
 });
 
 describe('createPostListing', () => {
@@ -81,7 +170,8 @@ describe('createPostListing', () => {
           id: 'listing-1',
           user_id: 'user-1',
           description: 'Near mint copy',
-          game_id: 7,
+          game: { id: 7, name: 'Catan' },
+          cover_image: null,
           condition: 'good',
           price: 30,
           status: 'open',
@@ -125,7 +215,8 @@ describe('createPostListing', () => {
           id: 'listing-1',
           user_id: 'user-1',
           description: null,
-          game_id: 7,
+          game: { id: 7, name: 'Catan' },
+          cover_image: null,
           condition: 'good',
           price: 30,
           status: 'open',
