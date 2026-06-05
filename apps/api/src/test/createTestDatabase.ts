@@ -1,5 +1,4 @@
 import { Database } from 'bun:sqlite';
-import { runMigrations } from '../db/migrations';
 
 const schemaPath = new URL('../db/schema.sql', import.meta.url);
 
@@ -7,7 +6,6 @@ export async function createTestDatabase() {
   const database = new Database(':memory:', { create: true, strict: true });
   const schemaSql = await Bun.file(schemaPath).text();
   database.run(schemaSql);
-  runMigrations(database);
   return database;
 }
 
