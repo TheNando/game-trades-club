@@ -6,7 +6,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 
 - [x] Fix project hygiene first. Add the missing build script in `package.json`, update stale README endpoints in `README.md`, and fix TypeScript coverage so the new app layout is typechecked intentionally.
 - [x] Clean up stale trade/offers/wishlist direction. Direction picked: **listings marketplace first**. Dead route/schema/table stubs removed from `apps/api/src/index.ts`, `apps/api/src/db/schema.sql`, and `apps/api/src/{routes,db}/`. Future trade/offer/wishlist work is tracked under "Trades workflow" below.
-- [ ] Enforce typecheck and tests in CI (`bun run typecheck`, `bun run test`).
+- [x] Enforce typecheck and tests in CI (`bun run typecheck`, `bun run test`).
 - [ ] Confirm `apps/api/src/db/migrations.ts` tracks applied versions and supports forward-only schema changes.
 - [ ] Document and automate backups for `data/app.db` and `data/listing-images/`.
 
