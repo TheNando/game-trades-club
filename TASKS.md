@@ -1,11 +1,51 @@
+# Game Trades Club — Task List
+
+A living checklist of features, fixes, and improvements. Check items off as they ship.
+
+## Project hygiene
+
 - [x] Fix project hygiene first. Add the missing build script in `package.json`, update stale README endpoints in `README.md`, and fix TypeScript coverage so the new app layout is typechecked intentionally.
+- [x] Clean up stale trade/offers/wishlist direction. Direction picked: **listings marketplace first**. Dead route/schema/table stubs removed from `apps/api/src/index.ts`, `apps/api/src/db/schema.sql`, and `apps/api/src/{routes,db}/`. Future trade/offer/wishlist work is tracked under "Trades workflow" below.
+- [ ] Enforce typecheck and tests in CI (`bun run typecheck`, `bun run test`).
+- [ ] Confirm `apps/api/src/db/migrations.ts` tracks applied versions and supports forward-only schema changes.
+- [ ] Document and automate backups for `data/app.db` and `data/listing-images/`.
 
-- [ ] Add a listings browse experience. The home page links to `/games`, but only `/` and `/add-listing` are routed in `apps/web/src/index.tsx`. Backend `GET /api/listings` currently returns only the signed-in user’s listings via `WHERE user_id = ?` in `apps/api/src/db/listingsTable.ts`, so a public marketplace browse API/page is the biggest product unlock.
+## Core marketplace gaps
 
-- [ ] Serve and display uploaded listing images. Upload metadata/files exist, but there’s no image lookup/list API or file-serving route yet. Start from `apps/api/src/db/listingImagesTable.ts`, `apps/api/src/routes/listingImages.ts`, and `apps/api/src/storage/listingImageStorage.ts`.
+- [ ] Listing detail page (`/listings/:id`). Cards on `/games` currently dead-end; users can't see full description, all images, or the seller.
+- [ ] "My listings" page so signed-in users can see and manage what they posted.
+- [ ] Public user profile pages (member since, current listings, trade history).
+- [ ] Messaging / contact flow between buyer and seller. The landing page promises "message the owner"; nothing implements it.
+- [ ] Search bar on `/games`.
+- [ ] Filters on `/games`: condition, price range, category, mechanic, player count, year.
+- [ ] Sort options on `/games` (newest, price asc/desc).
+- [ ] Add `city` / location to `users` and scope listings by city — the core "neighbors in your city" pitch.
+- [ ] Pickup-shop directory (`shops` table) and shop picker on each listing; map view.
+- [ ] Serve and display uploaded listing images end-to-end. Verify image lookup/list and file-serving cover all UI needs from `apps/api/src/db/listingImagesTable.ts`, `apps/api/src/routes/listingImages.ts`, and `apps/api/src/storage/listingImageStorage.ts`.
 
-- [ ] Harden listing/image validation. The client limits images to 3, but the server accepts unlimited repeated one-file uploads for a listing. Also `condition` and `status` are typed but not runtime-validated in `apps/api/src/routes/listings.ts`, and `listings.game_id` has no FK in `apps/api/src/db/schema.sql`.
+## Trades workflow
 
-- [ ] Clean up stale trade/offers/wishlist direction. The commented route/schema code is still present in `apps/api/src/index.ts` and `apps/api/src/db/schema.sql`. Decide whether the product is “listings marketplace” first or “trades/offers/wishlist,” then remove or revive the dead code accordingly.
+- [x] Decide product direction: pure marketplace vs. structured trade negotiation. **Decided: pure marketplace first.** `listings.status` (`open|pending|complete`) keeps room for a future trade lifecycle without forcing the design now.
+- [ ] If keeping trades/offers: build offer → accept → meetup → complete state machine wired to `listings.status` (`open|pending|complete`).
+- [ ] Wishlist: signed-in users mark games they want.
+- [ ] "A game on your wishlist was just listed" notifications.
+
+## Validation & safety
+
+- [ ] Harden listing/image validation. Runtime-validate `condition` and `status` enums in `apps/api/src/routes/listings.ts`, cap image count per listing on the server, and add a FK on `listings.game_id` in `apps/api/src/db/schema.sql`.
+- [ ] Pagination on `GET /api/listings`.
+- [ ] Rate limiting on auth, uploads, and listing creation.
+- [ ] EXIF strip on uploaded images (privacy).
+- [ ] Client-side image compression and upload progress UI.
+- [ ] Report / block a user.
+- [ ] Trust signals on profiles: member since, completed-trade count, ratings.
+- [ ] Email verification and transactional email (welcome, new message, trade confirmation).
+
+## Frontend polish
 
 - [ ] Centralize auth state in the frontend. Both `Header` and `AddListing` fetch `/api/me` separately in `apps/web/src`. A shared auth hook or context would simplify logout/login behavior and reduce duplicated loading and error states.
+- [ ] Loading skeletons on `/games` instead of "Loading listings…" text.
+- [ ] Empty/error states with retry on the listings fetch.
+- [ ] Mobile nav (hamburger). Current nav is `hidden md:flex` with no small-screen replacement.
+- [ ] 404 page styling consistency check.
+- [ ] SEO / OG tags / sitemap once listing detail pages exist.
