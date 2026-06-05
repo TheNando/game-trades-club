@@ -246,7 +246,10 @@ function ListingSummary({ listing, sellerLabel, sellerInitial }: SummaryProps) {
 
 			<div class="rounded-2xl border border-base-300 bg-base-100 p-5">
 				<h2 class="font-display text-lg">Seller</h2>
-				<div class="mt-3 flex items-center gap-3">
+				<a
+					href={`/users/${listing.seller.id}`}
+					class="mt-3 flex items-center gap-3 -mx-2 px-2 py-1 rounded-xl hover:bg-base-200 transition-colors"
+				>
 					<div class="w-12 h-12 rounded-full overflow-hidden border border-base-300 bg-base-200 grid place-items-center">
 						{listing.seller.avatar_url ? (
 							<img alt={sellerLabel} src={listing.seller.avatar_url} class="w-full h-full object-cover" />
@@ -260,7 +263,7 @@ function ListingSummary({ listing, sellerLabel, sellerInitial }: SummaryProps) {
 							Member since {formatMemberSince(listing.seller.created_at)}
 						</span>
 					</div>
-				</div>
+				</a>
 				<p class="mt-4 text-xs text-base-content/55">
 					Messaging is coming soon. For now, save this listing and check back.
 				</p>

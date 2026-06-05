@@ -4,6 +4,7 @@ import { getBggImage } from './routes/bgg';
 import { getGames } from './routes/games';
 import { getListingImage, postListingImage } from './routes/listingImages';
 import { deleteListing, getListingDetail, getListings, patchListing, postListing } from './routes/listings';
+import { getUserProfile } from './routes/users';
 import { json } from './utils/http';
 
 const port = Number(process.env.PORT ?? 3000);
@@ -46,6 +47,9 @@ Bun.serve({
     },
     "/api/listing-images/:id": {
       GET: withDeps(getListingImage, NO_AUTH),
+    },
+    "/api/users/:id": {
+      GET: withDeps(getUserProfile, NO_AUTH),
     },
   },
   fetch() {

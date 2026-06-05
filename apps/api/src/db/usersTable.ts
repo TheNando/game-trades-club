@@ -8,6 +8,13 @@ export type UserRecord = {
   avatar_url: string | null;
 };
 
+export type PublicUserProfile = {
+  id: string;
+  name: string | null;
+  avatar_url: string | null;
+  created_at: string;
+};
+
 type GoogleProfile = {
   sub: string;
   email: string;
@@ -17,6 +24,10 @@ type GoogleProfile = {
 
 const selectByGoogleSubStmt = db.query<UserRecord, [string]>(
   `SELECT id, google_sub, email, name, avatar_url FROM users WHERE google_sub = ?`
+);
+
+const selectPublicProfileByIdStmt = db.query<PublicUserProfile, [string]>(
+  `SELECT id, name, avatar_url, created_at FROM users WHERE id = ?`
 );
 
 const upsertStmt = db.query(
@@ -41,4 +52,8 @@ export function upsertGoogleUser(id: string, profile: GoogleProfile): UserRecord
 
 export function findUserById(id: string): UserRecord | null {
   return selectByIdStmt.get(id) ?? null;
+}
+
+export function findUserPublicProfileById(id: string): PublicUserProfile | null {
+  return selectPublicProfileByIdStmt.get(id) ?? null;
 }

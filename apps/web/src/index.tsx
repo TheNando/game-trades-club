@@ -6,6 +6,7 @@ import { AddListing } from './pages/addListing';
 import { Games } from './pages/games';
 import { Home } from './pages/home';
 import { ListingDetail } from './pages/listingDetail';
+import { UserProfile } from './pages/userProfile';
 import { NotFound } from './pages/_404';
 
 import './style.css';
@@ -19,6 +20,7 @@ export function App() {
 					<Route path="/" component={Home} />
 					<Route path="/games" component={Games} />
 					<Route path="/listings/:id" component={ListingDetail} />
+					<Route path="/users/:id" component={UserProfile} />
 					<Route path="/add-listing" component={AddListing} />
 					<Route default component={NotFound} />
 				</Router>

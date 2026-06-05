@@ -14,7 +14,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 
 - [x] Listing detail page (`/listings/:id`). Cards on `/games` currently dead-end; users can't see full description, all images, or the seller.
 - [ ] "My listings" page so signed-in users can see and manage what they posted.
-- [ ] Public user profile pages (member since, current listings, trade history).
+- [x] Public user profile pages (member since, current listings, trade history).
 - [ ] Messaging / contact flow between buyer and seller. The landing page promises "message the owner"; nothing implements it.
 - [ ] Search bar on `/games`.
 - [ ] Filters on `/games`: condition, price range, category, mechanic, player count, year.

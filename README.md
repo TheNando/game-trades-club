@@ -50,3 +50,4 @@ Copy `.env.example` to `.env` and set:
 - `GET|POST /api/listings`
 - `PATCH|DELETE /api/listings/:id`
 - `POST /api/listing-images`
+- `GET /api/users/:id`
