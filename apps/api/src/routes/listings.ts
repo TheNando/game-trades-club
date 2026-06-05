@@ -6,6 +6,15 @@ import { RouteDependencies } from '../middleware/dependencies';
 import { badRequest, json, notFound, readJson } from '../utils/http';
 import { randomToken } from '../utils/security';
 
+type ListingDetailStore = Pick<
+  ReturnType<typeof createListingsStore>,
+  'findListingDetailById'
+>;
+
+type CreateGetListingDetailOptions = {
+  listingsStore?: ListingDetailStore;
+};
+
 type ListingBody = {
   description?: string;
   game_id?: string | number;
@@ -94,6 +103,25 @@ export async function getListings(
 ) {
   return json({ items: defaultListingsStore.listAllListings() });
 }
+
+export function createGetListingDetail({
+  listingsStore = defaultListingsStore,
+}: CreateGetListingDetailOptions = {}) {
+  return async function getListingDetail(
+    _: BunRequest<'/api/listings/:id'>,
+    { url }: RouteDependencies
+  ) {
+    const listingId = matchListingId(url);
+    if (!listingId) return badRequest('Invalid listing ID');
+
+    const listing = listingsStore.findListingDetailById(listingId);
+    if (!listing) return notFound('Listing not found');
+
+    return json({ item: listing });
+  };
+}
+
+export const getListingDetail = createGetListingDetail();
 
 export function createPostListing({
   createListingId = () => randomToken(18),

@@ -14,6 +14,37 @@ export type Listing = {
   updated_at: string;
 };
 
+export type ListingDetail = Omit<Listing, 'cover_image'> & {
+  images: { id: string; has_thumb: boolean; }[];
+  seller: {
+    id: string;
+    name: string | null;
+    avatar_url: string | null;
+    created_at: string;
+  };
+};
+
+type ListingDetailRow = {
+  id: string;
+  user_id: string;
+  description: string | null;
+  game_id: number;
+  game_name: string;
+  seller_name: string | null;
+  seller_avatar_url: string | null;
+  seller_created_at: string;
+  condition: string;
+  price: number;
+  status: 'open' | 'pending' | 'complete';
+  created_at: string;
+  updated_at: string;
+};
+
+type ListingImageRow = {
+  id: string;
+  has_thumb: number;
+};
+
 type ListingRow = {
   id: string;
   user_id: string;
@@ -132,6 +163,28 @@ export function createListingsStore(database: Database) {
 
   const deleteStmt = database.query(`DELETE FROM listings WHERE id = ? AND user_id = ?`);
 
+  const findDetailStmt = database.query<ListingDetailRow, [string]>(
+    `SELECT listings.id, listings.user_id, listings.description, listings.game_id,
+            games.name AS game_name,
+            users.name AS seller_name,
+            users.avatar_url AS seller_avatar_url,
+            users.created_at AS seller_created_at,
+            listings.condition, listings.price, listings.status,
+            listings.created_at, listings.updated_at
+     FROM listings
+     JOIN games ON games.id = listings.game_id
+     JOIN users ON users.id = listings.user_id
+     WHERE listings.id = ?`
+  );
+
+  const listImagesStmt = database.query<ListingImageRow, [string]>(
+    `SELECT id,
+            CASE WHEN thumb_stored_filename IS NOT NULL THEN 1 ELSE 0 END AS has_thumb
+     FROM listing_images
+     WHERE listing_id = ?
+     ORDER BY created_at ASC, id ASC`
+  );
+
   return {
     listAllListings(): Listing[] {
       return listAllStmt.all().map(rowToListing);
@@ -142,6 +195,33 @@ export function createListingsStore(database: Database) {
     findListingByIdForUser(listingId: string, userId: string): Listing | null {
       const row = findStmt.get(listingId, userId);
       return row ? rowToListing(row) : null;
+    },
+    findListingDetailById(listingId: string): ListingDetail | null {
+      const row = findDetailStmt.get(listingId);
+      if (!row) return null;
+
+      const images = listImagesStmt
+        .all(listingId)
+        .map((image) => ({ id: image.id, has_thumb: image.has_thumb === 1 }));
+
+      return {
+        id: row.id,
+        user_id: row.user_id,
+        description: row.description,
+        game: { id: row.game_id, name: row.game_name },
+        condition: row.condition,
+        price: row.price,
+        status: row.status,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        images,
+        seller: {
+          id: row.user_id,
+          name: row.seller_name,
+          avatar_url: row.seller_avatar_url,
+          created_at: row.seller_created_at,
+        },
+      };
     },
     createListing(userId: string, input: CreateListingInput): Listing {
       createStmt.run(
@@ -181,6 +261,7 @@ const listingsStore = createListingsStore(db);
 export const {
   createListing,
   findListingByIdForUser,
+  findListingDetailById,
   listAllListings,
   listListingsByUser,
   removeListing,

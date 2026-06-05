@@ -3,7 +3,7 @@ import { getAuthGoogleCallback, getAuthGoogleStart, getMe, postAuthLogout } from
 import { getBggImage } from './routes/bgg';
 import { getGames } from './routes/games';
 import { getListingImage, postListingImage } from './routes/listingImages';
-import { deleteListing, getListings, patchListing, postListing } from './routes/listings';
+import { deleteListing, getListingDetail, getListings, patchListing, postListing } from './routes/listings';
 import { json } from './utils/http';
 
 const port = Number(process.env.PORT ?? 3000);
@@ -37,6 +37,9 @@ Bun.serve({
       GET: withDeps(getListings, NO_AUTH),
       PATCH: withDeps(patchListing),
       POST: withDeps(postListing),
+    },
+    "/api/listings/:id": {
+      GET: withDeps(getListingDetail, NO_AUTH),
     },
     "/api/listing-images": {
       POST: withDeps(postListingImage),

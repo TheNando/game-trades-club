@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { createListingsStore } from '../db/listingsTable';
-import { createTestDatabase, seedGame, seedListingImage, seedUser } from '../test/createTestDatabase';
-import { createPostListing, parseCreateListingBody } from './listings';
+import { createTestDatabase, seedGame, seedListing, seedListingImage, seedUser } from '../test/createTestDatabase';
+import { createGetListingDetail, createPostListing, parseCreateListingBody } from './listings';
 
 describe('parseCreateListingBody', () => {
   test('ignores abandoned image fields', () => {
@@ -157,6 +157,102 @@ describe('createListingsStore', () => {
       id: 'image-early',
       has_thumb: false,
     });
+  });
+
+  test('findListingDetailById returns game, seller, and all images in created order', async () => {
+    const database = await createTestDatabase();
+    const user = seedUser(database);
+    seedGame(database, 3);
+    const listings = createListingsStore(database);
+
+    listings.createListing(user.id, {
+      id: 'listing-1',
+      description: 'Sealed copy',
+      game_id: 3,
+      condition: 'new',
+      price: 50,
+      status: 'open',
+    });
+
+    seedListingImage(database, {
+      id: 'image-second',
+      listingId: 'listing-1',
+      ownerId: user.id,
+      storedFilename: 'b.png',
+      mimeType: 'image/png',
+      createdAt: '2026-02-01 00:00:00',
+    });
+    seedListingImage(database, {
+      id: 'image-first',
+      listingId: 'listing-1',
+      ownerId: user.id,
+      storedFilename: 'a.jpg',
+      thumbStoredFilename: 'a_thumb.webp',
+      mimeType: 'image/jpeg',
+      createdAt: '2026-01-01 00:00:00',
+    });
+
+    const detail = listings.findListingDetailById('listing-1');
+
+    expect(detail).toMatchObject({
+      id: 'listing-1',
+      user_id: user.id,
+      description: 'Sealed copy',
+      game: { id: 3, name: 'Game 3' },
+      condition: 'new',
+      price: 50,
+      status: 'open',
+    });
+    expect(detail?.images).toEqual([
+      { id: 'image-first', has_thumb: true },
+      { id: 'image-second', has_thumb: false },
+    ]);
+    expect(detail?.seller.id).toBe(user.id);
+    expect(detail?.seller.name).toBe('Test User');
+  });
+
+  test('findListingDetailById returns null when the listing does not exist', async () => {
+    const database = await createTestDatabase();
+    const listings = createListingsStore(database);
+
+    expect(listings.findListingDetailById('missing')).toBeNull();
+  });
+});
+
+describe('createGetListingDetail', () => {
+  test('returns 200 with the listing detail when found', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    const listingsStore = createListingsStore(database);
+    const handler = createGetListingDetail({ listingsStore });
+
+    const request = new Request('http://example.test/api/listings/listing-1');
+    const response = await handler(request as never, {
+      auth: { userId: '', sessionId: '' },
+      url: new URL(request.url),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json() as { item: { id: string; seller: { id: string; }; }; };
+    expect(body.item.id).toBe('listing-1');
+    expect(body.item.seller.id).toBe('user-1');
+  });
+
+  test('returns 404 when the listing does not exist', async () => {
+    const database = await createTestDatabase();
+    const handler = createGetListingDetail({
+      listingsStore: createListingsStore(database),
+    });
+
+    const request = new Request('http://example.test/api/listings/missing');
+    const response = await handler(request as never, {
+      auth: { userId: '', sessionId: '' },
+      url: new URL(request.url),
+    });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: 'Listing not found' });
   });
 });
 
