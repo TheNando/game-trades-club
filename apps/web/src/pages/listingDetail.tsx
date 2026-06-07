@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { ShopMap, type ShopMapPoint } from '../components/ShopMap';
 
 type ListingImage = { id: string; has_thumb: boolean };
 
@@ -8,6 +9,23 @@ type Seller = {
 	avatar_url: string | null;
 	created_at: string;
 };
+
+type PreferredShop = {
+	id: string;
+	name: string;
+	city: string;
+	state: string | null;
+	zip: string | null;
+	address: string | null;
+	website_url: string | null;
+	latitude: number | null;
+	longitude: number | null;
+};
+
+function formatCityStateZip(city: string, state: string | null, zip: string | null): string {
+	const stateZip = [state, zip].filter(Boolean).join(' ');
+	return stateZip ? `${city}, ${stateZip}` : city;
+}
 
 type Listing = {
 	id: string;
@@ -19,9 +37,18 @@ type Listing = {
 	condition: string;
 	price: number;
 	status: 'open' | 'pending' | 'complete';
+	preferred_shop: PreferredShop | null;
 	created_at: string;
 	updated_at: string;
 };
+
+function buildGoogleMapsUrl(shop: PreferredShop): string {
+	if (shop.latitude !== null && shop.longitude !== null) {
+		return `https://www.google.com/maps/search/?api=1&query=${shop.latitude},${shop.longitude}`;
+	}
+	const query = [shop.name, shop.address, shop.city, shop.state, shop.zip].filter(Boolean).join(', ');
+	return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
 
 type ListingResponse = { item: Listing };
 
@@ -244,6 +271,8 @@ function ListingSummary({ listing, sellerLabel, sellerInitial }: SummaryProps) {
 				)}
 			</div>
 
+			{listing.preferred_shop ? <PreferredShopCard shop={listing.preferred_shop} /> : null}
+
 			<div class="rounded-2xl border border-base-300 bg-base-100 p-5">
 				<h2 class="font-display text-lg">Seller</h2>
 				<a
@@ -268,6 +297,68 @@ function ListingSummary({ listing, sellerLabel, sellerInitial }: SummaryProps) {
 					Messaging is coming soon. For now, save this listing and check back.
 				</p>
 			</div>
+		</div>
+	);
+}
+
+
+type PreferredShopCardProps = {
+	shop: PreferredShop;
+};
+
+function PreferredShopCard({ shop }: PreferredShopCardProps) {
+	const mapsHref = buildGoogleMapsUrl(shop);
+	const hasCoords = shop.latitude !== null && shop.longitude !== null;
+	const points: ShopMapPoint[] = hasCoords
+		? [{
+			id: shop.id,
+			name: shop.name,
+			city: shop.city,
+			address: shop.address,
+			website_url: shop.website_url,
+			latitude: shop.latitude as number,
+			longitude: shop.longitude as number,
+		}]
+		: [];
+
+	return (
+		<div class="rounded-2xl border border-base-300 bg-base-100 p-5">
+			<h2 class="font-display text-lg">Suggested meetup</h2>
+			<div class="mt-3">
+				<p class="font-medium">{shop.name}</p>
+				{shop.address ? (
+					<p class="text-sm text-base-content/70">{shop.address}</p>
+				) : null}
+				<p class="text-sm text-base-content/70">{formatCityStateZip(shop.city, shop.state, shop.zip)}</p>
+				{shop.website_url ? (
+					<a
+						class="text-sm text-primary hover:underline break-all"
+						href={shop.website_url}
+						target="_blank"
+						rel="noreferrer"
+					>
+						{shop.website_url}
+					</a>
+				) : null}
+			</div>
+			{hasCoords ? (
+				<div class="mt-4">
+					<ShopMap points={points} className="h-48 w-full rounded-xl border border-base-300" zoom={14} />
+				</div>
+			) : null}
+			<div class="mt-4 flex flex-wrap gap-2">
+				<a
+					class="btn btn-sm btn-outline rounded-lg"
+					href={mapsHref}
+					target="_blank"
+					rel="noreferrer"
+				>
+					Open in Google Maps
+				</a>
+			</div>
+			<p class="mt-3 text-xs text-base-content/55">
+				The seller suggested this spot. You can propose a different one once messaging is available.
+			</p>
 		</div>
 	);
 }

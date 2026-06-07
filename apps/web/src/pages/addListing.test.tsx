@@ -31,6 +31,10 @@ describe('<AddListing />', () => {
         });
       }
 
+      if (url === '/api/shops') {
+        return jsonResponse({ items: [] });
+      }
+
       if (url === '/api/listings') {
         return jsonResponse({
           item: {

@@ -22,7 +22,30 @@ describe('parseCreateListingBody', () => {
       condition: 'good',
       price: 25,
       status: 'open',
+      preferred_shop_id: null,
     });
+  });
+
+  test('accepts and trims preferred_shop_id', () => {
+    const parsed = parseCreateListingBody({
+      game_id: 1,
+      condition: 'good',
+      price: 10,
+      status: 'open',
+      preferred_shop_id: '  shop-1  ',
+    });
+    expect(parsed).toMatchObject({ preferred_shop_id: 'shop-1' });
+  });
+
+  test('normalizes empty preferred_shop_id to null', () => {
+    const parsed = parseCreateListingBody({
+      game_id: 1,
+      condition: 'good',
+      price: 10,
+      status: 'open',
+      preferred_shop_id: '   ',
+    });
+    expect(parsed).toMatchObject({ preferred_shop_id: null });
   });
 });
 
@@ -216,6 +239,102 @@ describe('createListingsStore', () => {
     const listings = createListingsStore(database);
 
     expect(listings.findListingDetailById('missing')).toBeNull();
+  });
+
+  test('createListing persists preferred_shop_id and findListingDetailById returns the joined shop', async () => {
+    const database = await createTestDatabase();
+    const user = seedUser(database);
+    seedGame(database, 9);
+    database
+      .query(
+        `INSERT INTO shops (id, name, city, state, zip, address, website_url, latitude, longitude)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run('shop-1', 'Catan Cafe', 'Springfield', 'CA', '94110', '1 Main St', null, 40.7128, -74.006);
+
+    const listings = createListingsStore(database);
+    const created = listings.createListing(user.id, {
+      id: 'listing-1',
+      description: null,
+      game_id: 9,
+      condition: 'good',
+      price: 20,
+      status: 'open',
+      preferred_shop_id: 'shop-1',
+    });
+
+    expect(created.preferred_shop_id).toBe('shop-1');
+
+    const detail = listings.findListingDetailById('listing-1');
+    expect(detail?.preferred_shop_id).toBe('shop-1');
+    expect(detail?.preferred_shop).toMatchObject({
+      id: 'shop-1',
+      name: 'Catan Cafe',
+      city: 'Springfield',
+      state: 'CA',
+      zip: '94110',
+      address: '1 Main St',
+      latitude: 40.7128,
+      longitude: -74.006,
+    });
+  });
+
+  test('updateListing clears preferred_shop_id when explicitly set to null', async () => {
+    const database = await createTestDatabase();
+    const user = seedUser(database);
+    seedGame(database, 9);
+    database
+      .query(
+        `INSERT INTO shops (id, name, city, address, website_url, latitude, longitude)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run('shop-1', 'Catan Cafe', 'Springfield', null, null, null, null);
+
+    const listings = createListingsStore(database);
+    listings.createListing(user.id, {
+      id: 'listing-1',
+      description: null,
+      game_id: 9,
+      condition: 'good',
+      price: 20,
+      status: 'open',
+      preferred_shop_id: 'shop-1',
+    });
+
+    listings.updateListing(user.id, 'listing-1', { preferred_shop_id: null });
+
+    const detail = listings.findListingDetailById('listing-1');
+    expect(detail?.preferred_shop_id).toBeNull();
+    expect(detail?.preferred_shop).toBeNull();
+  });
+
+  test('updateListing leaves preferred_shop_id untouched when omitted', async () => {
+    const database = await createTestDatabase();
+    const user = seedUser(database);
+    seedGame(database, 9);
+    database
+      .query(
+        `INSERT INTO shops (id, name, city, address, website_url, latitude, longitude)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run('shop-1', 'Catan Cafe', 'Springfield', null, null, null, null);
+
+    const listings = createListingsStore(database);
+    listings.createListing(user.id, {
+      id: 'listing-1',
+      description: null,
+      game_id: 9,
+      condition: 'good',
+      price: 20,
+      status: 'open',
+      preferred_shop_id: 'shop-1',
+    });
+
+    listings.updateListing(user.id, 'listing-1', { price: 25 });
+
+    const detail = listings.findListingDetailById('listing-1');
+    expect(detail?.preferred_shop_id).toBe('shop-1');
+    expect(detail?.price).toBe(25);
   });
 });
 

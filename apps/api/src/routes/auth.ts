@@ -68,5 +68,6 @@ export async function getMe(request: BunRequest<"/api/me">, { auth }: RouteDepen
     email: user.email,
     name: user.name,
     avatarUrl: user.avatar_url,
+    isAdmin: user.is_admin === 1,
   });
 }

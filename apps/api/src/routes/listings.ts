@@ -21,6 +21,7 @@ type ListingBody = {
   condition?: string;
   price?: string | number;
   status?: 'open' | 'pending' | 'complete';
+  preferred_shop_id?: string | null;
   image_ids?: string;
   image_url?: string;
   image_thumbnail_url?: string;
@@ -32,6 +33,7 @@ type ParsedCreateListingBody = {
   condition: string;
   price: number;
   status: 'open' | 'pending' | 'complete';
+  preferred_shop_id: string | null;
 };
 
 type ListingsStore = Pick<
@@ -88,13 +90,24 @@ export function parseCreateListingBody(
   if (price === null) return badRequest('price is required');
   if (price < 0) return badRequest('price must be zero or greater');
 
+  const preferredShopId = parsePreferredShopId(body.preferred_shop_id);
+  if (preferredShopId instanceof Response) return preferredShopId;
+
   return {
     description: normalizeOptionalText(body.description),
     game_id: gameId,
     condition: body.condition,
     price,
     status: body.status,
+    preferred_shop_id: preferredShopId,
   };
+}
+
+function parsePreferredShopId(value: string | null | undefined): string | null | Response {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') return badRequest('preferred_shop_id must be a string');
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
 }
 
 export async function getListings(
@@ -173,12 +186,20 @@ export async function patchListing(
     return badRequest('price must be zero or greater');
   }
 
+  let preferredShopId: string | null | undefined = undefined;
+  if ('preferred_shop_id' in body) {
+    const parsed = parsePreferredShopId(body.preferred_shop_id);
+    if (parsed instanceof Response) return parsed;
+    preferredShopId = parsed;
+  }
+
   const updated = defaultListingsStore.updateListing(auth.userId, listingId, {
     description: body.description === undefined ? undefined : normalizeOptionalText(body.description),
     condition: body.condition,
     game_id: gameId ?? undefined,
     price: price ?? undefined,
     status: body.status,
+    preferred_shop_id: preferredShopId,
   });
 
   return updated ? new Response(null, { status: 204 }) : notFound();

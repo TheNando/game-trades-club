@@ -1,5 +1,6 @@
 import type { Database } from 'bun:sqlite';
 import { db } from './client';
+import type { Shop } from './shopsTable';
 
 export type Listing = {
   id: string;
@@ -10,6 +11,7 @@ export type Listing = {
   condition: string;
   price: number;
   status: 'open' | 'pending' | 'complete';
+  preferred_shop_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -22,6 +24,7 @@ export type ListingDetail = Omit<Listing, 'cover_image'> & {
     avatar_url: string | null;
     created_at: string;
   };
+  preferred_shop: Shop | null;
 };
 
 type ListingDetailRow = {
@@ -36,6 +39,18 @@ type ListingDetailRow = {
   condition: string;
   price: number;
   status: 'open' | 'pending' | 'complete';
+  preferred_shop_id: string | null;
+  shop_id: string | null;
+  shop_name: string | null;
+  shop_city: string | null;
+  shop_state: string | null;
+  shop_zip: string | null;
+  shop_address: string | null;
+  shop_website_url: string | null;
+  shop_latitude: number | null;
+  shop_longitude: number | null;
+  shop_created_at: string | null;
+  shop_updated_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -56,6 +71,7 @@ type ListingRow = {
   condition: string;
   price: number;
   status: 'open' | 'pending' | 'complete';
+  preferred_shop_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -67,6 +83,7 @@ type CreateListingInput = {
   condition: string;
   price: number;
   status: 'open' | 'pending' | 'complete';
+  preferred_shop_id?: string | null;
 };
 
 type UpdateListingInput = {
@@ -75,6 +92,7 @@ type UpdateListingInput = {
   condition?: string;
   price?: number;
   status?: 'open' | 'pending' | 'complete';
+  preferred_shop_id?: string | null;
 };
 
 function rowToListing(row: ListingRow): Listing {
@@ -94,8 +112,26 @@ function rowToListing(row: ListingRow): Listing {
     condition: row.condition,
     price: row.price,
     status: row.status,
+    preferred_shop_id: row.preferred_shop_id,
     created_at: row.created_at,
     updated_at: row.updated_at,
+  };
+}
+
+function rowToPreferredShop(row: ListingDetailRow): Shop | null {
+  if (!row.shop_id) return null;
+  return {
+    id: row.shop_id,
+    name: row.shop_name!,
+    city: row.shop_city!,
+    state: row.shop_state,
+    zip: row.shop_zip,
+    address: row.shop_address,
+    website_url: row.shop_website_url,
+    latitude: row.shop_latitude,
+    longitude: row.shop_longitude,
+    created_at: row.shop_created_at!,
+    updated_at: row.shop_updated_at!,
   };
 }
 
@@ -103,7 +139,7 @@ const listingSelectColumns = `listings.id, listings.user_id, listings.descriptio
             games.name AS game_name,
             cover.id AS cover_image_id,
             CASE WHEN cover.thumb_stored_filename IS NOT NULL THEN 1 ELSE 0 END AS cover_image_has_thumb,
-            listings.condition, listings.price, listings.status,
+            listings.condition, listings.price, listings.status, listings.preferred_shop_id,
             listings.created_at, listings.updated_at`;
 
 const listingCoverJoin = `JOIN games ON games.id = listings.game_id
@@ -145,18 +181,31 @@ export function createListingsStore(database: Database) {
        game_id,
        condition,
        price,
-       status
+       status,
+       preferred_shop_id
      )
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
   );
 
-  const updateStmt = database.query(
+  const updateWithoutShopStmt = database.query(
     `UPDATE listings
      SET description = COALESCE(?, description),
          game_id = COALESCE(?, game_id),
          condition = COALESCE(?, condition),
          price = COALESCE(?, price),
          status = COALESCE(?, status),
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = ? AND user_id = ?`
+  );
+
+  const updateWithShopStmt = database.query(
+    `UPDATE listings
+     SET description = COALESCE(?, description),
+         game_id = COALESCE(?, game_id),
+         condition = COALESCE(?, condition),
+         price = COALESCE(?, price),
+         status = COALESCE(?, status),
+         preferred_shop_id = ?,
          updated_at = CURRENT_TIMESTAMP
      WHERE id = ? AND user_id = ?`
   );
@@ -170,10 +219,23 @@ export function createListingsStore(database: Database) {
             users.avatar_url AS seller_avatar_url,
             users.created_at AS seller_created_at,
             listings.condition, listings.price, listings.status,
+            listings.preferred_shop_id,
+            shops.id AS shop_id,
+            shops.name AS shop_name,
+            shops.city AS shop_city,
+            shops.state AS shop_state,
+            shops.zip AS shop_zip,
+            shops.address AS shop_address,
+            shops.website_url AS shop_website_url,
+            shops.latitude AS shop_latitude,
+            shops.longitude AS shop_longitude,
+            shops.created_at AS shop_created_at,
+            shops.updated_at AS shop_updated_at,
             listings.created_at, listings.updated_at
      FROM listings
      JOIN games ON games.id = listings.game_id
      JOIN users ON users.id = listings.user_id
+     LEFT JOIN shops ON shops.id = listings.preferred_shop_id
      WHERE listings.id = ?`
   );
 
@@ -212,6 +274,7 @@ export function createListingsStore(database: Database) {
         condition: row.condition,
         price: row.price,
         status: row.status,
+        preferred_shop_id: row.preferred_shop_id,
         created_at: row.created_at,
         updated_at: row.updated_at,
         images,
@@ -221,6 +284,7 @@ export function createListingsStore(database: Database) {
           avatar_url: row.seller_avatar_url,
           created_at: row.seller_created_at,
         },
+        preferred_shop: rowToPreferredShop(row),
       };
     },
     createListing(userId: string, input: CreateListingInput): Listing {
@@ -231,21 +295,34 @@ export function createListingsStore(database: Database) {
         input.game_id,
         input.condition,
         input.price,
-        input.status
+        input.status,
+        input.preferred_shop_id ?? null
       );
 
       return rowToListing(findStmt.get(input.id, userId)!);
     },
     updateListing(userId: string, listingId: string, input: UpdateListingInput) {
-      const result = updateStmt.run(
-        input.description ?? null,
-        input.game_id ?? null,
-        input.condition ?? null,
-        input.price ?? null,
-        input.status ?? null,
-        listingId,
-        userId
-      );
+      const includeShop = input.preferred_shop_id !== undefined;
+      const result = includeShop
+        ? updateWithShopStmt.run(
+          input.description ?? null,
+          input.game_id ?? null,
+          input.condition ?? null,
+          input.price ?? null,
+          input.status ?? null,
+          input.preferred_shop_id ?? null,
+          listingId,
+          userId
+        )
+        : updateWithoutShopStmt.run(
+          input.description ?? null,
+          input.game_id ?? null,
+          input.condition ?? null,
+          input.price ?? null,
+          input.status ?? null,
+          listingId,
+          userId
+        );
 
       return Number(result.changes) > 0;
     },

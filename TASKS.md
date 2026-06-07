@@ -12,6 +12,8 @@ A living checklist of features, fixes, and improvements. Check items off as they
 
 ## Core marketplace gaps
 
+- [x] Add an Admin page where admins can add game stores. Admins may only be added via direct SQL statement.
+- [ ] Admin: edit and delete game stores from the admin page.
 - [x] Listing detail page (`/listings/:id`). Cards on `/games` currently dead-end; users can't see full description, all images, or the seller.
 - [ ] "My listings" page so signed-in users can see and manage what they posted.
 - [x] Public user profile pages (member since, current listings, trade history).
@@ -20,13 +22,14 @@ A living checklist of features, fixes, and improvements. Check items off as they
 - [ ] Filters on `/games`: condition, price range, category, mechanic, player count, year.
 - [ ] Sort options on `/games` (newest, price asc/desc).
 - [ ] Add `city` / location to `users` and scope listings by city — the core "neighbors in your city" pitch.
-- [ ] Pickup-shop directory (`shops` table) and shop picker on each listing; map view.
+- [x] Pickup-shop directory (`shops` table) and shop picker on each listing; map view.
 - [ ] Serve and display uploaded listing images end-to-end. Verify image lookup/list and file-serving cover all UI needs from `apps/api/src/db/listingImagesTable.ts`, `apps/api/src/routes/listingImages.ts`, and `apps/api/src/storage/listingImageStorage.ts`.
 
 ## Trades workflow
 
 - [x] Decide product direction: pure marketplace vs. structured trade negotiation. **Decided: pure marketplace first.** `listings.status` (`open|pending|complete`) keeps room for a future trade lifecycle without forcing the design now.
 - [ ] If keeping trades/offers: build offer → accept → meetup → complete state machine wired to `listings.status` (`open|pending|complete`).
+- [ ] Shop agreement workflow: buyer accepts the seller's preferred shop or proposes a different one; both must agree before completing.
 - [ ] Wishlist: signed-in users mark games they want.
 - [ ] "A game on your wishlist was just listed" notifications.
 

@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT NOT NULL,
   name TEXT,
   avatar_url TEXT,
+  is_admin INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -112,10 +113,26 @@ CREATE TABLE IF NOT EXISTS listings (
   condition TEXT NOT NULL,
   price INTEGER NOT NULL,
   status TEXT NOT NULL DEFAULT 'open',
+  preferred_shop_id TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE RESTRICT
+  FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE RESTRICT,
+  FOREIGN KEY (preferred_shop_id) REFERENCES shops(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS shops (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  city TEXT NOT NULL,
+  state TEXT,
+  zip TEXT,
+  address TEXT,
+  website_url TEXT,
+  latitude REAL,
+  longitude REAL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS listing_images (
@@ -148,8 +165,12 @@ CREATE INDEX IF NOT EXISTS idx_game_artists_artist_id ON game_artists(artist_id)
 CREATE INDEX IF NOT EXISTS idx_game_categories_category_id ON game_categories(category_id);
 CREATE INDEX IF NOT EXISTS idx_game_mechanics_mechanic_id ON game_mechanics(mechanic_id);
 
+CREATE INDEX IF NOT EXISTS idx_shops_city ON shops(city);
+CREATE INDEX IF NOT EXISTS idx_shops_name ON shops(name);
+
 CREATE INDEX IF NOT EXISTS idx_listings_user_id ON listings(user_id);
 CREATE INDEX IF NOT EXISTS idx_listings_game_id ON listings(game_id);
+CREATE INDEX IF NOT EXISTS idx_listings_preferred_shop_id ON listings(preferred_shop_id);
 CREATE INDEX IF NOT EXISTS idx_listing_images_listing_id ON listing_images(listing_id);
 CREATE INDEX IF NOT EXISTS idx_listing_images_owner_id ON listing_images(owner_id);
 CREATE INDEX IF NOT EXISTS idx_listing_images_listing_created ON listing_images(listing_id, created_at, id);

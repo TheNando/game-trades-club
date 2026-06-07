@@ -3,9 +3,11 @@ import { LocationProvider, Router, Route } from 'preact-iso';
 
 import { Header } from './components/Header';
 import { AddListing } from './pages/addListing';
+import { Admin } from './pages/admin';
 import { Games } from './pages/games';
 import { Home } from './pages/home';
 import { ListingDetail } from './pages/listingDetail';
+import { Shops } from './pages/shops';
 import { UserProfile } from './pages/userProfile';
 import { NotFound } from './pages/_404';
 
@@ -22,6 +24,8 @@ export function App() {
 					<Route path="/listings/:id" component={ListingDetail} />
 					<Route path="/users/:id" component={UserProfile} />
 					<Route path="/add-listing" component={AddListing} />
+					<Route path="/shops" component={Shops} />
+					<Route path="/admin" component={Admin} />
 					<Route default component={NotFound} />
 				</Router>
 			</main>

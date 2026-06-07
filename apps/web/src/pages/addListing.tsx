@@ -30,6 +30,22 @@ type ListingResponse = {
 	};
 };
 
+type ShopOption = {
+	id: string;
+	name: string;
+	city: string;
+	state: string | null;
+};
+
+function formatShopOptionLabel(shop: ShopOption): string {
+	const location = [shop.city, shop.state].filter(Boolean).join(', ');
+	return `${shop.name} — ${location}`;
+}
+
+type ShopsResponse = {
+	items: ShopOption[];
+};
+
 function formatGameLabel(game: GameSearchResult): string {
 	return `${game.name} (${game.year ?? 'Unknown'})`;
 }
@@ -78,6 +94,9 @@ export function AddListing() {
 	const [createdListingId, setCreatedListingId] = useState<string | null>(null);
 	const [uploadFlowCancelled, setUploadFlowCancelled] = useState(false);
 
+	const [shops, setShops] = useState<ShopOption[]>([]);
+	const [preferredShopId, setPreferredShopId] = useState('');
+
 	const [submitError, setSubmitError] = useState('');
 	const [submitSuccess, setSubmitSuccess] = useState('');
 	const [creatingListing, setCreatingListing] = useState(false);
@@ -105,6 +124,23 @@ export function AddListing() {
 
 		loadCurrentUser();
 
+		return () => {
+			isMounted = false;
+		};
+	}, []);
+
+	useEffect(() => {
+		let isMounted = true;
+		(async () => {
+			try {
+				const response = await fetch('/api/shops', { credentials: 'include' });
+				if (!response.ok) return;
+				const data = (await response.json()) as ShopsResponse;
+				if (isMounted) setShops(data.items ?? []);
+			} catch {
+				// non-fatal: the picker stays empty
+			}
+		})();
 		return () => {
 			isMounted = false;
 		};
@@ -190,6 +226,7 @@ export function AddListing() {
 		setUploadItems([]);
 		setCreatedListingId(null);
 		setUploadFlowCancelled(false);
+		setPreferredShopId('');
 	};
 
 	const handleFileChange = (event: Event) => {
@@ -244,6 +281,7 @@ export function AddListing() {
 					condition,
 					price: normalizedPrice,
 					status: 'open',
+					preferred_shop_id: preferredShopId || null,
 				}),
 			});
 
@@ -489,6 +527,27 @@ export function AddListing() {
 											setDescription((event.currentTarget as HTMLTextAreaElement).value)
 										}
 									/>
+								</div>
+
+								<div class="flex flex-col gap-1.5">
+									<label class="text-sm font-medium" for="listing-shop">Preferred meetup shop</label>
+									<select
+										id="listing-shop"
+										aria-label="Preferred meetup shop"
+										class="select select-bordered rounded-xl"
+										value={preferredShopId}
+										onInput={(event) =>
+											setPreferredShopId((event.currentTarget as HTMLSelectElement).value)
+										}
+									>
+										<option value="">No preference</option>
+										{shops.map((shop) => (
+											<option key={shop.id} value={shop.id}>{formatShopOptionLabel(shop)}</option>
+										))}
+									</select>
+									<p class="text-xs text-base-content/60">
+										Optional. Pick a game store where you'd be happy to meet for the hand-off.
+									</p>
 								</div>
 
 								<div class="flex flex-col gap-1.5">

@@ -9,13 +9,17 @@ export async function createTestDatabase() {
   return database;
 }
 
-export function seedUser(database: Database, userId = 'user-1') {
+export function seedUser(
+  database: Database,
+  userId = 'user-1',
+  { isAdmin = false }: { isAdmin?: boolean; } = {}
+) {
   database
     .query(
-      `INSERT INTO users (id, google_sub, email, name, avatar_url)
-       VALUES (?, ?, ?, ?, ?)`
+      `INSERT INTO users (id, google_sub, email, name, avatar_url, is_admin)
+       VALUES (?, ?, ?, ?, ?, ?)`
     )
-    .run(userId, `${userId}-google`, `${userId}@example.com`, 'Test User', null);
+    .run(userId, `${userId}-google`, `${userId}@example.com`, 'Test User', null, isAdmin ? 1 : 0);
 
   return { id: userId };
 }

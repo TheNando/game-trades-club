@@ -110,6 +110,9 @@ export function Header() {
 					<a href="/add-listing" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
 						List a game
 					</a>
+					<a href="/shops" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
+						Shops
+					</a>
 					<a href="#how-it-works" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
 						How it works
 					</a>
