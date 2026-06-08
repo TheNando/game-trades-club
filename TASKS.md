@@ -15,7 +15,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 - [x] Add an Admin page where admins can add game stores. Admins may only be added via direct SQL statement.
 - [x] Admin: edit and delete game stores from the admin page.
 - [x] Listing detail page (`/listings/:id`). Cards on `/games` currently dead-end; users can't see full description, all images, or the seller.
-- [ ] Owner controls on `/listings/:id` (edit description / price / condition, delete) when the viewer owns the listing. Add a "Profile" link to the signed-in user menu so users can find their own listings via the existing user profile page. Status transitions are intentionally excluded for now — they'll be driven by the future offer flow.
+- [x] Owner controls on `/listings/:id` (edit description / price / condition, delete) when the viewer owns the listing. Add a "Profile" link to the signed-in user menu so users can find their own listings via the existing user profile page. Status transitions are intentionally excluded for now — they'll be driven by the future offer flow.
 - [x] Public user profile pages (member since, current listings, trade history).
 - [ ] Messaging / contact flow between buyer and seller. The landing page promises "message the owner"; nothing implements it.
 - [ ] Search bar on `/games`.

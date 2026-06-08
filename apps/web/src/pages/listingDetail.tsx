@@ -277,6 +277,42 @@ type SummaryProps = {
 
 function ListingSummary({ listing, sellerLabel, sellerInitial, isOwner, onListingChange }: SummaryProps) {
 	const [isEditing, setIsEditing] = useState(false);
+	const [deleting, setDeleting] = useState(false);
+	const [deleteError, setDeleteError] = useState('');
+
+	const handleDelete = async () => {
+		if (deleting) return;
+		const confirmed = window.confirm('Delete this listing? This cannot be undone.');
+		if (!confirmed) return;
+
+		setDeleting(true);
+		setDeleteError('');
+		try {
+			const response = await fetch(`/api/listings/${encodeURIComponent(listing.id)}`, {
+				method: 'DELETE',
+				credentials: 'include',
+			});
+
+			if (response.status === 401) {
+				setDeleteError('You must be signed in to delete this listing.');
+				return;
+			}
+			if (response.status === 404) {
+				setDeleteError('Listing not found or you no longer have permission to delete it.');
+				return;
+			}
+			if (!response.ok) {
+				setDeleteError('Unable to delete this listing. Please try again.');
+				return;
+			}
+
+			window.location.href = '/games';
+		} catch {
+			setDeleteError('Unable to delete this listing. Please try again.');
+		} finally {
+			setDeleting(false);
+		}
+	};
 
 	return (
 		<div class="flex flex-col gap-6">
@@ -296,15 +332,31 @@ function ListingSummary({ listing, sellerLabel, sellerInitial, isOwner, onListin
 						{STATUS_LABELS[listing.status]}
 					</span>
 					{isOwner && !isEditing ? (
-						<button
-							type="button"
-							class="btn btn-sm btn-outline rounded-lg ml-auto"
-							onClick={() => setIsEditing(true)}
-						>
-							Edit
-						</button>
+						<div class="ml-auto flex gap-2">
+							<button
+								type="button"
+								class="btn btn-sm btn-outline rounded-lg"
+								onClick={() => setIsEditing(true)}
+								disabled={deleting}
+							>
+								Edit
+							</button>
+							<button
+								type="button"
+								class="btn btn-sm btn-outline btn-error rounded-lg"
+								onClick={handleDelete}
+								disabled={deleting}
+							>
+								{deleting ? 'Deleting...' : 'Delete'}
+							</button>
+						</div>
 					) : null}
 				</div>
+				{deleteError ? (
+					<div class="mt-3 alert alert-error rounded-xl text-sm">
+						<span>{deleteError}</span>
+					</div>
+				) : null}
 			</div>
 
 			{isEditing ? (
