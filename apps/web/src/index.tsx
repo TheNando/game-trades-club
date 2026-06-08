@@ -25,7 +25,7 @@ export function App() {
 					<Route path="/users/:id" component={UserProfile} />
 					<Route path="/add-listing" component={AddListing} />
 					<Route path="/shops" component={Shops} />
-					<Route path="/admin" component={Admin} />
+					<Route path="/admin/shops" component={Admin} />
 					<Route default component={NotFound} />
 				</Router>
 			</main>

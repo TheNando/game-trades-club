@@ -9,6 +9,7 @@ type CurrentUser = {
 	email: string;
 	name: string | null;
 	avatarUrl: string | null;
+	isAdmin: boolean;
 };
 
 function getSavedTheme(): Theme {
@@ -165,6 +166,19 @@ export function Header() {
 									<span class="truncate">{user.name ?? user.email}</span>
 								</li>
 								<li><a href="/add-listing">List a game</a></li>
+								{user.isAdmin ? (
+									<li class="group/admin relative">
+										<a class="flex items-center justify-between gap-2">
+											<span>Admin</span>
+											<svg viewBox="0 0 20 20" class="w-2.5 h-2.5 fill-current opacity-50" aria-hidden="true">
+												<path d="M13 10 7 5v10l6-5Z" />
+											</svg>
+										</a>
+										<ul class="hidden group-hover/admin:block absolute right-full top-0 z-20 ms-0 menu menu-sm bg-base-100 rounded-box p-2 w-32 shadow-lg border border-base-300 before:hidden">
+											<li><a href="/admin/shops">Shops</a></li>
+										</ul>
+									</li>
+								) : null}
 								<li><a onClick={logout}>Sign out</a></li>
 							</ul>
 						</div>

@@ -3,7 +3,7 @@ import { db } from '../db/client';
 import { createShopsStore } from '../db/shopsTable';
 import { RouteDependencies } from '../middleware/dependencies';
 import { requireAdmin, type RequireAdminOptions } from '../middleware/requireAdmin';
-import { badRequest, json, readJson } from '../utils/http';
+import { badRequest, json, notFound, readJson } from '../utils/http';
 import { randomToken } from '../utils/security';
 
 type ShopBody = {
@@ -30,7 +30,7 @@ type ParsedCreateShopBody = {
 
 type ShopsStore = Pick<
   ReturnType<typeof createShopsStore>,
-  'listAllShops' | 'createShop'
+  'listAllShops' | 'createShop' | 'updateShop' | 'removeShop'
 >;
 
 type CreateGetShopsOptions = {
@@ -42,7 +42,19 @@ type CreatePostShopOptions = RequireAdminOptions & {
   shopsStore?: ShopsStore;
 };
 
+type CreatePatchShopOptions = RequireAdminOptions & {
+  shopsStore?: ShopsStore;
+};
+
+type CreateDeleteShopOptions = RequireAdminOptions & {
+  shopsStore?: ShopsStore;
+};
+
 const defaultShopsStore = createShopsStore(db);
+
+function matchShopId(url: URL) {
+  return url.pathname.match(/^\/api\/shops\/([^/]+)$/)?.[1];
+}
 
 function normalizeRequiredText(value: string | undefined): string | null {
   const normalized = value?.trim();
@@ -144,3 +156,50 @@ export function createPostShop({
 }
 
 export const postShop = createPostShop();
+
+export function createPatchShop({
+  findUser,
+  shopsStore = defaultShopsStore,
+}: CreatePatchShopOptions = {}) {
+  return async function patchShop(
+    request: BunRequest<'/api/shops/:id'>,
+    { auth, url }: RouteDependencies
+  ) {
+    const denied = requireAdmin(auth, { findUser });
+    if (denied) return denied;
+
+    const shopId = matchShopId(url);
+    if (!shopId) return badRequest('Invalid shop ID');
+
+    const parsed = parseCreateShopBody(await readJson<ShopBody>(request));
+    if (parsed instanceof Response) return parsed;
+
+    const updated = shopsStore.updateShop(shopId, parsed);
+    if (!updated) return notFound('Shop not found');
+
+    return json({ item: updated });
+  };
+}
+
+export const patchShop = createPatchShop();
+
+export function createDeleteShop({
+  findUser,
+  shopsStore = defaultShopsStore,
+}: CreateDeleteShopOptions = {}) {
+  return async function deleteShop(
+    _: BunRequest<'/api/shops/:id'>,
+    { auth, url }: RouteDependencies
+  ) {
+    const denied = requireAdmin(auth, { findUser });
+    if (denied) return denied;
+
+    const shopId = matchShopId(url);
+    if (!shopId) return badRequest('Invalid shop ID');
+
+    const removed = shopsStore.removeShop(shopId);
+    return removed ? new Response(null, { status: 204 }) : notFound('Shop not found');
+  };
+}
+
+export const deleteShop = createDeleteShop();

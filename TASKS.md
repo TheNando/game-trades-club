@@ -13,7 +13,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 ## Core marketplace gaps
 
 - [x] Add an Admin page where admins can add game stores. Admins may only be added via direct SQL statement.
-- [ ] Admin: edit and delete game stores from the admin page.
+- [x] Admin: edit and delete game stores from the admin page.
 - [x] Listing detail page (`/listings/:id`). Cards on `/games` currently dead-end; users can't see full description, all images, or the seller.
 - [ ] "My listings" page so signed-in users can see and manage what they posted.
 - [x] Public user profile pages (member since, current listings, trade history).

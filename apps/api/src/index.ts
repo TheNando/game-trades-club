@@ -4,7 +4,7 @@ import { getBggImage } from './routes/bgg';
 import { getGames } from './routes/games';
 import { getListingImage, postListingImage } from './routes/listingImages';
 import { deleteListing, getListingDetail, getListings, patchListing, postListing } from './routes/listings';
-import { getShops, postShop } from './routes/shops';
+import { deleteShop, getShops, patchShop, postShop } from './routes/shops';
 import { getUserProfile } from './routes/users';
 import { json } from './utils/http';
 
@@ -52,6 +52,10 @@ Bun.serve({
     "/api/shops": {
       GET: withDeps(getShops, NO_AUTH),
       POST: withDeps(postShop),
+    },
+    "/api/shops/:id": {
+      DELETE: withDeps(deleteShop),
+      PATCH: withDeps(patchShop),
     },
     "/api/users/:id": {
       GET: withDeps(getUserProfile, NO_AUTH),

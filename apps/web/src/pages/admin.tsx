@@ -51,6 +51,11 @@ function formatCityStateZip(city: string, state: string | null, zip: string | nu
 	return stateZip ? `${city}, ${stateZip}` : city;
 }
 
+function compareShops(a: Shop, b: Shop): number {
+	const byCity = a.city.localeCompare(b.city);
+	return byCity !== 0 ? byCity : a.name.localeCompare(b.name);
+}
+
 export function Admin() {
 	const [authChecked, setAuthChecked] = useState(false);
 	const [isAdmin, setIsAdmin] = useState(false);
@@ -98,6 +103,14 @@ function AdminConsole() {
 	const [submitting, setSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState('');
 	const [submitSuccess, setSubmitSuccess] = useState('');
+
+	const handleShopUpdated = (updated: Shop) => {
+		setShops((existing) => existing.map((s) => (s.id === updated.id ? updated : s)).sort(compareShops));
+	};
+
+	const handleShopDeleted = (id: string) => {
+		setShops((existing) => existing.filter((s) => s.id !== id));
+	};
 
 	const loadShops = async () => {
 		setLoadError('');
@@ -174,10 +187,7 @@ function AdminConsole() {
 			}
 
 			const body = (await response.json()) as ShopResponse;
-			setShops((existing) => [...existing, body.item].sort((a, b) => {
-				const byCity = a.city.localeCompare(b.city);
-				return byCity !== 0 ? byCity : a.name.localeCompare(b.name);
-			}));
+			setShops((existing) => [...existing, body.item].sort(compareShops));
 			setName('');
 			setAddress('');
 			setCity('');
@@ -283,28 +293,236 @@ function AdminConsole() {
 					) : (
 						<ul class="flex flex-col gap-3">
 							{shops.map((shop) => (
-								<li key={shop.id} class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-4">
-									<p class="font-display text-lg leading-tight">{shop.name}</p>
-									{shop.address ? (
-										<p class="text-sm text-base-content/70">{shop.address}</p>
-									) : null}
-									<p class="text-sm text-base-content/70">{formatCityStateZip(shop.city, shop.state, shop.zip)}</p>
-									{shop.website_url ? (
-										<a class="text-sm text-primary hover:underline break-all" href={shop.website_url} target="_blank" rel="noreferrer">
-											{shop.website_url}
-										</a>
-									) : null}
-									{shop.latitude !== null && shop.longitude !== null ? (
-										<p class="mt-1 text-xs text-base-content/55 font-mono">{shop.latitude.toFixed(5)}, {shop.longitude.toFixed(5)}</p>
-									) : (
-										<p class="mt-1 text-xs text-warning/80">No coordinates · not on map</p>
-									)}
-								</li>
+								<ShopListItem
+									key={shop.id}
+									shop={shop}
+									onUpdated={handleShopUpdated}
+									onDeleted={handleShopDeleted}
+								/>
 							))}
 						</ul>
 					)}
 				</div>
 			</section>
 		</div>
+	);
+}
+
+
+type ShopListItemProps = {
+	shop: Shop;
+	onUpdated: (shop: Shop) => void;
+	onDeleted: (id: string) => void;
+};
+
+function ShopListItem({ shop, onUpdated, onDeleted }: ShopListItemProps) {
+	const [editing, setEditing] = useState(false);
+	const [name, setName] = useState(shop.name);
+	const [address, setAddress] = useState(shop.address ?? '');
+	const [city, setCity] = useState(shop.city);
+	const [stateValue, setStateValue] = useState(shop.state ?? '');
+	const [zip, setZip] = useState(shop.zip ?? '');
+	const [websiteUrl, setWebsiteUrl] = useState(shop.website_url ?? '');
+	const [latitude, setLatitude] = useState(shop.latitude !== null ? String(shop.latitude) : '');
+	const [longitude, setLongitude] = useState(shop.longitude !== null ? String(shop.longitude) : '');
+	const [saving, setSaving] = useState(false);
+	const [saveError, setSaveError] = useState('');
+	const [deleting, setDeleting] = useState(false);
+	const [deleteError, setDeleteError] = useState('');
+
+	const startEdit = () => {
+		setName(shop.name);
+		setAddress(shop.address ?? '');
+		setCity(shop.city);
+		setStateValue(shop.state ?? '');
+		setZip(shop.zip ?? '');
+		setWebsiteUrl(shop.website_url ?? '');
+		setLatitude(shop.latitude !== null ? String(shop.latitude) : '');
+		setLongitude(shop.longitude !== null ? String(shop.longitude) : '');
+		setSaveError('');
+		setEditing(true);
+	};
+
+	const cancelEdit = () => {
+		setEditing(false);
+		setSaveError('');
+	};
+
+	const saveEdit = async (event: Event) => {
+		event.preventDefault();
+		setSaveError('');
+
+		if (!name.trim() || !city.trim()) {
+			setSaveError('Name and city are required.');
+			return;
+		}
+
+		const lat = parseCoordinate(latitude);
+		if (!lat.ok) {
+			setSaveError('Latitude must be a number.');
+			return;
+		}
+		const lng = parseCoordinate(longitude);
+		if (!lng.ok) {
+			setSaveError('Longitude must be a number.');
+			return;
+		}
+		if ((lat.value === null) !== (lng.value === null)) {
+			setSaveError('Provide both latitude and longitude, or leave both empty.');
+			return;
+		}
+
+		setSaving(true);
+		try {
+			const response = await fetch(`/api/shops/${encodeURIComponent(shop.id)}`, {
+				method: 'PATCH',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					name: name.trim(),
+					address: address.trim(),
+					city: city.trim(),
+					state: stateValue.trim(),
+					zip: zip.trim(),
+					website_url: normalizeWebsiteUrl(websiteUrl),
+					latitude: lat.value,
+					longitude: lng.value,
+				}),
+			});
+
+			if (!response.ok) {
+				try {
+					const errorBody = (await response.json()) as { error?: string };
+					setSaveError(errorBody.error ?? 'Unable to update shop.');
+				} catch {
+					setSaveError('Unable to update shop.');
+				}
+				return;
+			}
+
+			const body = (await response.json()) as ShopResponse;
+			onUpdated(body.item);
+			setEditing(false);
+		} catch {
+			setSaveError('Unable to update shop.');
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	const deleteShop = async () => {
+		setDeleteError('');
+		if (!window.confirm(`Delete ${shop.name}? This cannot be undone.`)) return;
+
+		setDeleting(true);
+		try {
+			const response = await fetch(`/api/shops/${encodeURIComponent(shop.id)}`, {
+				method: 'DELETE',
+				credentials: 'include',
+			});
+			if (!response.ok && response.status !== 204) {
+				try {
+					const errorBody = (await response.json()) as { error?: string };
+					setDeleteError(errorBody.error ?? 'Unable to delete shop.');
+				} catch {
+					setDeleteError('Unable to delete shop.');
+				}
+				return;
+			}
+			onDeleted(shop.id);
+		} catch {
+			setDeleteError('Unable to delete shop.');
+		} finally {
+			setDeleting(false);
+		}
+	};
+
+	if (editing) {
+		return (
+			<li class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-4">
+				<form class="flex flex-col gap-3" onSubmit={saveEdit}>
+					<div class="flex flex-col gap-1.5">
+						<label class="text-xs font-medium" for={`edit-name-${shop.id}`}>Name</label>
+						<input id={`edit-name-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" required value={name}
+							onInput={(e) => setName((e.currentTarget as HTMLInputElement).value)} />
+					</div>
+					<div class="flex flex-col gap-1.5">
+						<label class="text-xs font-medium" for={`edit-address-${shop.id}`}>Address</label>
+						<input id={`edit-address-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" value={address}
+							onInput={(e) => setAddress((e.currentTarget as HTMLInputElement).value)} />
+					</div>
+					<div class="flex flex-col gap-1.5">
+						<label class="text-xs font-medium" for={`edit-city-${shop.id}`}>City</label>
+						<input id={`edit-city-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" required value={city}
+							onInput={(e) => setCity((e.currentTarget as HTMLInputElement).value)} />
+					</div>
+					<div class="grid gap-3 sm:grid-cols-2">
+						<div class="flex flex-col gap-1.5">
+							<label class="text-xs font-medium" for={`edit-state-${shop.id}`}>State</label>
+							<input id={`edit-state-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" value={stateValue}
+								onInput={(e) => setStateValue((e.currentTarget as HTMLInputElement).value)} />
+						</div>
+						<div class="flex flex-col gap-1.5">
+							<label class="text-xs font-medium" for={`edit-zip-${shop.id}`}>ZIP</label>
+							<input id={`edit-zip-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" inputMode="numeric" value={zip}
+								onInput={(e) => setZip((e.currentTarget as HTMLInputElement).value)} />
+						</div>
+					</div>
+					<div class="flex flex-col gap-1.5">
+						<label class="text-xs font-medium" for={`edit-website-${shop.id}`}>Website</label>
+						<input id={`edit-website-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" value={websiteUrl}
+							onInput={(e) => setWebsiteUrl((e.currentTarget as HTMLInputElement).value)} />
+					</div>
+					<div class="grid gap-3 sm:grid-cols-2">
+						<div class="flex flex-col gap-1.5">
+							<label class="text-xs font-medium" for={`edit-latitude-${shop.id}`}>Latitude</label>
+							<input id={`edit-latitude-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" inputMode="decimal" value={latitude}
+								onInput={(e) => setLatitude((e.currentTarget as HTMLInputElement).value)} />
+						</div>
+						<div class="flex flex-col gap-1.5">
+							<label class="text-xs font-medium" for={`edit-longitude-${shop.id}`}>Longitude</label>
+							<input id={`edit-longitude-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" inputMode="decimal" value={longitude}
+								onInput={(e) => setLongitude((e.currentTarget as HTMLInputElement).value)} />
+						</div>
+					</div>
+
+					{saveError ? <div class="alert alert-error rounded-xl"><span>{saveError}</span></div> : null}
+
+					<div class="flex justify-end gap-2 pt-1">
+						<button type="button" class="btn btn-ghost btn-sm rounded-lg" onClick={cancelEdit} disabled={saving}>Cancel</button>
+						<button type="submit" class="btn btn-primary btn-sm rounded-lg" disabled={saving}>
+							{saving ? 'Saving...' : 'Save'}
+						</button>
+					</div>
+				</form>
+			</li>
+		);
+	}
+
+	return (
+		<li class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-4">
+			<p class="font-display text-lg leading-tight">{shop.name}</p>
+			{shop.address ? (
+				<p class="text-sm text-base-content/70">{shop.address}</p>
+			) : null}
+			<p class="text-sm text-base-content/70">{formatCityStateZip(shop.city, shop.state, shop.zip)}</p>
+			{shop.website_url ? (
+				<a class="text-sm text-primary hover:underline break-all" href={shop.website_url} target="_blank" rel="noreferrer">
+					{shop.website_url}
+				</a>
+			) : null}
+			{shop.latitude !== null && shop.longitude !== null ? (
+				<p class="mt-1 text-xs text-base-content/55 font-mono">{shop.latitude.toFixed(5)}, {shop.longitude.toFixed(5)}</p>
+			) : (
+				<p class="mt-1 text-xs text-warning/80">No coordinates · not on map</p>
+			)}
+			{deleteError ? <div class="alert alert-error rounded-xl mt-2"><span>{deleteError}</span></div> : null}
+			<div class="mt-3 flex justify-end gap-2 border-t border-base-300 pt-3">
+				<button type="button" class="btn btn-ghost btn-sm rounded-lg" onClick={startEdit} disabled={deleting}>Edit</button>
+				<button type="button" class="btn btn-error btn-sm rounded-lg" onClick={deleteShop} disabled={deleting}>
+					{deleting ? 'Deleting...' : 'Delete'}
+				</button>
+			</div>
+		</li>
 	);
 }
