@@ -35,13 +35,13 @@ Bun.serve({
       GET: withDeps(getMe)
     },
     "/api/listings": {
-      DELETE: withDeps(deleteListing),
       GET: withDeps(getListings, NO_AUTH),
-      PATCH: withDeps(patchListing),
       POST: withDeps(postListing),
     },
     "/api/listings/:id": {
+      DELETE: withDeps(deleteListing),
       GET: withDeps(getListingDetail, NO_AUTH),
+      PATCH: withDeps(patchListing),
     },
     "/api/listing-images": {
       POST: withDeps(postListingImage),

@@ -165,6 +165,7 @@ export function Header() {
 								<li class="menu-title">
 									<span class="truncate">{user.name ?? user.email}</span>
 								</li>
+								<li><a href={`/users/${user.id}`}>Profile</a></li>
 								<li><a href="/add-listing">List a game</a></li>
 								{user.isAdmin ? (
 									<li class="group/admin relative">

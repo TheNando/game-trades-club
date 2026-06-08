@@ -166,52 +166,82 @@ export function createPostListing({
 
 export const postListing = createPostListing();
 
-export async function patchListing(
-  request: BunRequest<'/api/listings'>,
-  { auth, url }: RouteDependencies
-) {
-  const listingId = matchListingId(url);
-  if (!listingId) return badRequest('Invalid listing ID');
+type PatchListingStore = Pick<
+  ReturnType<typeof createListingsStore>,
+  'updateListing'
+>;
 
-  const body = await readJson<ListingBody>(request);
-  if (!body) return badRequest('Invalid JSON body');
+type CreatePatchListingOptions = {
+  listingsStore?: PatchListingStore;
+};
 
-  const gameId = parseIntegerField(body.game_id, 'game_id');
-  if (gameId instanceof Response) return gameId;
-  if (gameId !== null && gameId <= 0) return badRequest('game_id must be greater than zero');
+export function createPatchListing({
+  listingsStore = defaultListingsStore,
+}: CreatePatchListingOptions = {}) {
+  return async function patchListing(
+    request: BunRequest<'/api/listings/:id'>,
+    { auth, url }: RouteDependencies
+  ) {
+    const listingId = matchListingId(url);
+    if (!listingId) return badRequest('Invalid listing ID');
 
-  const price = parseIntegerField(body.price, 'price');
-  if (price instanceof Response) return price;
-  if (price !== null && price < 0) {
-    return badRequest('price must be zero or greater');
-  }
+    const body = await readJson<ListingBody>(request);
+    if (!body) return badRequest('Invalid JSON body');
 
-  let preferredShopId: string | null | undefined = undefined;
-  if ('preferred_shop_id' in body) {
-    const parsed = parsePreferredShopId(body.preferred_shop_id);
-    if (parsed instanceof Response) return parsed;
-    preferredShopId = parsed;
-  }
+    const gameId = parseIntegerField(body.game_id, 'game_id');
+    if (gameId instanceof Response) return gameId;
+    if (gameId !== null && gameId <= 0) return badRequest('game_id must be greater than zero');
 
-  const updated = defaultListingsStore.updateListing(auth.userId, listingId, {
-    description: body.description === undefined ? undefined : normalizeOptionalText(body.description),
-    condition: body.condition,
-    game_id: gameId ?? undefined,
-    price: price ?? undefined,
-    status: body.status,
-    preferred_shop_id: preferredShopId,
-  });
+    const price = parseIntegerField(body.price, 'price');
+    if (price instanceof Response) return price;
+    if (price !== null && price < 0) {
+      return badRequest('price must be zero or greater');
+    }
 
-  return updated ? new Response(null, { status: 204 }) : notFound();
+    let preferredShopId: string | null | undefined = undefined;
+    if ('preferred_shop_id' in body) {
+      const parsed = parsePreferredShopId(body.preferred_shop_id);
+      if (parsed instanceof Response) return parsed;
+      preferredShopId = parsed;
+    }
+
+    const updated = listingsStore.updateListing(auth.userId, listingId, {
+      description: body.description === undefined ? undefined : normalizeOptionalText(body.description),
+      condition: body.condition,
+      game_id: gameId ?? undefined,
+      price: price ?? undefined,
+      status: body.status,
+      preferred_shop_id: preferredShopId,
+    });
+
+    return updated ? new Response(null, { status: 204 }) : notFound();
+  };
 }
 
-export async function deleteListing(
-  _: BunRequest<'/api/listings'>,
-  { auth, url }: RouteDependencies
-) {
-  const listingId = matchListingId(url);
-  if (!listingId) return badRequest('Invalid trade ID');
+export const patchListing = createPatchListing();
 
-  const deleted = defaultListingsStore.removeListing(auth.userId, listingId);
-  return deleted ? new Response(null, { status: 204 }) : notFound();
+type DeleteListingStore = Pick<
+  ReturnType<typeof createListingsStore>,
+  'removeListing'
+>;
+
+type CreateDeleteListingOptions = {
+  listingsStore?: DeleteListingStore;
+};
+
+export function createDeleteListing({
+  listingsStore = defaultListingsStore,
+}: CreateDeleteListingOptions = {}) {
+  return async function deleteListing(
+    _: BunRequest<'/api/listings/:id'>,
+    { auth, url }: RouteDependencies
+  ) {
+    const listingId = matchListingId(url);
+    if (!listingId) return badRequest('Invalid listing ID');
+
+    const deleted = listingsStore.removeListing(auth.userId, listingId);
+    return deleted ? new Response(null, { status: 204 }) : notFound();
+  };
 }
+
+export const deleteListing = createDeleteListing();

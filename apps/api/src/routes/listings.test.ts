@@ -1,7 +1,13 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { createListingsStore } from '../db/listingsTable';
 import { createTestDatabase, seedGame, seedListing, seedListingImage, seedUser } from '../test/createTestDatabase';
-import { createGetListingDetail, createPostListing, parseCreateListingBody } from './listings';
+import {
+  createDeleteListing,
+  createGetListingDetail,
+  createPatchListing,
+  createPostListing,
+  parseCreateListingBody,
+} from './listings';
 
 describe('parseCreateListingBody', () => {
   test('ignores abandoned image fields', () => {
@@ -461,5 +467,209 @@ describe('createPostListing', () => {
 
     expect(response.status).toBe(201);
     expect(logger.error).toHaveBeenCalled();
+  });
+});
+
+
+describe('createPatchListing', () => {
+  function patchRequest(listingId: string, body: unknown) {
+    const request = new Request(`http://example.test/api/listings/${listingId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    return { request, url: new URL(request.url) };
+  }
+
+  test('updates description, condition, and price and returns 204', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    const listingsStore = createListingsStore(database);
+    const patchListing = createPatchListing({ listingsStore });
+
+    const { request, url } = patchRequest('listing-1', {
+      description: 'Updated copy',
+      condition: 'like_new',
+      price: 42,
+    });
+
+    const response = await patchListing(request as never, {
+      auth: { userId: 'user-1', sessionId: 'session-1' },
+      url,
+    });
+
+    expect(response.status).toBe(204);
+
+    const detail = listingsStore.findListingDetailById('listing-1');
+    expect(detail).toMatchObject({
+      description: 'Updated copy',
+      condition: 'like_new',
+      price: 42,
+    });
+  });
+
+  test('returns 404 when the listing belongs to a different user', async () => {
+    const database = await createTestDatabase();
+    seedUser(database, 'user-1');
+    seedUser(database, 'user-2');
+    seedListing(database, { userId: 'user-1' });
+    const listingsStore = createListingsStore(database);
+    const patchListing = createPatchListing({ listingsStore });
+
+    const { request, url } = patchRequest('listing-1', { price: 99 });
+
+    const response = await patchListing(request as never, {
+      auth: { userId: 'user-2', sessionId: 'session-2' },
+      url,
+    });
+
+    expect(response.status).toBe(404);
+
+    const detail = listingsStore.findListingDetailById('listing-1');
+    expect(detail?.price).toBe(20);
+  });
+
+  test('returns 404 when the listing does not exist', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    const patchListing = createPatchListing({
+      listingsStore: createListingsStore(database),
+    });
+
+    const { request, url } = patchRequest('missing', { price: 10 });
+
+    const response = await patchListing(request as never, {
+      auth: { userId: 'user-1', sessionId: 'session-1' },
+      url,
+    });
+
+    expect(response.status).toBe(404);
+  });
+
+  test('returns 400 when price is negative', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    const patchListing = createPatchListing({
+      listingsStore: createListingsStore(database),
+    });
+
+    const { request, url } = patchRequest('listing-1', { price: -5 });
+
+    const response = await patchListing(request as never, {
+      auth: { userId: 'user-1', sessionId: 'session-1' },
+      url,
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'price must be zero or greater' });
+  });
+
+  test('returns 400 when game_id is not an integer', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    const patchListing = createPatchListing({
+      listingsStore: createListingsStore(database),
+    });
+
+    const { request, url } = patchRequest('listing-1', { game_id: 'abc' });
+
+    const response = await patchListing(request as never, {
+      auth: { userId: 'user-1', sessionId: 'session-1' },
+      url,
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'game_id must be an integer' });
+  });
+
+  test('leaves untouched fields alone when only one field is patched', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    const listingsStore = createListingsStore(database);
+    const patchListing = createPatchListing({ listingsStore });
+
+    const { request, url } = patchRequest('listing-1', { price: 75 });
+
+    const response = await patchListing(request as never, {
+      auth: { userId: 'user-1', sessionId: 'session-1' },
+      url,
+    });
+
+    expect(response.status).toBe(204);
+
+    const detail = listingsStore.findListingDetailById('listing-1');
+    expect(detail).toMatchObject({
+      price: 75,
+      description: 'Seed listing',
+      condition: 'good',
+      status: 'open',
+    });
+  });
+});
+
+describe('createDeleteListing', () => {
+  function deleteRequest(listingId: string) {
+    const request = new Request(`http://example.test/api/listings/${listingId}`, {
+      method: 'DELETE',
+    });
+    return { request, url: new URL(request.url) };
+  }
+
+  test('deletes the listing and returns 204', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    const listingsStore = createListingsStore(database);
+    const deleteListing = createDeleteListing({ listingsStore });
+
+    const { request, url } = deleteRequest('listing-1');
+
+    const response = await deleteListing(request as never, {
+      auth: { userId: 'user-1', sessionId: 'session-1' },
+      url,
+    });
+
+    expect(response.status).toBe(204);
+    expect(listingsStore.findListingDetailById('listing-1')).toBeNull();
+  });
+
+  test('returns 404 when the listing belongs to a different user', async () => {
+    const database = await createTestDatabase();
+    seedUser(database, 'user-1');
+    seedUser(database, 'user-2');
+    seedListing(database, { userId: 'user-1' });
+    const listingsStore = createListingsStore(database);
+    const deleteListing = createDeleteListing({ listingsStore });
+
+    const { request, url } = deleteRequest('listing-1');
+
+    const response = await deleteListing(request as never, {
+      auth: { userId: 'user-2', sessionId: 'session-2' },
+      url,
+    });
+
+    expect(response.status).toBe(404);
+    expect(listingsStore.findListingDetailById('listing-1')).not.toBeNull();
+  });
+
+  test('returns 404 when the listing does not exist', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    const deleteListing = createDeleteListing({
+      listingsStore: createListingsStore(database),
+    });
+
+    const { request, url } = deleteRequest('missing');
+
+    const response = await deleteListing(request as never, {
+      auth: { userId: 'user-1', sessionId: 'session-1' },
+      url,
+    });
+
+    expect(response.status).toBe(404);
   });
 });
