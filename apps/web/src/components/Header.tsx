@@ -104,7 +104,7 @@ export function Header() {
 				</a>
 
 				<nav class="hidden md:flex items-center gap-1 text-sm font-medium">
-					<a href="/" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
+					<a href="/games" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
 						Browse
 					</a>
 					<a href="/add-listing" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
@@ -113,7 +113,7 @@ export function Header() {
 					<a href="/shops" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
 						Shops
 					</a>
-					<a href="#how-it-works" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
+					<a href="/#how-it-works" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
 						How it works
 					</a>
 				</nav>

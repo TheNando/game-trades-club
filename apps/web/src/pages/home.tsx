@@ -1,3 +1,5 @@
+import { useMemo } from 'preact/hooks';
+
 export function Home() {
 	return (
 		<div class="min-h-screen bg-base-100 text-base-content">
@@ -256,33 +258,51 @@ function Step({ n, title, body, tone }: StepProps) {
 	);
 }
 
+const HERO_CARDS: Array<Pick<MiniCardProps, 'title' | 'meta' | 'accent' | 'emoji'>> = [
+	{ title: 'Wingspan', meta: 'Like new · $42', accent: 'secondary', emoji: '🐦' },
+	{ title: 'Brass: Birmingham', meta: 'Good · trade', accent: 'primary', emoji: '🏭' },
+	{ title: 'Catan', meta: 'Open box · $25', accent: 'accent', emoji: '🐑' },
+	{ title: 'Ticket to Ride', meta: 'Good · $30', accent: 'primary', emoji: '🚂' },
+	{ title: 'Carcassonne', meta: 'Like new · trade', accent: 'accent', emoji: '🏰' },
+	{ title: 'Pandemic', meta: 'Good · $20', accent: 'secondary', emoji: '🦠' },
+	{ title: '7 Wonders', meta: 'Like new · $28', accent: 'primary', emoji: '🏛️' },
+	{ title: 'Azul', meta: 'Open box · $24', accent: 'accent', emoji: '🎨' },
+	{ title: 'Splendor', meta: 'Good · trade', accent: 'secondary', emoji: '💎' },
+	{ title: 'Terraforming Mars', meta: 'Like new · $48', accent: 'primary', emoji: '🚀' },
+	{ title: 'Root', meta: 'Good · $40', accent: 'accent', emoji: '🦝' },
+	{ title: 'Everdell', meta: 'Like new · $55', accent: 'secondary', emoji: '🌳' },
+	{ title: 'Gloomhaven', meta: 'Good · trade', accent: 'primary', emoji: '⚔️' },
+];
+
+const HERO_SLOTS: Array<{ style: Record<string, string>; className: string }> = [
+	{ style: { top: '8%', left: '8%', '--r': '-7deg' }, className: 'float-y' },
+	{ style: { top: '22%', right: '6%', '--r': '6deg', animationDelay: '1.2s' }, className: 'float-y' },
+	{ style: { bottom: '6%', left: '18%', '--r': '-2deg', animationDelay: '2.4s' }, className: 'float-y' },
+];
+
 function HeroStack() {
+	const cards = useMemo(() => {
+		const shuffled = [...HERO_CARDS];
+		for (let i = shuffled.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+		}
+		return shuffled.slice(0, HERO_SLOTS.length);
+	}, []);
+
 	return (
 		<div class="absolute inset-0">
-			<MiniCard
-				style={{ top: '8%', left: '8%', '--r': '-7deg' } as any}
-				className="float-y"
-				title="Wingspan"
-				meta="Like new · $42"
-				accent="secondary"
-				emoji="🪶"
-			/>
-			<MiniCard
-				style={{ top: '22%', right: '6%', '--r': '6deg', animationDelay: '1.2s' } as any}
-				className="float-y"
-				title="Brass: Birmingham"
-				meta="Good · trade"
-				accent="primary"
-				emoji="🏭"
-			/>
-			<MiniCard
-				style={{ bottom: '6%', left: '18%', '--r': '-2deg', animationDelay: '2.4s' } as any}
-				className="float-y"
-				title="Catan"
-				meta="Open box · $25"
-				accent="accent"
-				emoji="🐑"
-			/>
+			{cards.map((card, i) => (
+				<MiniCard
+					key={card.title}
+					style={HERO_SLOTS[i].style as any}
+					className={HERO_SLOTS[i].className}
+					title={card.title}
+					meta={card.meta}
+					accent={card.accent}
+					emoji={card.emoji}
+				/>
+			))}
 		</div>
 	);
 }
