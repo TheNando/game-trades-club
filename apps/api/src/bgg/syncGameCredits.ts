@@ -8,7 +8,10 @@ type GameCreditsStore = Pick<
   'listGameIdsMissingCredits' | 'replaceGameCredits'
 >;
 
-type GamesStore = Pick<ReturnType<typeof createGamesStore>, 'findGameById'>;
+type GamesStore = Pick<
+  ReturnType<typeof createGamesStore>,
+  'findGameById' | 'listGameIdsMissingStats' | 'updateGameStats'
+>;
 
 type SyncGameCreditsIfMissingOptions = {
   fetchGameCreditsFn?: typeof fetchGameCredits;
@@ -25,8 +28,9 @@ export function createSyncGameCreditsIfMissing({
   gamesStore = defaultGamesStore,
 }: SyncGameCreditsIfMissingOptions = {}) {
   return async function syncGameCreditsIfMissing(gameId: number) {
-    const missingGameIds = gameCreditsStore.listGameIdsMissingCredits([gameId]);
-    if (missingGameIds.length === 0) {
+    const missingCredits = gameCreditsStore.listGameIdsMissingCredits([gameId]).length > 0;
+    const missingStats = gamesStore.listGameIdsMissingStats([gameId]).length > 0;
+    if (!missingCredits && !missingStats) {
       return false;
     }
 
@@ -35,12 +39,15 @@ export function createSyncGameCreditsIfMissing({
       return false;
     }
 
-    const credits = await fetchGameCreditsFn({
+    const { credits, stats } = await fetchGameCreditsFn({
       gameId: game.id,
       gameName: game.name,
     });
 
-    gameCreditsStore.replaceGameCredits(game.id, credits);
+    if (missingCredits) {
+      gameCreditsStore.replaceGameCredits(game.id, credits);
+    }
+    gamesStore.updateGameStats(game.id, stats);
     return true;
   };
 }

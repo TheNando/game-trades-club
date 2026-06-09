@@ -19,7 +19,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 - [x] Public user profile pages (member since, current listings, trade history).
 - [ ] Messaging / contact flow between buyer and seller. The landing page promises "message the owner"; nothing implements it.
 - [ ] Search bar on `/games`.
-- [ ] Filters on `/games`: condition, price range, category, mechanic, player count, year.
+- [x] Filters on `/games`: condition, price range, category, mechanic, player count, year.
 - [ ] Sort options on `/games` (newest, price asc/desc).
 - [ ] Add `city` / location to `users` and scope listings by city — the core "neighbors in your city" pitch.
 - [x] Pickup-shop directory (`shops` table) and shop picker on each listing; map view.

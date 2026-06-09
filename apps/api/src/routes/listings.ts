@@ -1,10 +1,12 @@
 import { BunRequest } from 'bun';
 import { db } from '../db/client';
-import { createListingsStore } from '../db/listingsTable';
+import { createListingsStore, type ListingFilters } from '../db/listingsTable';
 import { syncGameCreditsIfMissing } from '../bgg/syncGameCredits';
 import { RouteDependencies } from '../middleware/dependencies';
 import { badRequest, json, notFound, readJson } from '../utils/http';
 import { randomToken } from '../utils/security';
+
+const VALID_CONDITIONS = new Set(['new', 'like_new', 'good', 'fair', 'poor']);
 
 type ListingDetailStore = Pick<
   ReturnType<typeof createListingsStore>,
@@ -38,8 +40,17 @@ type ParsedCreateListingBody = {
 
 type ListingsStore = Pick<
   ReturnType<typeof createListingsStore>,
-  'createListing' | 'listAllListings' | 'removeListing' | 'updateListing'
+  'createListing' | 'listAllListings' | 'listFilteredListings' | 'removeListing' | 'updateListing'
 >;
+
+type GetListingsStore = Pick<
+  ReturnType<typeof createListingsStore>,
+  'listFilteredListings'
+>;
+
+type CreateGetListingsOptions = {
+  listingsStore?: GetListingsStore;
+};
 
 type CreatePostListingOptions = {
   createListingId?: () => string;
@@ -110,12 +121,89 @@ function parsePreferredShopId(value: string | null | undefined): string | null |
   return trimmed ? trimmed : null;
 }
 
-export async function getListings(
-  _: BunRequest<'/api/listings'>,
-  __: RouteDependencies
-) {
-  return json({ items: defaultListingsStore.listAllListings() });
+function parseIntQueryParam(value: string | null, fieldName: string): number | null | Response {
+  if (value === null || value.trim() === '') return null;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) return badRequest(`${fieldName} must be an integer`);
+  return parsed;
 }
+
+function parseIntListQueryParam(values: string[], fieldName: string): number[] | Response {
+  const flattened = values.flatMap((value) => value.split(',')).map((value) => value.trim()).filter(Boolean);
+  const parsed: number[] = [];
+  for (const value of flattened) {
+    const num = Number(value);
+    if (!Number.isInteger(num)) return badRequest(`${fieldName} must be a list of integers`);
+    parsed.push(num);
+  }
+  return parsed;
+}
+
+function parseConditionQueryParam(values: string[]): string[] | Response {
+  const flattened = values.flatMap((value) => value.split(',')).map((value) => value.trim()).filter(Boolean);
+  for (const condition of flattened) {
+    if (!VALID_CONDITIONS.has(condition)) return badRequest(`condition must be one of: ${[...VALID_CONDITIONS].join(', ')}`);
+  }
+  return flattened;
+}
+
+export function parseListingFilters(searchParams: URLSearchParams): ListingFilters | Response {
+  const filters: ListingFilters = {};
+
+  const conditions = parseConditionQueryParam(searchParams.getAll('condition'));
+  if (conditions instanceof Response) return conditions;
+  if (conditions.length > 0) filters.conditions = conditions;
+
+  const priceMin = parseIntQueryParam(searchParams.get('price_min'), 'price_min');
+  if (priceMin instanceof Response) return priceMin;
+  if (priceMin !== null) filters.priceMin = priceMin;
+
+  const priceMax = parseIntQueryParam(searchParams.get('price_max'), 'price_max');
+  if (priceMax instanceof Response) return priceMax;
+  if (priceMax !== null) filters.priceMax = priceMax;
+
+  const yearMin = parseIntQueryParam(searchParams.get('year_min'), 'year_min');
+  if (yearMin instanceof Response) return yearMin;
+  if (yearMin !== null) filters.yearMin = yearMin;
+
+  const yearMax = parseIntQueryParam(searchParams.get('year_max'), 'year_max');
+  if (yearMax instanceof Response) return yearMax;
+  if (yearMax !== null) filters.yearMax = yearMax;
+
+  const players = parseIntQueryParam(searchParams.get('players'), 'players');
+  if (players instanceof Response) return players;
+  if (players !== null) filters.players = players;
+
+  const playtime = parseIntQueryParam(searchParams.get('playtime'), 'playtime');
+  if (playtime instanceof Response) return playtime;
+  if (playtime !== null) filters.playtime = playtime;
+
+  const categoryIds = parseIntListQueryParam(searchParams.getAll('category'), 'category');
+  if (categoryIds instanceof Response) return categoryIds;
+  if (categoryIds.length > 0) filters.categoryIds = categoryIds;
+
+  const mechanicIds = parseIntListQueryParam(searchParams.getAll('mechanic'), 'mechanic');
+  if (mechanicIds instanceof Response) return mechanicIds;
+  if (mechanicIds.length > 0) filters.mechanicIds = mechanicIds;
+
+  return filters;
+}
+
+export function createGetListings({
+  listingsStore = defaultListingsStore,
+}: CreateGetListingsOptions = {}) {
+  return async function getListings(
+    _: BunRequest<'/api/listings'>,
+    { url }: RouteDependencies
+  ) {
+    const filters = parseListingFilters(url.searchParams);
+    if (filters instanceof Response) return filters;
+
+    return json({ items: listingsStore.listFilteredListings(filters) });
+  };
+}
+
+export const getListings = createGetListings();
 
 export function createGetListingDetail({
   listingsStore = defaultListingsStore,

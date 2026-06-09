@@ -4,9 +4,11 @@ import { createTestDatabase, seedGame, seedListing, seedListingImage, seedUser }
 import {
   createDeleteListing,
   createGetListingDetail,
+  createGetListings,
   createPatchListing,
   createPostListing,
   parseCreateListingBody,
+  parseListingFilters,
 } from './listings';
 
 describe('parseCreateListingBody', () => {
@@ -341,6 +343,196 @@ describe('createListingsStore', () => {
     const detail = listings.findListingDetailById('listing-1');
     expect(detail?.preferred_shop_id).toBe('shop-1');
     expect(detail?.price).toBe(25);
+  });
+});
+
+describe('parseListingFilters', () => {
+  test('returns an empty filter set when no params are provided', () => {
+    const filters = parseListingFilters(new URLSearchParams());
+    expect(filters).toEqual({});
+  });
+
+  test('parses repeated and comma-separated multi-value params', () => {
+    const params = new URLSearchParams();
+    params.append('condition', 'new');
+    params.append('condition', 'like_new,good');
+    params.append('category', '1,2');
+    params.append('mechanic', '7');
+    params.set('price_min', '5');
+    params.set('price_max', '50');
+    params.set('year_min', '2010');
+    params.set('year_max', '2024');
+    params.set('players', '4');
+    params.set('playtime', '60');
+
+    expect(parseListingFilters(params)).toEqual({
+      conditions: ['new', 'like_new', 'good'],
+      priceMin: 5,
+      priceMax: 50,
+      yearMin: 2010,
+      yearMax: 2024,
+      players: 4,
+      playtime: 60,
+      categoryIds: [1, 2],
+      mechanicIds: [7],
+    });
+  });
+
+  test('rejects unknown condition values', async () => {
+    const params = new URLSearchParams();
+    params.set('condition', 'mint');
+    const result = parseListingFilters(params);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(400);
+  });
+
+  test('rejects non-integer numeric params', async () => {
+    const params = new URLSearchParams();
+    params.set('price_min', 'cheap');
+    const result = parseListingFilters(params);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(400);
+  });
+
+  test('rejects non-integer category ids', async () => {
+    const params = new URLSearchParams();
+    params.set('category', '1,foo');
+    const result = parseListingFilters(params);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(400);
+  });
+});
+
+describe('createGetListings', () => {
+  test('applies filters from the query string and returns matching listings', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedGame(database, 1);
+    seedGame(database, 2);
+    database.run(`UPDATE games SET min_players = 2, max_players = 4, min_playtime = 30, max_playtime = 60 WHERE id = 1`);
+    database.run(`UPDATE games SET min_players = 4, max_players = 8, min_playtime = 90, max_playtime = 120 WHERE id = 2`);
+    seedListing(database, { id: 'listing-cheap', gameId: 1 });
+    seedListing(database, { id: 'listing-expensive', gameId: 2 });
+    database.run(`UPDATE listings SET price = 10, condition = 'good' WHERE id = 'listing-cheap'`);
+    database.run(`UPDATE listings SET price = 80, condition = 'new' WHERE id = 'listing-expensive'`);
+
+    const listingsStore = createListingsStore(database);
+    const getListings = createGetListings({ listingsStore });
+
+    const url = new URL('http://example.test/api/listings?players=3&price_max=20&condition=good');
+    const response = await getListings(new Request(url) as never, {
+      auth: { userId: '', sessionId: '' },
+      url,
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json() as { items: { id: string; }[]; };
+    expect(body.items.map((item) => item.id)).toEqual(['listing-cheap']);
+  });
+
+  test('returns 400 when a query param is malformed', async () => {
+    const database = await createTestDatabase();
+    const getListings = createGetListings({ listingsStore: createListingsStore(database) });
+
+    const url = new URL('http://example.test/api/listings?price_min=cheap');
+    const response = await getListings(new Request(url) as never, {
+      auth: { userId: '', sessionId: '' },
+      url,
+    });
+
+    expect(response.status).toBe(400);
+  });
+});
+
+describe('createListingsStore.listFilteredListings', () => {
+  async function seedFiltersFixture() {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedGame(database, 1);
+    seedGame(database, 2);
+    database.run(
+      `UPDATE games SET year = 2015, min_players = 2, max_players = 4, min_playtime = 30, max_playtime = 60 WHERE id = 1`
+    );
+    database.run(
+      `UPDATE games SET year = 2022, min_players = 4, max_players = 8, min_playtime = 90, max_playtime = 120 WHERE id = 2`
+    );
+    database
+      .query(`INSERT INTO categories (id, name) VALUES (?, ?), (?, ?)`)
+      .run(10, 'Family', 20, 'War');
+    database
+      .query(`INSERT INTO mechanics (id, name) VALUES (?, ?), (?, ?)`)
+      .run(100, 'Drafting', 200, 'Hex grid');
+    database.query(`INSERT INTO game_categories (game_id, category_id) VALUES (?, ?)`).run(1, 10);
+    database.query(`INSERT INTO game_categories (game_id, category_id) VALUES (?, ?)`).run(2, 20);
+    database.query(`INSERT INTO game_mechanics (game_id, mechanic_id) VALUES (?, ?)`).run(1, 100);
+    database.query(`INSERT INTO game_mechanics (game_id, mechanic_id) VALUES (?, ?)`).run(2, 200);
+
+    seedListing(database, { id: 'family-listing', gameId: 1 });
+    seedListing(database, { id: 'war-listing', gameId: 2 });
+    database.run(`UPDATE listings SET price = 15, condition = 'good' WHERE id = 'family-listing'`);
+    database.run(`UPDATE listings SET price = 75, condition = 'new' WHERE id = 'war-listing'`);
+
+    return createListingsStore(database);
+  }
+
+  test('returns all listings when no filters are applied', async () => {
+    const store = await seedFiltersFixture();
+    const ids = store.listFilteredListings({}).map((item) => item.id).sort();
+    expect(ids).toEqual(['family-listing', 'war-listing']);
+  });
+
+  test('filters by condition (multi-value matches any)', async () => {
+    const store = await seedFiltersFixture();
+    const ids = store.listFilteredListings({ conditions: ['good', 'fair'] }).map((item) => item.id);
+    expect(ids).toEqual(['family-listing']);
+  });
+
+  test('filters by price range', async () => {
+    const store = await seedFiltersFixture();
+    const ids = store.listFilteredListings({ priceMin: 50, priceMax: 100 }).map((item) => item.id);
+    expect(ids).toEqual(['war-listing']);
+  });
+
+  test('filters by year range', async () => {
+    const store = await seedFiltersFixture();
+    const ids = store.listFilteredListings({ yearMin: 2020 }).map((item) => item.id);
+    expect(ids).toEqual(['war-listing']);
+  });
+
+  test('filters by player count using game min/max bounds', async () => {
+    const store = await seedFiltersFixture();
+    const idsAtThree = store.listFilteredListings({ players: 3 }).map((item) => item.id);
+    expect(idsAtThree).toEqual(['family-listing']);
+    const idsAtFour = store.listFilteredListings({ players: 4 }).map((item) => item.id).sort();
+    expect(idsAtFour).toEqual(['family-listing', 'war-listing']);
+  });
+
+  test('filters by playtime using game min/max bounds', async () => {
+    const store = await seedFiltersFixture();
+    const ids = store.listFilteredListings({ playtime: 100 }).map((item) => item.id);
+    expect(ids).toEqual(['war-listing']);
+  });
+
+  test('filters by category (OR match across selected categories)', async () => {
+    const store = await seedFiltersFixture();
+    const ids = store.listFilteredListings({ categoryIds: [10] }).map((item) => item.id);
+    expect(ids).toEqual(['family-listing']);
+    const bothIds = store.listFilteredListings({ categoryIds: [10, 20] }).map((item) => item.id).sort();
+    expect(bothIds).toEqual(['family-listing', 'war-listing']);
+  });
+
+  test('filters by mechanic (OR match across selected mechanics)', async () => {
+    const store = await seedFiltersFixture();
+    const ids = store.listFilteredListings({ mechanicIds: [200] }).map((item) => item.id);
+    expect(ids).toEqual(['war-listing']);
+  });
+
+  test('combines filters with AND semantics across distinct fields', async () => {
+    const store = await seedFiltersFixture();
+    const ids = store
+      .listFilteredListings({ conditions: ['new'], priceMin: 50, players: 6 })
+      .map((item) => item.id);
+    expect(ids).toEqual(['war-listing']);
   });
 });
 

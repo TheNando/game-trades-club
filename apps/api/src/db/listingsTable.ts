@@ -95,6 +95,18 @@ type UpdateListingInput = {
   preferred_shop_id?: string | null;
 };
 
+export type ListingFilters = {
+  conditions?: string[];
+  priceMin?: number;
+  priceMax?: number;
+  yearMin?: number;
+  yearMax?: number;
+  players?: number;
+  playtime?: number;
+  categoryIds?: number[];
+  mechanicIds?: number[];
+};
+
 function rowToListing(row: ListingRow): Listing {
   const cover = row.cover_image_id
     ? {
@@ -149,6 +161,65 @@ const listingCoverJoin = `JOIN games ON games.id = listings.game_id
        ORDER BY created_at ASC, id ASC
        LIMIT 1
      )`;
+
+function buildFilteredListingsQuery(filters: ListingFilters): { sql: string; params: (string | number)[]; } {
+  const where: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (filters.conditions && filters.conditions.length > 0) {
+    where.push(`listings.condition IN (${filters.conditions.map(() => '?').join(', ')})`);
+    params.push(...filters.conditions);
+  }
+  if (filters.priceMin !== undefined) {
+    where.push('listings.price >= ?');
+    params.push(filters.priceMin);
+  }
+  if (filters.priceMax !== undefined) {
+    where.push('listings.price <= ?');
+    params.push(filters.priceMax);
+  }
+  if (filters.yearMin !== undefined) {
+    where.push('games.year >= ?');
+    params.push(filters.yearMin);
+  }
+  if (filters.yearMax !== undefined) {
+    where.push('games.year <= ?');
+    params.push(filters.yearMax);
+  }
+  if (filters.players !== undefined) {
+    where.push('games.min_players <= ? AND games.max_players >= ?');
+    params.push(filters.players, filters.players);
+  }
+  if (filters.playtime !== undefined) {
+    where.push('games.min_playtime <= ? AND games.max_playtime >= ?');
+    params.push(filters.playtime, filters.playtime);
+  }
+  if (filters.categoryIds && filters.categoryIds.length > 0) {
+    where.push(
+      `EXISTS (SELECT 1 FROM game_categories
+                WHERE game_categories.game_id = games.id
+                  AND game_categories.category_id IN (${filters.categoryIds.map(() => '?').join(', ')}))`
+    );
+    params.push(...filters.categoryIds);
+  }
+  if (filters.mechanicIds && filters.mechanicIds.length > 0) {
+    where.push(
+      `EXISTS (SELECT 1 FROM game_mechanics
+                WHERE game_mechanics.game_id = games.id
+                  AND game_mechanics.mechanic_id IN (${filters.mechanicIds.map(() => '?').join(', ')}))`
+    );
+    params.push(...filters.mechanicIds);
+  }
+
+  const whereClause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+  const sql = `SELECT ${listingSelectColumns}
+     FROM listings
+     ${listingCoverJoin}
+     ${whereClause}
+     ORDER BY listings.created_at DESC`;
+
+  return { sql, params };
+}
 
 export function createListingsStore(database: Database) {
   const listAllStmt = database.query<ListingRow, []>(
@@ -251,6 +322,10 @@ export function createListingsStore(database: Database) {
     listAllListings(): Listing[] {
       return listAllStmt.all().map(rowToListing);
     },
+    listFilteredListings(filters: ListingFilters): Listing[] {
+      const { sql, params } = buildFilteredListingsQuery(filters);
+      return database.query<ListingRow, (string | number)[]>(sql).all(...params).map(rowToListing);
+    },
     listListingsByUser(userId: string): Listing[] {
       return listStmt.all(userId).map(rowToListing);
     },
@@ -340,6 +415,7 @@ export const {
   findListingByIdForUser,
   findListingDetailById,
   listAllListings,
+  listFilteredListings,
   listListingsByUser,
   removeListing,
   updateListing,

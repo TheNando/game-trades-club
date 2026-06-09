@@ -8,12 +8,23 @@ export type CreateGameInput = {
   isExpansion?: boolean | number;
 };
 
+export type GameStats = {
+  minPlayers: number | null;
+  maxPlayers: number | null;
+  minPlaytime: number | null;
+  maxPlaytime: number | null;
+};
+
 export type GameRow = {
   id: number;
   image_url: string | null;
   is_expansion: number;
   name: string;
   year: number | null;
+  min_players: number | null;
+  max_players: number | null;
+  min_playtime: number | null;
+  max_playtime: number | null;
 };
 
 const BATCH_SIZE = 50;
@@ -36,7 +47,8 @@ export function createGamesStore(database: typeof db) {
   );
 
   const findByIdStmt = database.query<GameRow, [number]>(
-    `SELECT id, name, image_url, year, is_expansion
+    `SELECT id, name, image_url, year, is_expansion,
+            min_players, max_players, min_playtime, max_playtime
      FROM games
      WHERE id = ?`
   );
@@ -44,6 +56,22 @@ export function createGamesStore(database: typeof db) {
   const updateImageUrlStmt = database.query(
     `UPDATE games SET image_url = ? WHERE id = ?`
   );
+
+  const updateStatsStmt = database.query<unknown, [number | null, number | null, number | null, number | null, number]>(
+    `UPDATE games
+     SET min_players = ?, max_players = ?, min_playtime = ?, max_playtime = ?
+     WHERE id = ?`
+  );
+
+  const listGameIdsMissingStatsStmt = (gameIds: number[]) =>
+    database
+      .query<{ id: number; }, number[]>(
+        `SELECT id FROM games
+         WHERE id IN (${gameIds.map(() => '?').join(', ')})
+           AND (min_players IS NULL OR max_players IS NULL
+                OR min_playtime IS NULL OR max_playtime IS NULL)`
+      )
+      .all(...gameIds);
 
   const searchByNameStmt = database.prepare<GameSearchResult, [string, string, string, number]>(
     `SELECT id, name, year
@@ -89,6 +117,19 @@ export function createGamesStore(database: typeof db) {
     updateGameImageUrl(gameId: number, imageUrl: string) {
       updateImageUrlStmt.run(imageUrl, gameId);
     },
+    updateGameStats(gameId: number, stats: GameStats) {
+      updateStatsStmt.run(
+        stats.minPlayers,
+        stats.maxPlayers,
+        stats.minPlaytime,
+        stats.maxPlaytime,
+        gameId
+      );
+    },
+    listGameIdsMissingStats(gameIds: number[]): number[] {
+      if (gameIds.length === 0) return [];
+      return listGameIdsMissingStatsStmt(gameIds).map((row) => row.id);
+    },
     searchGamesByName(query: string, limit = 25): GameSearchResult[] {
       const trimmed = query.trim();
       if (!trimmed) return [];
@@ -104,6 +145,8 @@ const gamesStore = createGamesStore(db);
 export const {
   createGamesBatch,
   findGameById,
+  listGameIdsMissingStats,
   searchGamesByName,
   updateGameImageUrl,
+  updateGameStats,
 } = gamesStore;

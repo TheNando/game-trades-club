@@ -2,6 +2,7 @@ import { NO_AUTH, withDeps } from './middleware/dependencies';
 import { getAuthGoogleCallback, getAuthGoogleStart, getMe, postAuthLogout } from './routes/auth';
 import { getBggImage } from './routes/bgg';
 import { getGames } from './routes/games';
+import { getListingFilters } from './routes/listingFilters';
 import { getListingImage, postListingImage } from './routes/listingImages';
 import { deleteListing, getListingDetail, getListings, patchListing, postListing } from './routes/listings';
 import { deleteShop, getShops, patchShop, postShop } from './routes/shops';
@@ -33,6 +34,9 @@ Bun.serve({
     },
     "/api/me": {
       GET: withDeps(getMe)
+    },
+    "/api/listing-filters": {
+      GET: withDeps(getListingFilters, NO_AUTH),
     },
     "/api/listings": {
       GET: withDeps(getListings, NO_AUTH),

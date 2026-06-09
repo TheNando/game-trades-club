@@ -1,5 +1,11 @@
 import type { GameCreditRecord, GameCredits } from '../db/gameCreditsTable';
-import type { GeekData, ItemLink } from '../types/bgg';
+import type { GameStats } from '../db/gamesTable';
+import type { GeekData, Item, ItemLink } from '../types/bgg';
+
+export type GamePageData = {
+  credits: GameCredits;
+  stats: GameStats;
+};
 
 const publishersId = 'boardgamepublisher';
 const designersIds = [
@@ -52,11 +58,27 @@ function getCreditRecordsFromLinks(links: ItemLink[]): GameCreditRecord[] {
     })) as GameCreditRecord[];
 }
 
+function parsePositiveIntField(value: string | undefined | null): number | null {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) return null;
+  return parsed;
+}
+
+function extractGameStats(item: Item): GameStats {
+  return {
+    minPlayers: parsePositiveIntField(item.minplayers),
+    maxPlayers: parsePositiveIntField(item.maxplayers),
+    minPlaytime: parsePositiveIntField(item.minplaytime),
+    maxPlaytime: parsePositiveIntField(item.maxplaytime),
+  };
+}
+
 export async function fetchGameCredits({
   fetchFn = fetch,
   gameId,
   gameName,
-}: FetchGameCreditsOptions): Promise<GameCredits> {
+}: FetchGameCreditsOptions): Promise<GamePageData> {
   const url = `https://boardgamegeek.com/boardgame/${gameId}/name/credits`;
 
   const response = await fetchFn(url);
@@ -78,12 +100,15 @@ export async function fetchGameCredits({
   }
 
   return {
-    artists: getCreditRecordsFromLinks(item.links[artistId]),
-    categories: getCreditRecordsFromLinks(item.links[categoryId]),
-    designers:
-      getCreditRecordsFromLinks(designersIds.flatMap((id) => item.links[id])),
-    mechanics: getCreditRecordsFromLinks(item.links[mechanicsId]),
-    publishers: getCreditRecordsFromLinks(item.links[publishersId]),
+    credits: {
+      artists: getCreditRecordsFromLinks(item.links[artistId]),
+      categories: getCreditRecordsFromLinks(item.links[categoryId]),
+      designers:
+        getCreditRecordsFromLinks(designersIds.flatMap((id) => item.links[id])),
+      mechanics: getCreditRecordsFromLinks(item.links[mechanicsId]),
+      publishers: getCreditRecordsFromLinks(item.links[publishersId]),
+    },
+    stats: extractGameStats(item),
   };
 }
 

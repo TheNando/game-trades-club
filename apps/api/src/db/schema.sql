@@ -27,7 +27,11 @@ CREATE TABLE IF NOT EXISTS games (
   name TEXT NOT NULL,
   image_url TEXT,
   year INTEGER,
-  is_expansion INTEGER NOT NULL DEFAULT 0
+  is_expansion INTEGER NOT NULL DEFAULT 0,
+  min_players INTEGER,
+  max_players INTEGER,
+  min_playtime INTEGER,
+  max_playtime INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS publishers (

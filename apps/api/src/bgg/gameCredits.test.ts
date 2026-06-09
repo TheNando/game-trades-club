@@ -1,14 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 import { fetchGameCredits } from './gameCredits';
 
-function createCreditsHtml(links: Record<string, Array<{ objectid: string; name: string }>>) {
+function createCreditsHtml(links: Record<string, Array<{ objectid: string; name: string; }>>) {
   return `
     <html>
       <body>
         <script>
           GEEK.geekitemPreload = ${JSON.stringify({
-            item: { links },
-          })};
+    item: { links },
+  })};
 	
         </script>
       </body>
@@ -32,7 +32,7 @@ function createGeekPreloadHtml(geekData: unknown) {
 describe('fetchGameCredits', () => {
   test('extracts credits from geek preload data and dedupes duplicate links', async () => {
     let requestedUrl = '';
-    const credits = await fetchGameCredits({
+    const result = await fetchGameCredits({
       gameId: 42,
       gameName: 'Ra',
       fetchFn: async (input) => {
@@ -68,7 +68,7 @@ describe('fetchGameCredits', () => {
     });
 
     expect(requestedUrl).toBe('https://boardgamegeek.com/boardgame/42/name/credits');
-    expect(credits).toEqual({
+    expect(result.credits).toEqual({
       publishers: [
         { bggId: 395, description: null, name: 'Asmodee' },
         { bggId: 21608, description: null, name: 'Capstone Games' },
@@ -86,6 +86,75 @@ describe('fetchGameCredits', () => {
       mechanics: [
         { bggId: 2040, description: null, name: 'Hand Management' },
       ],
+    });
+    expect(result.stats).toEqual({
+      minPlayers: null,
+      maxPlayers: null,
+      minPlaytime: null,
+      maxPlaytime: null,
+    });
+  });
+
+  const emptyLinks = {
+    boardgamepublisher: [],
+    boardgamedesigner: [],
+    boardgamesolodesigner: [],
+    boardgameartist: [],
+    boardgamecategory: [],
+    boardgamemechanic: [],
+  };
+
+  test('parses player and playtime stats from the geek preload data', async () => {
+    const result = await fetchGameCredits({
+      gameId: 42,
+      gameName: 'Ra',
+      fetchFn: async () =>
+        new Response(
+          createGeekPreloadHtml({
+            item: {
+              links: emptyLinks,
+              minplayers: '2',
+              maxplayers: '4',
+              minplaytime: '45',
+              maxplaytime: '90',
+            },
+          }),
+          { status: 200 }
+        ),
+    });
+
+    expect(result.stats).toEqual({
+      minPlayers: 2,
+      maxPlayers: 4,
+      minPlaytime: 45,
+      maxPlaytime: 90,
+    });
+  });
+
+  test('treats empty or zero stat values as null', async () => {
+    const result = await fetchGameCredits({
+      gameId: 42,
+      gameName: 'Ra',
+      fetchFn: async () =>
+        new Response(
+          createGeekPreloadHtml({
+            item: {
+              links: emptyLinks,
+              minplayers: '',
+              maxplayers: '0',
+              minplaytime: '45',
+              maxplaytime: '',
+            },
+          }),
+          { status: 200 }
+        ),
+    });
+
+    expect(result.stats).toEqual({
+      minPlayers: null,
+      maxPlayers: null,
+      minPlaytime: 45,
+      maxPlaytime: null,
     });
   });
 
