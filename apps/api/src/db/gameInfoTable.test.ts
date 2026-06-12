@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { createGameCreditsStore } from './gameCreditsTable';
+import { createGameInfoStore } from './gameInfoTable';
 import { createTestDatabase } from '../test/createTestDatabase';
 
 async function seedGame(database: Awaited<ReturnType<typeof createTestDatabase>>, gameId = 1) {
@@ -11,14 +11,14 @@ async function seedGame(database: Awaited<ReturnType<typeof createTestDatabase>>
     .run(gameId, `Game ${gameId}`, 2024, 0);
 }
 
-describe('createGameCreditsStore', () => {
+describe('createGameInfoStore', () => {
   test('upserts unique names and creates join rows for a game', async () => {
     const database = await createTestDatabase();
     await seedGame(database, 1);
     await seedGame(database, 2);
-    const store = createGameCreditsStore(database);
+    const store = createGameInfoStore(database);
 
-    store.replaceGameCredits(1, {
+    store.replaceGameInfo(1, {
       publishers: [
         { bggId: 10, description: null, name: 'Capstone Games' },
       ],
@@ -31,7 +31,7 @@ describe('createGameCreditsStore', () => {
       mechanics: [{ bggId: 40, description: null, name: 'Auction / Bidding' }],
     });
 
-    store.replaceGameCredits(2, {
+    store.replaceGameInfo(2, {
       publishers: [
         { bggId: 999, description: 'Ignored because name matches exactly', name: 'Capstone Games' },
       ],
@@ -42,19 +42,19 @@ describe('createGameCreditsStore', () => {
     });
 
     const publishers = database
-      .query<{ bgg_id: number | null; description: string | null; name: string }, []>(
+      .query<{ bgg_id: number | null; description: string | null; name: string; }, []>(
         'SELECT name, bgg_id, description FROM publishers ORDER BY name ASC'
       )
       .all();
 
     const gamePublishers = database
-      .query<{ game_id: number; publisher_id: number }, []>(
+      .query<{ game_id: number; publisher_id: number; }, []>(
         'SELECT game_id, publisher_id FROM game_publishers ORDER BY game_id ASC'
       )
       .all();
 
     const designers = database
-      .query<{ bgg_id: number | null; name: string }, []>(
+      .query<{ bgg_id: number | null; name: string; }, []>(
         'SELECT name, bgg_id FROM designers ORDER BY name ASC'
       )
       .all();
@@ -77,9 +77,9 @@ describe('createGameCreditsStore', () => {
     const database = await createTestDatabase();
     await seedGame(database, 1);
     await seedGame(database, 2);
-    const store = createGameCreditsStore(database);
+    const store = createGameInfoStore(database);
 
-    store.replaceGameCredits(1, {
+    store.replaceGameInfo(1, {
       publishers: [{ bggId: 10, description: null, name: 'Capstone Games' }],
       designers: [],
       artists: [],
@@ -87,7 +87,7 @@ describe('createGameCreditsStore', () => {
       mechanics: [],
     });
 
-    store.replaceGameCredits(2, {
+    store.replaceGameInfo(2, {
       publishers: [],
       designers: [],
       artists: [],

@@ -1,6 +1,7 @@
 import { NO_AUTH, withDeps } from './middleware/dependencies';
 import { getAuthGoogleCallback, getAuthGoogleStart, getMe, postAuthLogout } from './routes/auth';
 import { getBggImage } from './routes/bgg';
+import { getGameImage } from './routes/gameImages';
 import { getGames } from './routes/games';
 import { getListingFilters } from './routes/listingFilters';
 import { getListingImage, postListingImage } from './routes/listingImages';
@@ -28,6 +29,9 @@ Bun.serve({
     },
     "/api/health": {
       GET: json({ ok: true })
+    },
+    "/api/game-images/:id": {
+      GET: withDeps(getGameImage, NO_AUTH),
     },
     "/api/games": {
       GET: withDeps(getGames, NO_AUTH)

@@ -1,7 +1,7 @@
 import { BunRequest } from 'bun';
 import { db } from '../db/client';
 import { createListingsStore, type ListingFilters } from '../db/listingsTable';
-import { syncGameCreditsIfMissing } from '../bgg/syncGameCredits';
+import { syncGameInfoIfMissing } from '../bgg/syncGameInfo';
 import { RouteDependencies } from '../middleware/dependencies';
 import { badRequest, json, notFound, readJson } from '../utils/http';
 import { randomToken } from '../utils/security';
@@ -56,7 +56,7 @@ type CreatePostListingOptions = {
   createListingId?: () => string;
   listingsStore?: ListingsStore;
   logger?: Pick<Console, 'error'>;
-  syncGameCreditsIfMissing?: (gameId: number) => Promise<boolean>;
+  syncGameInfoIfMissing?: (gameId: number) => Promise<boolean>;
 };
 
 const defaultListingsStore = createListingsStore(db);
@@ -228,7 +228,7 @@ export function createPostListing({
   createListingId = () => randomToken(18),
   listingsStore = defaultListingsStore,
   logger = console,
-  syncGameCreditsIfMissing: syncCreditsIfMissing = syncGameCreditsIfMissing,
+  syncGameInfoIfMissing: syncCreditsIfMissing = syncGameInfoIfMissing,
 }: CreatePostListingOptions = {}) {
   return async function postListing(
     request: BunRequest<'/api/listings'>,

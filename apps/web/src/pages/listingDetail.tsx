@@ -36,6 +36,7 @@ type Listing = {
 	user_id: string;
 	description: string | null;
 	game: { id: number; name: string };
+	game_image_path: string | null;
 	images: ListingImage[];
 	seller: Seller;
 	condition: string;
@@ -199,7 +200,14 @@ export function ListingDetail({ id }: { id?: string }) {
 			</section>
 
 			<section class="max-w-5xl mx-auto px-4 md:px-8 pb-16 grid md:grid-cols-[1.1fr_1fr] gap-8 md:gap-10">
-				<ListingGallery images={listing.images} activeImage={activeImage} onSelect={setActiveImageId} gameName={listing.game.name} />
+				<ListingGallery
+					images={listing.images}
+					activeImage={activeImage}
+					onSelect={setActiveImageId}
+					gameName={listing.game.name}
+					gameId={listing.game.id}
+					fallbackImagePath={listing.game_image_path}
+				/>
 				<ListingSummary
 					listing={listing}
 					sellerLabel={sellerLabel}
@@ -217,9 +225,12 @@ type GalleryProps = {
 	activeImage: ListingImage | null;
 	onSelect: (imageId: string) => void;
 	gameName: string;
+	gameId: number;
+	fallbackImagePath: string | null;
 };
 
-function ListingGallery({ images, activeImage, onSelect, gameName }: GalleryProps) {
+function ListingGallery({ images, activeImage, onSelect, gameName, gameId, fallbackImagePath }: GalleryProps) {
+	const showFallback = activeImage === null && fallbackImagePath !== null;
 	return (
 		<div class="flex flex-col gap-3">
 			{activeImage ? (
@@ -227,6 +238,12 @@ function ListingGallery({ images, activeImage, onSelect, gameName }: GalleryProp
 					src={`/api/listing-images/${activeImage.id}`}
 					alt={gameName}
 					class="w-full h-auto rounded-2xl border border-base-300 bg-base-200"
+				/>
+			) : showFallback ? (
+				<img
+					src={`/api/game-images/${gameId}`}
+					alt={gameName}
+					class="w-full h-auto rounded-2xl border border-base-300 bg-base-200 object-contain"
 				/>
 			) : (
 				<div class="w-full aspect-[4/3] rounded-2xl border border-base-300 bg-base-200/60 flex items-center justify-center text-base-content/40">

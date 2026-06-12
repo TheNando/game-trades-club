@@ -7,7 +7,7 @@ export type GameCreditRecord = {
   name: string;
 };
 
-export type GameCredits = {
+export type GameInfo = {
   artists: GameCreditRecord[];
   categories: GameCreditRecord[];
   designers: GameCreditRecord[];
@@ -15,7 +15,7 @@ export type GameCredits = {
   publishers: GameCreditRecord[];
 };
 
-type CreditBucket = keyof GameCredits;
+type CreditBucket = keyof GameInfo;
 
 type NormalizedGameCreditRecord = {
   bggId: number | null;
@@ -23,7 +23,7 @@ type NormalizedGameCreditRecord = {
   name: string;
 };
 
-type NormalizedGameCredits = Record<CreditBucket, NormalizedGameCreditRecord[]>;
+type NormalizedGameInfo = Record<CreditBucket, NormalizedGameCreditRecord[]>;
 
 type CreditTableConfig = {
   entityColumn: string;
@@ -93,7 +93,7 @@ function dedupeCreditRecords(records: GameCreditRecord[]): NormalizedGameCreditR
   return [...deduped.values()];
 }
 
-function normalizeGameCredits(credits: GameCredits): NormalizedGameCredits {
+function normalizeGameInfo(credits: GameInfo): NormalizedGameInfo {
   return {
     artists: dedupeCreditRecords(credits.artists),
     categories: dedupeCreditRecords(credits.categories),
@@ -103,9 +103,9 @@ function normalizeGameCredits(credits: GameCredits): NormalizedGameCredits {
   };
 }
 
-export function createGameCreditsStore(database: Database) {
+export function createGameInfoStore(database: Database) {
   type ClearJoinStatement = Statement<unknown, [number]>;
-  type FindEntityStatement = Statement<{ id: number }, [string]>;
+  type FindEntityStatement = Statement<{ id: number; }, [string]>;
   type InsertJoinStatement = Statement<unknown, [number, number]>;
   type UpsertEntityStatement = Statement<unknown, [number | null, string, string | null]>;
 
@@ -119,7 +119,7 @@ export function createGameCreditsStore(database: Database) {
   const findEntityStatements = Object.fromEntries(
     Object.entries(creditTableConfigs).map(([bucket, config]) => [
       bucket,
-      database.query<{ id: number }, [string]>(`SELECT id FROM ${config.entityTable} WHERE name = ?`),
+      database.query<{ id: number; }, [string]>(`SELECT id FROM ${config.entityTable} WHERE name = ?`),
     ])
   ) as Record<CreditBucket, FindEntityStatement>;
 
@@ -148,7 +148,7 @@ export function createGameCreditsStore(database: Database) {
 
   const listGamesWithAnyCreditsStmt = (gameIds: number[]) =>
     database
-      .query<{ game_id: number }, number[]>(
+      .query<{ game_id: number; }, number[]>(
         `SELECT DISTINCT game_id
          FROM (
            SELECT game_id FROM game_publishers WHERE game_id IN (${gameIds.map(() => '?').join(', ')})
@@ -164,8 +164,8 @@ export function createGameCreditsStore(database: Database) {
       )
       .all(...gameIds, ...gameIds, ...gameIds, ...gameIds, ...gameIds);
 
-  const replaceGameCreditsTxn = database.transaction((gameId: number, credits: GameCredits) => {
-    const normalized = normalizeGameCredits(credits);
+  const replaceGameInfoTxn = database.transaction((gameId: number, credits: GameInfo) => {
+    const normalized = normalizeGameInfo(credits);
 
     for (const bucket of Object.keys(creditTableConfigs) as CreditBucket[]) {
       clearJoinStatements[bucket].run(gameId);
@@ -173,7 +173,7 @@ export function createGameCreditsStore(database: Database) {
       for (const record of normalized[bucket]) {
         upsertEntityStatements[bucket].run(record.bggId, record.name, record.description);
 
-        const entity = findEntityStatements[bucket].get(record.name) as { id: number } | null;
+        const entity = findEntityStatements[bucket].get(record.name) as { id: number; } | null;
         if (!entity) {
           throw new Error(`Unable to find ${bucket} row for ${record.name}`);
         }
@@ -192,15 +192,15 @@ export function createGameCreditsStore(database: Database) {
       );
       return gameIds.filter((gameId) => !gamesWithAnyCredits.has(gameId));
     },
-    replaceGameCredits(gameId: number, credits: GameCredits) {
-      replaceGameCreditsTxn(gameId, credits);
+    replaceGameInfo(gameId: number, credits: GameInfo) {
+      replaceGameInfoTxn(gameId, credits);
     },
   };
 }
 
-const gameCreditsStore = createGameCreditsStore(db);
+const GameInfoStore = createGameInfoStore(db);
 
 export const {
   listGameIdsMissingCredits,
-  replaceGameCredits,
-} = gameCreditsStore;
+  replaceGameInfo,
+} = GameInfoStore;

@@ -575,7 +575,7 @@ describe('createGetListingDetail', () => {
 
 describe('createPostListing', () => {
   test('syncs missing game credits after creating a listing', async () => {
-    const syncGameCredits = mock(async () => true);
+    const syncGameInfo = mock(async () => true);
     const postListing = createPostListing({
       createListingId: () => 'listing-1',
       listingsStore: {
@@ -592,7 +592,7 @@ describe('createPostListing', () => {
           updated_at: '2026-01-01 00:00:00',
         }),
       } as never,
-      syncGameCreditsIfMissing: syncGameCredits,
+      syncGameInfoIfMissing: syncGameInfo,
     });
 
     const request = new Request('http://example.test/api/listings', {
@@ -613,11 +613,11 @@ describe('createPostListing', () => {
     });
 
     expect(response.status).toBe(201);
-    expect(syncGameCredits).toHaveBeenCalledWith(7);
+    expect(syncGameInfo).toHaveBeenCalledWith(7);
   });
 
   test('still creates the listing when the credit sync fails', async () => {
-    const syncGameCredits = mock(async () => {
+    const syncGameInfo = mock(async () => {
       throw new Error('bgg unavailable');
     });
     const logger = { error: mock(() => undefined) };
@@ -638,7 +638,7 @@ describe('createPostListing', () => {
         }),
       } as never,
       logger,
-      syncGameCreditsIfMissing: syncGameCredits,
+      syncGameInfoIfMissing: syncGameInfo,
     });
 
     const request = new Request('http://example.test/api/listings', {

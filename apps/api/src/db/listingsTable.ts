@@ -8,6 +8,7 @@ export type Listing = {
   description: string | null;
   game: { id: number; name: string; };
   cover_image: { id: string; has_thumb: boolean; } | null;
+  game_image_path: string | null;
   condition: string;
   price: number;
   status: 'open' | 'pending' | 'complete';
@@ -27,12 +28,17 @@ export type ListingDetail = Omit<Listing, 'cover_image'> & {
   preferred_shop: Shop | null;
 };
 
+function buildGameImagePath(gameId: number, gameImageUrl: string | null): string | null {
+  return gameImageUrl ? `/api/game-images/${gameId}?variant=thumb` : null;
+}
+
 type ListingDetailRow = {
   id: string;
   user_id: string;
   description: string | null;
   game_id: number;
   game_name: string;
+  game_image_url: string | null;
   seller_name: string | null;
   seller_avatar_url: string | null;
   seller_created_at: string;
@@ -66,6 +72,7 @@ type ListingRow = {
   description: string | null;
   game_id: number;
   game_name: string;
+  game_image_url: string | null;
   cover_image_id: string | null;
   cover_image_has_thumb: number | null;
   condition: string;
@@ -121,6 +128,7 @@ function rowToListing(row: ListingRow): Listing {
     description: row.description,
     game: { id: row.game_id, name: row.game_name },
     cover_image: cover,
+    game_image_path: cover ? null : buildGameImagePath(row.game_id, row.game_image_url),
     condition: row.condition,
     price: row.price,
     status: row.status,
@@ -149,6 +157,7 @@ function rowToPreferredShop(row: ListingDetailRow): Shop | null {
 
 const listingSelectColumns = `listings.id, listings.user_id, listings.description, listings.game_id,
             games.name AS game_name,
+            games.image_url AS game_image_url,
             cover.id AS cover_image_id,
             CASE WHEN cover.thumb_stored_filename IS NOT NULL THEN 1 ELSE 0 END AS cover_image_has_thumb,
             listings.condition, listings.price, listings.status, listings.preferred_shop_id,
@@ -286,6 +295,7 @@ export function createListingsStore(database: Database) {
   const findDetailStmt = database.query<ListingDetailRow, [string]>(
     `SELECT listings.id, listings.user_id, listings.description, listings.game_id,
             games.name AS game_name,
+            games.image_url AS game_image_url,
             users.name AS seller_name,
             users.avatar_url AS seller_avatar_url,
             users.created_at AS seller_created_at,
@@ -346,6 +356,9 @@ export function createListingsStore(database: Database) {
         user_id: row.user_id,
         description: row.description,
         game: { id: row.game_id, name: row.game_name },
+        game_image_path: images.length > 0
+          ? null
+          : buildGameImagePath(row.game_id, row.game_image_url),
         condition: row.condition,
         price: row.price,
         status: row.status,

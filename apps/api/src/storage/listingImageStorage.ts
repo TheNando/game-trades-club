@@ -15,7 +15,7 @@ const supportedImageMimeTypesByExtension = new Map<string, string>([
   ['.webp', 'image/webp'],
 ]);
 
-const THUMB_MAX_DIMENSION = 480;
+const THUMB_MAX_DIMENSION = 200;
 const THUMB_WEBP_QUALITY = 78;
 
 export function getListingImageUploadDir() {
@@ -62,7 +62,7 @@ async function writeThumbnail(uploadDir: string, sourcePath: string, baseId: str
   const pipeline = Bun.file(sourcePath)
     .image()
     .resize(THUMB_MAX_DIMENSION, THUMB_MAX_DIMENSION, {
-      fit: 'inside',
+      fit: 'cover',
       withoutEnlargement: true,
     })
     .webp({ quality: THUMB_WEBP_QUALITY });
