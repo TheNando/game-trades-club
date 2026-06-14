@@ -86,7 +86,7 @@ export async function fetchGameInfo({
 
   const response = await fetchFn(url, {
     headers: {
-      Authorization: `Bearer ${process.env.BGG_API_TOKEN ?? ''}`,
+      Authorization: process.env.BGG_API_TOKEN ? `Bearer ${process.env.BGG_API_TOKEN}` : 'Bearer',
     },
   });
 

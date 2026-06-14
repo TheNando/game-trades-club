@@ -62,7 +62,7 @@ async function writeThumbnail(uploadDir: string, sourcePath: string, baseId: str
   const pipeline = Bun.file(sourcePath)
     .image()
     .resize(THUMB_MAX_DIMENSION, THUMB_MAX_DIMENSION, {
-      fit: 'cover',
+      fit: 'inside',
       withoutEnlargement: true,
     })
     .webp({ quality: THUMB_WEBP_QUALITY });
