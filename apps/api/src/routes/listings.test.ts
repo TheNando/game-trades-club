@@ -401,6 +401,38 @@ describe('parseListingFilters', () => {
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(400);
   });
+
+  test('parses weight_min and weight_max as floats', () => {
+    const params = new URLSearchParams();
+    params.set('weight_min', '1.5');
+    params.set('weight_max', '3.5');
+    const filters = parseListingFilters(params);
+    expect(filters).toMatchObject({ weightMin: 1.5, weightMax: 3.5 });
+  });
+
+  test('parses min_rating with rating_type', () => {
+    const params = new URLSearchParams();
+    params.set('min_rating', '7.5');
+    params.set('rating_type', 'adjusted');
+    const filters = parseListingFilters(params);
+    expect(filters).toMatchObject({ minRating: 7.5, ratingType: 'adjusted' });
+  });
+
+  test('rejects invalid rating_type values', async () => {
+    const params = new URLSearchParams();
+    params.set('rating_type', 'geek');
+    const result = parseListingFilters(params);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(400);
+  });
+
+  test('rejects non-numeric weight params', async () => {
+    const params = new URLSearchParams();
+    params.set('weight_min', 'heavy');
+    const result = parseListingFilters(params);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(400);
+  });
 });
 
 describe('createGetListings', () => {
@@ -533,6 +565,46 @@ describe('createListingsStore.listFilteredListings', () => {
       .listFilteredListings({ conditions: ['new'], priceMin: 50, players: 6 })
       .map((item) => item.id);
     expect(ids).toEqual(['war-listing']);
+  });
+
+  test('filters by weight range', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedGame(database, 1);
+    seedGame(database, 2);
+    database.run(`UPDATE games SET weight = 1.5 WHERE id = 1`);
+    database.run(`UPDATE games SET weight = 3.8 WHERE id = 2`);
+    seedListing(database, { id: 'light-listing', gameId: 1 });
+    seedListing(database, { id: 'heavy-listing', gameId: 2 });
+
+    const store = createListingsStore(database);
+    const ids = store.listFilteredListings({ weightMin: 3.0 }).map((item) => item.id);
+    expect(ids).toEqual(['heavy-listing']);
+
+    const allIds = store.listFilteredListings({ weightMin: 1.0, weightMax: 4.0 }).map((item) => item.id).sort();
+    expect(allIds).toEqual(['heavy-listing', 'light-listing']);
+  });
+
+  test('filters by average rating', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedGame(database, 1);
+    seedGame(database, 2);
+    database.run(`UPDATE games SET rating = 6.5, adjusted_rating = 6.0 WHERE id = 1`);
+    database.run(`UPDATE games SET rating = 8.2, adjusted_rating = 7.9 WHERE id = 2`);
+    seedListing(database, { id: 'low-rated', gameId: 1 });
+    seedListing(database, { id: 'high-rated', gameId: 2 });
+
+    const store = createListingsStore(database);
+
+    const byAvg = store.listFilteredListings({ minRating: 7.0, ratingType: 'average' }).map((item) => item.id);
+    expect(byAvg).toEqual(['high-rated']);
+
+    const byBayes = store.listFilteredListings({ minRating: 7.5, ratingType: 'adjusted' }).map((item) => item.id);
+    expect(byBayes).toEqual(['high-rated']);
+
+    const lowBar = store.listFilteredListings({ minRating: 6.0, ratingType: 'adjusted' }).map((item) => item.id).sort();
+    expect(lowBar).toEqual(['high-rated', 'low-rated']);
   });
 });
 

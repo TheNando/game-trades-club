@@ -8,6 +8,10 @@ export type GamesFilterState = {
   playtime: string;
   categoryIds: number[];
   mechanicIds: number[];
+  weightMin: string;
+  weightMax: string;
+  minRating: string;
+  ratingType: 'average' | 'adjusted';
 };
 
 export const CONDITION_OPTIONS: { value: string; label: string; }[] = [
@@ -29,6 +33,10 @@ export function emptyGamesFilters(): GamesFilterState {
     playtime: '',
     categoryIds: [],
     mechanicIds: [],
+    weightMin: '',
+    weightMax: '',
+    minRating: '',
+    ratingType: 'average',
   };
 }
 
@@ -42,7 +50,10 @@ export function isEmptyGamesFilters(state: GamesFilterState): boolean {
     state.players === '' &&
     state.playtime === '' &&
     state.categoryIds.length === 0 &&
-    state.mechanicIds.length === 0
+    state.mechanicIds.length === 0 &&
+    state.weightMin === '' &&
+    state.weightMax === '' &&
+    state.minRating === ''
   );
 }
 
@@ -83,6 +94,11 @@ export function parseGamesFiltersFromSearch(search: URLSearchParams): GamesFilte
   state.categoryIds = Array.from(new Set(parseIntList(search.getAll('category'))));
   state.mechanicIds = Array.from(new Set(parseIntList(search.getAll('mechanic'))));
 
+  state.weightMin = parseNumberInput(search.get('weight_min'));
+  state.weightMax = parseNumberInput(search.get('weight_max'));
+  state.minRating = parseNumberInput(search.get('min_rating'));
+  state.ratingType = search.get('rating_type') === 'adjusted' ? 'adjusted' : 'average';
+
   return state;
 }
 
@@ -97,6 +113,12 @@ export function gamesFiltersToSearch(state: GamesFilterState): URLSearchParams {
   if (state.playtime !== '') params.set('playtime', state.playtime);
   for (const id of state.categoryIds) params.append('category', String(id));
   for (const id of state.mechanicIds) params.append('mechanic', String(id));
+  if (state.weightMin !== '') params.set('weight_min', state.weightMin);
+  if (state.weightMax !== '') params.set('weight_max', state.weightMax);
+  if (state.minRating !== '') {
+    params.set('min_rating', state.minRating);
+    params.set('rating_type', state.ratingType);
+  }
   return params;
 }
 

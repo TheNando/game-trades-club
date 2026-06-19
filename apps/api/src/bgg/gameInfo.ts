@@ -27,6 +27,13 @@ function parsePositiveIntField(value: string | undefined | null): number | null 
   return parsed;
 }
 
+function parseFloatField(value: string | undefined | null): number | null {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed)) return null;
+  return parsed;
+}
+
 const xmlNamedEntities: Record<string, string> = {
   amp: '&',
   apos: "'",
@@ -82,7 +89,7 @@ export async function fetchGameInfo({
   fetchFn = fetch,
   gameId,
 }: FetchGameInfoOptions): Promise<GamePageData> {
-  const url = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}`;
+  const url = `https://boardgamegeek.com/xmlapi2/thing?id=${gameId}&stats=1`;
 
   const response = await fetchFn(url, {
     headers: {
@@ -107,6 +114,9 @@ export async function fetchGameInfo({
 
   const itemXml = itemMatch[1];
 
+  const ratingsMatch = itemXml.match(/<ratings\b[^>]*>([\s\S]*?)<\/ratings>/);
+  const ratingsXml = ratingsMatch ? ratingsMatch[1] : '';
+
   return {
     credits: {
       artists: getCreditRecordsFromXmlLinks(itemXml, artistId),
@@ -121,6 +131,9 @@ export async function fetchGameInfo({
       maxPlayers: parsePositiveIntField(extractTagValue(itemXml, 'maxplayers')),
       minPlaytime: parsePositiveIntField(extractTagValue(itemXml, 'minplaytime')),
       maxPlaytime: parsePositiveIntField(extractTagValue(itemXml, 'maxplaytime')),
+      rating: parseFloatField(extractTagValue(ratingsXml, 'average')),
+      adjusted_rating: parseFloatField(extractTagValue(ratingsXml, 'bayesaverage')),
+      weight: parseFloatField(extractTagValue(ratingsXml, 'averageweight')),
     },
   };
 }

@@ -20,6 +20,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 - [ ] Messaging / contact flow between buyer and seller. The landing page promises "message the owner"; nothing implements it.
 - [ ] Search bar on `/games`.
 - [x] Filters on `/games`: condition, price range, category, mechanic, player count, year.
+- [ ] Close the game-stats data gaps. `rating`/`adjusted_rating` are bulk-loaded from `scripts/boardgames_ranks.csv` (with `weight` still backfilled per-game from the BGG API on listing creation). Two follow-ups: (1) **Coverage gap** — games absent from the CSV have no rating/adjusted_rating until a BGG sync fires; decide on a fallback (e.g. populate ratings during the same BGG sync that fetches weight, or fetch the CSV row on demand). (2) **Staleness** — the CSV is a static snapshot, so ratings freeze at export time; add a feature to periodically re-fetch/refresh the ranks CSV and re-run the loader to keep stats current. No decision now; tracked for later.
 - [ ] Sort options on `/games` (newest, price asc/desc).
 - [ ] Add `city` / location to `users` and scope listings by city — the core "neighbors in your city" pitch.
 - [x] Pickup-shop directory (`shops` table) and shop picker on each listing; map view.

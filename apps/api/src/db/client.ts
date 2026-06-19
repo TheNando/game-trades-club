@@ -28,5 +28,8 @@ addColumnIfMissing('games', 'min_players', 'INTEGER');
 addColumnIfMissing('games', 'max_players', 'INTEGER');
 addColumnIfMissing('games', 'min_playtime', 'INTEGER');
 addColumnIfMissing('games', 'max_playtime', 'INTEGER');
+addColumnIfMissing('games', 'rating', 'REAL');
+addColumnIfMissing('games', 'adjusted_rating', 'REAL');
+addColumnIfMissing('games', 'weight', 'REAL');
 
 export { db };

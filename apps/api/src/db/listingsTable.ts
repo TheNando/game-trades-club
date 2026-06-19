@@ -7,6 +7,7 @@ export type Listing = {
   user_id: string;
   description: string | null;
   game: { id: number; name: string; };
+  rating: number | null;
   cover_image: { id: string; has_thumb: boolean; } | null;
   game_image_path: string | null;
   condition: string;
@@ -39,6 +40,7 @@ type ListingDetailRow = {
   game_id: number;
   game_name: string;
   game_image_url: string | null;
+  game_rating: number | null;
   seller_name: string | null;
   seller_avatar_url: string | null;
   seller_created_at: string;
@@ -73,6 +75,7 @@ type ListingRow = {
   game_id: number;
   game_name: string;
   game_image_url: string | null;
+  game_rating: number | null;
   cover_image_id: string | null;
   cover_image_has_thumb: number | null;
   condition: string;
@@ -112,6 +115,10 @@ export type ListingFilters = {
   playtime?: number;
   categoryIds?: number[];
   mechanicIds?: number[];
+  weightMin?: number;
+  weightMax?: number;
+  minRating?: number;
+  ratingType?: 'average' | 'adjusted';
 };
 
 function rowToListing(row: ListingRow): Listing {
@@ -127,6 +134,7 @@ function rowToListing(row: ListingRow): Listing {
     user_id: row.user_id,
     description: row.description,
     game: { id: row.game_id, name: row.game_name },
+    rating: row.game_rating,
     cover_image: cover,
     game_image_path: cover ? null : buildGameImagePath(row.game_id, row.game_image_url),
     condition: row.condition,
@@ -158,6 +166,7 @@ function rowToPreferredShop(row: ListingDetailRow): Shop | null {
 const listingSelectColumns = `listings.id, listings.user_id, listings.description, listings.game_id,
             games.name AS game_name,
             games.image_url AS game_image_url,
+            games.rating AS game_rating,
             cover.id AS cover_image_id,
             CASE WHEN cover.thumb_stored_filename IS NOT NULL THEN 1 ELSE 0 END AS cover_image_has_thumb,
             listings.condition, listings.price, listings.status, listings.preferred_shop_id,
@@ -218,6 +227,19 @@ function buildFilteredListingsQuery(filters: ListingFilters): { sql: string; par
                   AND game_mechanics.mechanic_id IN (${filters.mechanicIds.map(() => '?').join(', ')}))`
     );
     params.push(...filters.mechanicIds);
+  }
+  if (filters.weightMin !== undefined) {
+    where.push('games.weight >= ?');
+    params.push(filters.weightMin);
+  }
+  if (filters.weightMax !== undefined) {
+    where.push('games.weight <= ?');
+    params.push(filters.weightMax);
+  }
+  if (filters.minRating !== undefined) {
+    const ratingCol = filters.ratingType === 'adjusted' ? 'games.adjusted_rating' : 'games.rating';
+    where.push(`${ratingCol} >= ?`);
+    params.push(filters.minRating);
   }
 
   const whereClause = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
@@ -296,6 +318,7 @@ export function createListingsStore(database: Database) {
     `SELECT listings.id, listings.user_id, listings.description, listings.game_id,
             games.name AS game_name,
             games.image_url AS game_image_url,
+            games.rating AS game_rating,
             users.name AS seller_name,
             users.avatar_url AS seller_avatar_url,
             users.created_at AS seller_created_at,
@@ -356,6 +379,7 @@ export function createListingsStore(database: Database) {
         user_id: row.user_id,
         description: row.description,
         game: { id: row.game_id, name: row.game_name },
+        rating: row.game_rating,
         game_image_path: images.length > 0
           ? null
           : buildGameImagePath(row.game_id, row.game_image_url),

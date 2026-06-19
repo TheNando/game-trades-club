@@ -1,7 +1,10 @@
+import { RatingHexagon } from './RatingHexagon';
+
 export type ListingCardData = {
 	id: string;
 	description: string | null;
 	game: { id: number; name: string };
+	rating?: number | null;
 	cover_image: { id: string; has_thumb: boolean } | null;
 	game_image_path: string | null;
 	condition: string;
@@ -36,25 +39,28 @@ export function ListingCard({ listing, showDescription = false }: ListingCardPro
 			href={`/listings/${listing.id}`}
 			class="h-full rounded-2xl border border-base-300 bg-base-100 shadow-sm p-5 flex flex-col gap-3 hover:border-base-content/30 hover:shadow-md transition-all"
 		>
-			{listing.cover_image ? (
-				<img
-					src={`/api/listing-images/${listing.cover_image.id}${listing.cover_image.has_thumb ? '?variant=thumb' : ''}`}
-					alt={listing.game.name}
-					class="w-full object-cover rounded-xl border border-base-300 bg-base-200"
-					loading="lazy"
-				/>
-			) : listing.game_image_path ? (
-				<img
-					src={listing.game_image_path}
-					alt={listing.game.name}
-					class="w-full object-contain rounded-xl border border-base-300 bg-base-200"
-					loading="lazy"
-				/>
-			) : (
-				<div class="w-full rounded-xl border border-base-300 bg-base-200/60 flex items-center justify-center text-base-content/40 text-sm">
-					No image
-				</div>
-			)}
+			<div class="relative">
+				{listing.cover_image ? (
+					<img
+						src={`/api/listing-images/${listing.cover_image.id}${listing.cover_image.has_thumb ? '?variant=thumb' : ''}`}
+						alt={listing.game.name}
+						class="w-full object-cover rounded-xl border border-base-300 bg-base-200"
+						loading="lazy"
+					/>
+				) : listing.game_image_path ? (
+					<img
+						src={listing.game_image_path}
+						alt={listing.game.name}
+						class="w-full object-contain rounded-xl border border-base-300 bg-base-200"
+						loading="lazy"
+					/>
+				) : (
+					<div class="w-full rounded-xl border border-base-300 bg-base-200/60 flex items-center justify-center text-base-content/40 text-sm">
+						No image
+					</div>
+				)}
+				<RatingHexagon rating={listing.rating} class="absolute top-2 right-2" />
+			</div>
 			<div class="flex items-baseline justify-between gap-3">
 				<p class="font-display text-xl leading-tight truncate">
 					{listing.game.name}

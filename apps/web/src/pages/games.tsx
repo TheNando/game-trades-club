@@ -274,6 +274,47 @@ function FilterSidebar({ filters, categories, mechanics, hasFilters, onChange, o
 				/>
 			</FilterSection>
 
+			<FilterSection title="Complexity / Weight">
+				<RangeInputs
+					minValue={filters.weightMin}
+					maxValue={filters.weightMax}
+					minPlaceholder="Min (1–5)"
+					maxPlaceholder="Max (1–5)"
+					onMinChange={(value) => onChange({ weightMin: value })}
+					onMaxChange={(value) => onChange({ weightMax: value })}
+				/>
+			</FilterSection>
+
+			<FilterSection title="Minimum Rating">
+				<input
+					type="number"
+					min="1"
+					max="10"
+					step="0.1"
+					inputMode="decimal"
+					class="input input-bordered input-sm w-full"
+					placeholder="e.g. 7.0"
+					value={filters.minRating}
+					onInput={(event) => onChange({ minRating: (event.currentTarget as HTMLInputElement).value })}
+				/>
+				<div class="flex rounded-lg border border-base-300 overflow-hidden text-xs mt-1">
+					<button
+						type="button"
+						class={`flex-1 py-1 px-2 transition-colors ${filters.ratingType === 'average' ? 'bg-primary text-primary-content font-semibold' : 'bg-base-100 text-base-content/70 hover:bg-base-200'}`}
+						onClick={() => onChange({ ratingType: 'average' })}
+					>
+						Avg Rating
+					</button>
+					<button
+						type="button"
+						class={`flex-1 py-1 px-2 transition-colors ${filters.ratingType === 'adjusted' ? 'bg-primary text-primary-content font-semibold' : 'bg-base-100 text-base-content/70 hover:bg-base-200'}`}
+						onClick={() => onChange({ ratingType: 'adjusted' })}
+					>
+						Geek Rating
+					</button>
+				</div>
+			</FilterSection>
+
 			<TaxonomyFilterSection
 				title="Categories"
 				options={categories}

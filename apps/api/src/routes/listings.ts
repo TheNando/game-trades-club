@@ -128,6 +128,13 @@ function parseIntQueryParam(value: string | null, fieldName: string): number | n
   return parsed;
 }
 
+function parseFloatQueryParam(value: string | null, fieldName: string): number | null | Response {
+  if (value === null || value.trim() === '') return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return badRequest(`${fieldName} must be a number`);
+  return parsed;
+}
+
 function parseIntListQueryParam(values: string[], fieldName: string): number[] | Response {
   const flattened = values.flatMap((value) => value.split(',')).map((value) => value.trim()).filter(Boolean);
   const parsed: number[] = [];
@@ -185,6 +192,26 @@ export function parseListingFilters(searchParams: URLSearchParams): ListingFilte
   const mechanicIds = parseIntListQueryParam(searchParams.getAll('mechanic'), 'mechanic');
   if (mechanicIds instanceof Response) return mechanicIds;
   if (mechanicIds.length > 0) filters.mechanicIds = mechanicIds;
+
+  const weightMin = parseFloatQueryParam(searchParams.get('weight_min'), 'weight_min');
+  if (weightMin instanceof Response) return weightMin;
+  if (weightMin !== null) filters.weightMin = weightMin;
+
+  const weightMax = parseFloatQueryParam(searchParams.get('weight_max'), 'weight_max');
+  if (weightMax instanceof Response) return weightMax;
+  if (weightMax !== null) filters.weightMax = weightMax;
+
+  const minRating = parseFloatQueryParam(searchParams.get('min_rating'), 'min_rating');
+  if (minRating instanceof Response) return minRating;
+  if (minRating !== null) filters.minRating = minRating;
+
+  const ratingTypeValue = searchParams.get('rating_type');
+  if (ratingTypeValue !== null) {
+    if (ratingTypeValue !== 'average' && ratingTypeValue !== 'adjusted') {
+      return badRequest('rating_type must be "average" or "adjusted"');
+    }
+    filters.ratingType = ratingTypeValue;
+  }
 
   return filters;
 }

@@ -6,6 +6,8 @@ export type CreateGameInput = {
   imageUrl?: string | null;
   year?: number | null;
   isExpansion?: boolean | number;
+  rating?: number | null;
+  adjustedRating?: number | null;
 };
 
 export type GameStats = {
@@ -13,6 +15,9 @@ export type GameStats = {
   maxPlayers: number | null;
   minPlaytime: number | null;
   maxPlaytime: number | null;
+  rating: number | null;
+  adjusted_rating: number | null;
+  weight: number | null;
 };
 
 export type GameRow = {
@@ -25,6 +30,9 @@ export type GameRow = {
   max_players: number | null;
   min_playtime: number | null;
   max_playtime: number | null;
+  rating: number | null;
+  adjusted_rating: number | null;
+  weight: number | null;
 };
 
 const BATCH_SIZE = 50;
@@ -37,18 +45,21 @@ export type GameSearchResult = {
 
 export function createGamesStore(database: typeof db) {
   const insertStmt = database.query(
-    `INSERT INTO games (id, name, image_url, year, is_expansion)
-     VALUES (?, ?, ?, ?, ?)
+    `INSERT INTO games (id, name, image_url, year, is_expansion, rating, adjusted_rating)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name,
        image_url = COALESCE(excluded.image_url, games.image_url),
        year = excluded.year,
-       is_expansion = excluded.is_expansion`
+       is_expansion = excluded.is_expansion,
+       rating = excluded.rating,
+       adjusted_rating = excluded.adjusted_rating`
   );
 
   const findByIdStmt = database.query<GameRow, [number]>(
     `SELECT id, name, image_url, year, is_expansion,
-            min_players, max_players, min_playtime, max_playtime
+            min_players, max_players, min_playtime, max_playtime,
+            rating, adjusted_rating, weight
      FROM games
      WHERE id = ?`
   );
@@ -57,9 +68,10 @@ export function createGamesStore(database: typeof db) {
     `UPDATE games SET image_url = ? WHERE id = ?`
   );
 
-  const updateStatsStmt = database.query<unknown, [number | null, number | null, number | null, number | null, number]>(
+  const updateStatsStmt = database.query<unknown, [number | null, number | null, number | null, number | null, number | null, number | null, number | null, number]>(
     `UPDATE games
-     SET min_players = ?, max_players = ?, min_playtime = ?, max_playtime = ?
+     SET min_players = ?, max_players = ?, min_playtime = ?, max_playtime = ?,
+         rating = ?, adjusted_rating = ?, weight = ?
      WHERE id = ?`
   );
 
@@ -69,7 +81,8 @@ export function createGamesStore(database: typeof db) {
         `SELECT id FROM games
          WHERE id IN (${gameIds.map(() => '?').join(', ')})
            AND (min_players IS NULL OR max_players IS NULL
-                OR min_playtime IS NULL OR max_playtime IS NULL)`
+                OR min_playtime IS NULL OR max_playtime IS NULL
+                OR weight IS NULL)`
       )
       .all(...gameIds);
 
@@ -94,7 +107,9 @@ export function createGamesStore(database: typeof db) {
         game.name,
         game.imageUrl ?? null,
         game.year ?? null,
-        game.isExpansion ? 1 : 0
+        game.isExpansion ? 1 : 0,
+        game.rating ?? null,
+        game.adjustedRating ?? null
       );
     }
   });
@@ -123,6 +138,9 @@ export function createGamesStore(database: typeof db) {
         stats.maxPlayers,
         stats.minPlaytime,
         stats.maxPlaytime,
+        stats.rating,
+        stats.adjusted_rating,
+        stats.weight,
         gameId
       );
     },

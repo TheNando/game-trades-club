@@ -8,12 +8,18 @@ type XmlStats = {
   minplaytime?: string;
   maxplaytime?: string;
 };
+type XmlRatings = {
+  average?: string;
+  bayesaverage?: string;
+  averageweight?: string;
+};
 
 function createThingXml({
   image,
   links = [],
   stats = {},
-}: { image?: string; links?: XmlLink[]; stats?: XmlStats; } = {}) {
+  ratings,
+}: { image?: string; links?: XmlLink[]; stats?: XmlStats; ratings?: XmlRatings; } = {}) {
   const linkLines = links
     .map((l) => `    <link type="${l.type}" id="${l.id}" value="${l.value}" />`)
     .join('\n');
@@ -22,12 +28,25 @@ function createThingXml({
     .map((k) => `    <${k} value="${stats[k]}" />`)
     .join('\n');
   const imageLine = image === undefined ? '' : `    <image>${image}</image>`;
+  const statisticsBlock = ratings
+    ? `    <statistics page="1">
+      <ratings >
+        ${ratings.average !== undefined ? `<average value="${ratings.average}" />` : ''}
+        ${ratings.bayesaverage !== undefined ? `<bayesaverage value="${ratings.bayesaverage}" />` : ''}
+        <ranks>
+          <rank type="subtype" id="1" name="boardgame" friendlyname="Board Game Rank" value="9" bayesaverage="${ratings.bayesaverage ?? ''}" />
+        </ranks>
+        ${ratings.averageweight !== undefined ? `<averageweight value="${ratings.averageweight}" />` : ''}
+      </ratings>
+    </statistics>`
+    : '';
   return `<?xml version="1.0" encoding="utf-8"?>
 <items termsofuse="https://boardgamegeek.com/xmlapi/termsofuse">
   <item type="boardgame" id="42">
 ${imageLine}
 ${statLines}
 ${linkLines}
+${statisticsBlock}
   </item>
 </items>`;
 }
@@ -75,7 +94,7 @@ describe('fetchGameInfo', () => {
       },
     });
 
-    expect(requestedUrl).toBe('https://boardgamegeek.com/xmlapi2/thing?id=42');
+    expect(requestedUrl).toBe('https://boardgamegeek.com/xmlapi2/thing?id=42&stats=1');
     expect(requestedAuth).toBe('Bearer test-token');
     expect(result.credits).toEqual({
       publishers: [
@@ -93,6 +112,9 @@ describe('fetchGameInfo', () => {
       maxPlayers: 4,
       minPlaytime: 45,
       maxPlaytime: 90,
+      rating: null,
+      adjusted_rating: null,
+      weight: null,
     });
   });
 
@@ -194,7 +216,40 @@ describe('fetchGameInfo', () => {
       maxPlayers: null,
       minPlaytime: 45,
       maxPlaytime: null,
+      rating: null,
+      adjusted_rating: null,
+      weight: null,
     });
+  });
+
+  test('parses rating, adjusted_rating, and weight from the ratings block', async () => {
+    const result = await fetchGameInfo({
+      gameId: 42,
+      gameName: 'Ra',
+      fetchFn: async () =>
+        new Response(
+          createThingXml({
+            ratings: { average: '7.70626', bayesaverage: '7.5111', averageweight: '2.7633' },
+          }),
+          { status: 200 }
+        ),
+    });
+
+    expect(result.stats.rating).toBeCloseTo(7.70626);
+    expect(result.stats.adjusted_rating).toBeCloseTo(7.5111);
+    expect(result.stats.weight).toBeCloseTo(2.7633);
+  });
+
+  test('returns null for rating fields when the ratings block is absent', async () => {
+    const result = await fetchGameInfo({
+      gameId: 42,
+      gameName: 'Ra',
+      fetchFn: async () => new Response(createThingXml(), { status: 200 }),
+    });
+
+    expect(result.stats.rating).toBeNull();
+    expect(result.stats.adjusted_rating).toBeNull();
+    expect(result.stats.weight).toBeNull();
   });
 
   test('throws a not found error when BGG returns 404', async () => {

@@ -31,7 +31,10 @@ CREATE TABLE IF NOT EXISTS games (
   min_players INTEGER,
   max_players INTEGER,
   min_playtime INTEGER,
-  max_playtime INTEGER
+  max_playtime INTEGER,
+  rating REAL,
+  adjusted_rating REAL,
+  weight REAL
 );
 
 CREATE TABLE IF NOT EXISTS publishers (
