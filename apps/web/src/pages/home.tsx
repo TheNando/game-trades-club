@@ -58,7 +58,7 @@ export function Home() {
 					</div>
 
 					{/* Stacked "listing cards" composition */}
-					<div class="lg:col-span-5 relative h-[420px] sm:h-[480px] hidden md:block">
+					<div class="lg:col-span-5 relative h-105 sm:h-120 hidden md:block">
 						<HeroStack />
 					</div>
 				</div>
@@ -325,10 +325,10 @@ function MiniCard({ title, meta, accent, emoji, style, className = '' }: MiniCar
 				: 'bg-accent/20 text-accent-content';
 	return (
 		<div
-			class={`absolute w-56 sm:w-64 rounded-2xl border border-base-300 bg-base-100 shadow-lg p-4 rotate-[var(--r,0deg)] ${className}`}
+			class={`absolute w-56 sm:w-64 rounded-2xl border border-base-300 bg-base-100 shadow-lg p-4 rotate-(--r,0deg) ${className}`}
 			style={style}
 		>
-			<div class={`aspect-[4/3] rounded-xl grid place-items-center text-5xl ${tint}`}>
+			<div class={`aspect-4/3 rounded-xl grid place-items-center text-5xl ${tint}`}>
 				<span aria-hidden="true">{emoji}</span>
 			</div>
 			<div class="mt-3 flex items-baseline justify-between gap-2">
