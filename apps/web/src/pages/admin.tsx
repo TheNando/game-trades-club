@@ -2,527 +2,527 @@ import { useEffect, useState } from 'preact/hooks';
 import { NotFound } from './_404';
 
 type CurrentUser = {
-	id: string;
-	email: string;
-	name: string | null;
-	avatarUrl: string | null;
-	isAdmin: boolean;
+  id: string;
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+  isAdmin: boolean;
 };
 
 type Shop = {
-	id: string;
-	name: string;
-	city: string;
-	state: string | null;
-	zip: string | null;
-	address: string | null;
-	website_url: string | null;
-	latitude: number | null;
-	longitude: number | null;
-	created_at: string;
-	updated_at: string;
+  id: string;
+  name: string;
+  city: string;
+  state: string | null;
+  zip: string | null;
+  address: string | null;
+  website_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  created_at: string;
+  updated_at: string;
 };
 
 type ShopsResponse = {
-	items: Shop[];
+  items: Shop[];
 };
 
 type ShopResponse = {
-	item: Shop;
+  item: Shop;
 };
 
 function normalizeWebsiteUrl(input: string): string {
-	const trimmed = input.trim();
-	if (!trimmed) return '';
-	if (/^https?:\/\//i.test(trimmed)) return trimmed;
-	return `https://${trimmed}`;
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
 }
 
 function parseCoordinate(value: string): { ok: true; value: number | null; } | { ok: false; } {
-	const trimmed = value.trim();
-	if (!trimmed) return { ok: true, value: null };
-	const parsed = Number(trimmed);
-	if (!Number.isFinite(parsed)) return { ok: false };
-	return { ok: true, value: parsed };
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, value: null };
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) return { ok: false };
+  return { ok: true, value: parsed };
 }
 
 function formatCityStateZip(city: string, state: string | null, zip: string | null): string {
-	const stateZip = [state, zip].filter(Boolean).join(' ');
-	return stateZip ? `${city}, ${stateZip}` : city;
+  const stateZip = [state, zip].filter(Boolean).join(' ');
+  return stateZip ? `${city}, ${stateZip}` : city;
 }
 
 function compareShops(a: Shop, b: Shop): number {
-	const byCity = a.city.localeCompare(b.city);
-	return byCity !== 0 ? byCity : a.name.localeCompare(b.name);
+  const byCity = a.city.localeCompare(b.city);
+  return byCity !== 0 ? byCity : a.name.localeCompare(b.name);
 }
 
 export function Admin() {
-	const [authChecked, setAuthChecked] = useState(false);
-	const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-	useEffect(() => {
-		let isMounted = true;
-		(async () => {
-			try {
-				const response = await fetch('/api/me', { credentials: 'include' });
-				if (!response.ok) {
-					if (isMounted) setIsAdmin(false);
-					return;
-				}
-				const data = (await response.json()) as CurrentUser;
-				if (isMounted) setIsAdmin(!!data.isAdmin);
-			} catch {
-				if (isMounted) setIsAdmin(false);
-			} finally {
-				if (isMounted) setAuthChecked(true);
-			}
-		})();
-		return () => {
-			isMounted = false;
-		};
-	}, []);
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      try {
+        const response = await fetch('/api/me', { credentials: 'include' });
+        if (!response.ok) {
+          if (isMounted) setIsAdmin(false);
+          return;
+        }
+        const data = (await response.json()) as CurrentUser;
+        if (isMounted) setIsAdmin(!!data.isAdmin);
+      } catch {
+        if (isMounted) setIsAdmin(false);
+      } finally {
+        if (isMounted) setAuthChecked(true);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-	if (!authChecked || !isAdmin) return <NotFound />;
+  if (!authChecked || !isAdmin) return <NotFound />;
 
-	return <AdminConsole />;
+  return <AdminConsole />;
 }
 
 function AdminConsole() {
-	const [shops, setShops] = useState<Shop[]>([]);
-	const [loadingShops, setLoadingShops] = useState(true);
-	const [loadError, setLoadError] = useState('');
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [loadingShops, setLoadingShops] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
-	const [name, setName] = useState('');
-	const [address, setAddress] = useState('');
-	const [city, setCity] = useState('');
-	const [state, setState] = useState('');
-	const [zip, setZip] = useState('');
-	const [websiteUrl, setWebsiteUrl] = useState('');
-	const [latitude, setLatitude] = useState('');
-	const [longitude, setLongitude] = useState('');
-	const [submitting, setSubmitting] = useState(false);
-	const [submitError, setSubmitError] = useState('');
-	const [submitSuccess, setSubmitSuccess] = useState('');
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zip, setZip] = useState('');
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState('');
 
-	const handleShopUpdated = (updated: Shop) => {
-		setShops((existing) => existing.map((s) => (s.id === updated.id ? updated : s)).sort(compareShops));
-	};
+  const handleShopUpdated = (updated: Shop) => {
+    setShops((existing) => existing.map((s) => (s.id === updated.id ? updated : s)).sort(compareShops));
+  };
 
-	const handleShopDeleted = (id: string) => {
-		setShops((existing) => existing.filter((s) => s.id !== id));
-	};
+  const handleShopDeleted = (id: string) => {
+    setShops((existing) => existing.filter((s) => s.id !== id));
+  };
 
-	const loadShops = async () => {
-		setLoadError('');
-		try {
-			const response = await fetch('/api/shops', { credentials: 'include' });
-			if (!response.ok) {
-				setLoadError('Unable to load shops.');
-				return;
-			}
-			const data = (await response.json()) as ShopsResponse;
-			setShops(data.items ?? []);
-		} catch {
-			setLoadError('Unable to load shops.');
-		} finally {
-			setLoadingShops(false);
-		}
-	};
+  const loadShops = async () => {
+    setLoadError('');
+    try {
+      const response = await fetch('/api/shops', { credentials: 'include' });
+      if (!response.ok) {
+        setLoadError('Unable to load shops.');
+        return;
+      }
+      const data = (await response.json()) as ShopsResponse;
+      setShops(data.items ?? []);
+    } catch {
+      setLoadError('Unable to load shops.');
+    } finally {
+      setLoadingShops(false);
+    }
+  };
 
-	useEffect(() => {
-		loadShops();
-	}, []);
+  useEffect(() => {
+    loadShops();
+  }, []);
 
-	const submitShop = async (event: Event) => {
-		event.preventDefault();
-		setSubmitError('');
-		setSubmitSuccess('');
+  const submitShop = async (event: Event) => {
+    event.preventDefault();
+    setSubmitError('');
+    setSubmitSuccess('');
 
-		if (!name.trim() || !city.trim()) {
-			setSubmitError('Name and city are required.');
-			return;
-		}
+    if (!name.trim() || !city.trim()) {
+      setSubmitError('Name and city are required.');
+      return;
+    }
 
-		const lat = parseCoordinate(latitude);
-		if (!lat.ok) {
-			setSubmitError('Latitude must be a number.');
-			return;
-		}
-		const lng = parseCoordinate(longitude);
-		if (!lng.ok) {
-			setSubmitError('Longitude must be a number.');
-			return;
-		}
-		if ((lat.value === null) !== (lng.value === null)) {
-			setSubmitError('Provide both latitude and longitude, or leave both empty.');
-			return;
-		}
+    const lat = parseCoordinate(latitude);
+    if (!lat.ok) {
+      setSubmitError('Latitude must be a number.');
+      return;
+    }
+    const lng = parseCoordinate(longitude);
+    if (!lng.ok) {
+      setSubmitError('Longitude must be a number.');
+      return;
+    }
+    if ((lat.value === null) !== (lng.value === null)) {
+      setSubmitError('Provide both latitude and longitude, or leave both empty.');
+      return;
+    }
 
-		setSubmitting(true);
-		try {
-			const response = await fetch('/api/shops', {
-				method: 'POST',
-				credentials: 'include',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					name: name.trim(),
-					address: address.trim(),
-					city: city.trim(),
-					state: state.trim(),
-					zip: zip.trim(),
-					website_url: normalizeWebsiteUrl(websiteUrl),
-					latitude: lat.value,
-					longitude: lng.value,
-				}),
-			});
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/shops', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          address: address.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          zip: zip.trim(),
+          website_url: normalizeWebsiteUrl(websiteUrl),
+          latitude: lat.value,
+          longitude: lng.value,
+        }),
+      });
 
-			if (!response.ok) {
-				try {
-					const errorBody = (await response.json()) as { error?: string };
-					setSubmitError(errorBody.error ?? 'Unable to create shop.');
-				} catch {
-					setSubmitError('Unable to create shop.');
-				}
-				return;
-			}
+      if (!response.ok) {
+        try {
+          const errorBody = (await response.json()) as { error?: string };
+          setSubmitError(errorBody.error ?? 'Unable to create shop.');
+        } catch {
+          setSubmitError('Unable to create shop.');
+        }
+        return;
+      }
 
-			const body = (await response.json()) as ShopResponse;
-			setShops((existing) => [...existing, body.item].sort(compareShops));
-			setName('');
-			setAddress('');
-			setCity('');
-			setState('');
-			setZip('');
-			setWebsiteUrl('');
-			setLatitude('');
-			setLongitude('');
-			setSubmitSuccess('Shop added.');
-		} catch {
-			setSubmitError('Unable to create shop.');
-		} finally {
-			setSubmitting(false);
-		}
-	};
+      const body = (await response.json()) as ShopResponse;
+      setShops((existing) => [...existing, body.item].sort(compareShops));
+      setName('');
+      setAddress('');
+      setCity('');
+      setState('');
+      setZip('');
+      setWebsiteUrl('');
+      setLatitude('');
+      setLongitude('');
+      setSubmitSuccess('Shop added.');
+    } catch {
+      setSubmitError('Unable to create shop.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-	return (
-		<div class="min-h-screen bg-base-100 text-base-content">
-			<section class="relative overflow-hidden border-b border-base-300 bg-base-200 bg-paper">
-				<div class="absolute inset-0 bg-dotgrid opacity-[0.25] pointer-events-none" />
-				<div class="relative z-10 max-w-4xl mx-auto px-4 md:px-8 pt-12 pb-8">
-					<p class="text-xs uppercase tracking-[0.22em] text-primary/80 font-semibold">Admin</p>
-					<h1 class="font-display text-4xl md:text-5xl font-medium mt-2 leading-tight">Game stores</h1>
-					<p class="mt-3 text-base-content/70 max-w-xl">
-						Add pickup-friendly shops where neighbors can meet to hand off games.
-					</p>
-				</div>
-			</section>
+  return (
+    <div class="min-h-screen bg-base-100 text-base-content">
+      <section class="relative overflow-hidden border-b border-base-300 bg-base-200 bg-paper">
+        <div class="absolute inset-0 bg-dotgrid opacity-[0.25] pointer-events-none" />
+        <div class="relative z-10 max-w-4xl mx-auto px-4 md:px-8 pt-12 pb-8">
+          <p class="text-xs uppercase tracking-[0.22em] text-primary/80 font-semibold">Admin</p>
+          <h1 class="font-display text-4xl md:text-5xl font-medium mt-2 leading-tight">Game stores</h1>
+          <p class="mt-3 text-base-content/70 max-w-xl">
+            Add pickup-friendly shops where neighbors can meet to hand off games.
+          </p>
+        </div>
+      </section>
 
-			<section class="max-w-4xl mx-auto px-4 md:px-8 py-10 grid gap-10 md:grid-cols-[1fr_1fr]">
-				<form class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-6 md:p-7 flex flex-col gap-4" onSubmit={submitShop}>
-					<h2 class="font-display text-2xl">Add a shop</h2>
-					<div class="flex flex-col gap-1.5">
-						<label class="text-sm font-medium" for="shop-name">Name</label>
-						<input id="shop-name" class="input input-bordered rounded-xl" type="text" required value={name}
-							onInput={(e) => setName((e.currentTarget as HTMLInputElement).value)} />
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<label class="text-sm font-medium" for="shop-address">Address</label>
-						<input id="shop-address" class="input input-bordered rounded-xl" type="text" value={address}
-							onInput={(e) => setAddress((e.currentTarget as HTMLInputElement).value)} />
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<label class="text-sm font-medium" for="shop-city">City</label>
-						<input id="shop-city" class="input input-bordered rounded-xl" type="text" required value={city}
-							onInput={(e) => setCity((e.currentTarget as HTMLInputElement).value)} />
-					</div>
-					<div class="grid gap-3 sm:grid-cols-2">
-						<div class="flex flex-col gap-1.5">
-							<label class="text-sm font-medium" for="shop-state">State</label>
-							<input id="shop-state" class="input input-bordered rounded-xl" type="text" placeholder="CA" value={state}
-								onInput={(e) => setState((e.currentTarget as HTMLInputElement).value)} />
-						</div>
-						<div class="flex flex-col gap-1.5">
-							<label class="text-sm font-medium" for="shop-zip">ZIP</label>
-							<input id="shop-zip" class="input input-bordered rounded-xl" type="text" inputMode="numeric" placeholder="94110" value={zip}
-								onInput={(e) => setZip((e.currentTarget as HTMLInputElement).value)} />
-						</div>
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<label class="text-sm font-medium" for="shop-website">Website</label>
-						<input id="shop-website" class="input input-bordered rounded-xl" type="text" placeholder="example.com" value={websiteUrl}
-							onInput={(e) => setWebsiteUrl((e.currentTarget as HTMLInputElement).value)} />
-						<p class="text-xs text-base-content/55">https:// is added automatically if you leave it off.</p>
-					</div>
-					<div class="grid gap-3 sm:grid-cols-2">
-						<div class="flex flex-col gap-1.5">
-							<label class="text-sm font-medium" for="shop-latitude">Latitude</label>
-							<input id="shop-latitude" class="input input-bordered rounded-xl" type="text" inputMode="decimal" placeholder="40.7128" value={latitude}
-								onInput={(e) => setLatitude((e.currentTarget as HTMLInputElement).value)} />
-						</div>
-						<div class="flex flex-col gap-1.5">
-							<label class="text-sm font-medium" for="shop-longitude">Longitude</label>
-							<input id="shop-longitude" class="input input-bordered rounded-xl" type="text" inputMode="decimal" placeholder="-74.0060" value={longitude}
-								onInput={(e) => setLongitude((e.currentTarget as HTMLInputElement).value)} />
-						</div>
-						<p class="sm:col-span-2 text-xs text-base-content/55">
-							On Google Maps, right-click the shop's location and click the coordinates at the top of the menu to copy them. Paste the first number into Latitude and the second into Longitude. Optional, but required to show the shop on the map.
-						</p>
-					</div>
+      <section class="max-w-4xl mx-auto px-4 md:px-8 py-10 grid gap-10 md:grid-cols-[1fr_1fr]">
+        <form class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-6 md:p-7 flex flex-col gap-4" onSubmit={submitShop}>
+          <h2 class="font-display text-2xl">Add a shop</h2>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium" for="shop-name">Name</label>
+            <input id="shop-name" class="input input-bordered rounded-xl" type="text" required value={name}
+              onInput={(e) => setName((e.currentTarget as HTMLInputElement).value)} />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium" for="shop-address">Address</label>
+            <input id="shop-address" class="input input-bordered rounded-xl" type="text" value={address}
+              onInput={(e) => setAddress((e.currentTarget as HTMLInputElement).value)} />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium" for="shop-city">City</label>
+            <input id="shop-city" class="input input-bordered rounded-xl" type="text" required value={city}
+              onInput={(e) => setCity((e.currentTarget as HTMLInputElement).value)} />
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium" for="shop-state">State</label>
+              <input id="shop-state" class="input input-bordered rounded-xl" type="text" placeholder="CA" value={state}
+                onInput={(e) => setState((e.currentTarget as HTMLInputElement).value)} />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium" for="shop-zip">ZIP</label>
+              <input id="shop-zip" class="input input-bordered rounded-xl" type="text" inputMode="numeric" placeholder="94110" value={zip}
+                onInput={(e) => setZip((e.currentTarget as HTMLInputElement).value)} />
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-medium" for="shop-website">Website</label>
+            <input id="shop-website" class="input input-bordered rounded-xl" type="text" placeholder="example.com" value={websiteUrl}
+              onInput={(e) => setWebsiteUrl((e.currentTarget as HTMLInputElement).value)} />
+            <p class="text-xs text-base-content/55">https:// is added automatically if you leave it off.</p>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium" for="shop-latitude">Latitude</label>
+              <input id="shop-latitude" class="input input-bordered rounded-xl" type="text" inputMode="decimal" placeholder="40.7128" value={latitude}
+                onInput={(e) => setLatitude((e.currentTarget as HTMLInputElement).value)} />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-medium" for="shop-longitude">Longitude</label>
+              <input id="shop-longitude" class="input input-bordered rounded-xl" type="text" inputMode="decimal" placeholder="-74.0060" value={longitude}
+                onInput={(e) => setLongitude((e.currentTarget as HTMLInputElement).value)} />
+            </div>
+            <p class="sm:col-span-2 text-xs text-base-content/55">
+              On Google Maps, right-click the shop's location and click the coordinates at the top of the menu to copy them. Paste the first number into Latitude and the second into Longitude. Optional, but required to show the shop on the map.
+            </p>
+          </div>
 
-					{submitError ? <div class="alert alert-error rounded-xl"><span>{submitError}</span></div> : null}
-					{submitSuccess ? <div class="alert alert-success rounded-xl"><span>{submitSuccess}</span></div> : null}
+          {submitError ? <div class="alert alert-error rounded-xl"><span>{submitError}</span></div> : null}
+          {submitSuccess ? <div class="alert alert-success rounded-xl"><span>{submitSuccess}</span></div> : null}
 
-					<div class="flex justify-end pt-2 border-t border-base-300">
-						<button type="submit" class="btn btn-primary rounded-xl" disabled={submitting}>
-							{submitting ? 'Adding...' : 'Add shop'}
-						</button>
-					</div>
-				</form>
+          <div class="flex justify-end pt-2 border-t border-base-300">
+            <button type="submit" class="btn btn-primary rounded-xl" disabled={submitting}>
+              {submitting ? 'Adding...' : 'Add shop'}
+            </button>
+          </div>
+        </form>
 
-				<div class="flex flex-col gap-4">
-					<div class="flex items-baseline justify-between gap-3">
-						<h2 class="font-display text-2xl">Existing shops</h2>
-						<span class="text-xs text-base-content/55">{shops.length}</span>
-					</div>
-					{loadingShops ? (
-						<div class="rounded-2xl border border-base-300 bg-base-200/60 p-4 text-base-content/75">Loading shops...</div>
-					) : loadError ? (
-						<div class="alert alert-error rounded-xl"><span>{loadError}</span></div>
-					) : shops.length === 0 ? (
-						<div class="rounded-2xl border border-base-300 bg-base-200/60 p-6 text-base-content/65">No shops yet.</div>
-					) : (
-						<ul class="flex flex-col gap-3">
-							{shops.map((shop) => (
-								<ShopListItem
-									key={shop.id}
-									shop={shop}
-									onUpdated={handleShopUpdated}
-									onDeleted={handleShopDeleted}
-								/>
-							))}
-						</ul>
-					)}
-				</div>
-			</section>
-		</div>
-	);
+        <div class="flex flex-col gap-4">
+          <div class="flex items-baseline justify-between gap-3">
+            <h2 class="font-display text-2xl">Existing shops</h2>
+            <span class="text-xs text-base-content/55">{shops.length}</span>
+          </div>
+          {loadingShops ? (
+            <div class="rounded-2xl border border-base-300 bg-base-200/60 p-4 text-base-content/75">Loading shops...</div>
+          ) : loadError ? (
+            <div class="alert alert-error rounded-xl"><span>{loadError}</span></div>
+          ) : shops.length === 0 ? (
+            <div class="rounded-2xl border border-base-300 bg-base-200/60 p-6 text-base-content/65">No shops yet.</div>
+          ) : (
+            <ul class="flex flex-col gap-3">
+              {shops.map((shop) => (
+                <ShopListItem
+                  key={shop.id}
+                  shop={shop}
+                  onUpdated={handleShopUpdated}
+                  onDeleted={handleShopDeleted}
+                />
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+    </div>
+  );
 }
 
 
 type ShopListItemProps = {
-	shop: Shop;
-	onUpdated: (shop: Shop) => void;
-	onDeleted: (id: string) => void;
+  shop: Shop;
+  onUpdated: (shop: Shop) => void;
+  onDeleted: (id: string) => void;
 };
 
 function ShopListItem({ shop, onUpdated, onDeleted }: ShopListItemProps) {
-	const [editing, setEditing] = useState(false);
-	const [name, setName] = useState(shop.name);
-	const [address, setAddress] = useState(shop.address ?? '');
-	const [city, setCity] = useState(shop.city);
-	const [stateValue, setStateValue] = useState(shop.state ?? '');
-	const [zip, setZip] = useState(shop.zip ?? '');
-	const [websiteUrl, setWebsiteUrl] = useState(shop.website_url ?? '');
-	const [latitude, setLatitude] = useState(shop.latitude !== null ? String(shop.latitude) : '');
-	const [longitude, setLongitude] = useState(shop.longitude !== null ? String(shop.longitude) : '');
-	const [saving, setSaving] = useState(false);
-	const [saveError, setSaveError] = useState('');
-	const [deleting, setDeleting] = useState(false);
-	const [deleteError, setDeleteError] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(shop.name);
+  const [address, setAddress] = useState(shop.address ?? '');
+  const [city, setCity] = useState(shop.city);
+  const [stateValue, setStateValue] = useState(shop.state ?? '');
+  const [zip, setZip] = useState(shop.zip ?? '');
+  const [websiteUrl, setWebsiteUrl] = useState(shop.website_url ?? '');
+  const [latitude, setLatitude] = useState(shop.latitude !== null ? String(shop.latitude) : '');
+  const [longitude, setLongitude] = useState(shop.longitude !== null ? String(shop.longitude) : '');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
-	const startEdit = () => {
-		setName(shop.name);
-		setAddress(shop.address ?? '');
-		setCity(shop.city);
-		setStateValue(shop.state ?? '');
-		setZip(shop.zip ?? '');
-		setWebsiteUrl(shop.website_url ?? '');
-		setLatitude(shop.latitude !== null ? String(shop.latitude) : '');
-		setLongitude(shop.longitude !== null ? String(shop.longitude) : '');
-		setSaveError('');
-		setEditing(true);
-	};
+  const startEdit = () => {
+    setName(shop.name);
+    setAddress(shop.address ?? '');
+    setCity(shop.city);
+    setStateValue(shop.state ?? '');
+    setZip(shop.zip ?? '');
+    setWebsiteUrl(shop.website_url ?? '');
+    setLatitude(shop.latitude !== null ? String(shop.latitude) : '');
+    setLongitude(shop.longitude !== null ? String(shop.longitude) : '');
+    setSaveError('');
+    setEditing(true);
+  };
 
-	const cancelEdit = () => {
-		setEditing(false);
-		setSaveError('');
-	};
+  const cancelEdit = () => {
+    setEditing(false);
+    setSaveError('');
+  };
 
-	const saveEdit = async (event: Event) => {
-		event.preventDefault();
-		setSaveError('');
+  const saveEdit = async (event: Event) => {
+    event.preventDefault();
+    setSaveError('');
 
-		if (!name.trim() || !city.trim()) {
-			setSaveError('Name and city are required.');
-			return;
-		}
+    if (!name.trim() || !city.trim()) {
+      setSaveError('Name and city are required.');
+      return;
+    }
 
-		const lat = parseCoordinate(latitude);
-		if (!lat.ok) {
-			setSaveError('Latitude must be a number.');
-			return;
-		}
-		const lng = parseCoordinate(longitude);
-		if (!lng.ok) {
-			setSaveError('Longitude must be a number.');
-			return;
-		}
-		if ((lat.value === null) !== (lng.value === null)) {
-			setSaveError('Provide both latitude and longitude, or leave both empty.');
-			return;
-		}
+    const lat = parseCoordinate(latitude);
+    if (!lat.ok) {
+      setSaveError('Latitude must be a number.');
+      return;
+    }
+    const lng = parseCoordinate(longitude);
+    if (!lng.ok) {
+      setSaveError('Longitude must be a number.');
+      return;
+    }
+    if ((lat.value === null) !== (lng.value === null)) {
+      setSaveError('Provide both latitude and longitude, or leave both empty.');
+      return;
+    }
 
-		setSaving(true);
-		try {
-			const response = await fetch(`/api/shops/${encodeURIComponent(shop.id)}`, {
-				method: 'PATCH',
-				credentials: 'include',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					name: name.trim(),
-					address: address.trim(),
-					city: city.trim(),
-					state: stateValue.trim(),
-					zip: zip.trim(),
-					website_url: normalizeWebsiteUrl(websiteUrl),
-					latitude: lat.value,
-					longitude: lng.value,
-				}),
-			});
+    setSaving(true);
+    try {
+      const response = await fetch(`/api/shops/${encodeURIComponent(shop.id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          address: address.trim(),
+          city: city.trim(),
+          state: stateValue.trim(),
+          zip: zip.trim(),
+          website_url: normalizeWebsiteUrl(websiteUrl),
+          latitude: lat.value,
+          longitude: lng.value,
+        }),
+      });
 
-			if (!response.ok) {
-				try {
-					const errorBody = (await response.json()) as { error?: string };
-					setSaveError(errorBody.error ?? 'Unable to update shop.');
-				} catch {
-					setSaveError('Unable to update shop.');
-				}
-				return;
-			}
+      if (!response.ok) {
+        try {
+          const errorBody = (await response.json()) as { error?: string };
+          setSaveError(errorBody.error ?? 'Unable to update shop.');
+        } catch {
+          setSaveError('Unable to update shop.');
+        }
+        return;
+      }
 
-			const body = (await response.json()) as ShopResponse;
-			onUpdated(body.item);
-			setEditing(false);
-		} catch {
-			setSaveError('Unable to update shop.');
-		} finally {
-			setSaving(false);
-		}
-	};
+      const body = (await response.json()) as ShopResponse;
+      onUpdated(body.item);
+      setEditing(false);
+    } catch {
+      setSaveError('Unable to update shop.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
-	const deleteShop = async () => {
-		setDeleteError('');
-		if (!window.confirm(`Delete ${shop.name}? This cannot be undone.`)) return;
+  const deleteShop = async () => {
+    setDeleteError('');
+    if (!window.confirm(`Delete ${shop.name}? This cannot be undone.`)) return;
 
-		setDeleting(true);
-		try {
-			const response = await fetch(`/api/shops/${encodeURIComponent(shop.id)}`, {
-				method: 'DELETE',
-				credentials: 'include',
-			});
-			if (!response.ok && response.status !== 204) {
-				try {
-					const errorBody = (await response.json()) as { error?: string };
-					setDeleteError(errorBody.error ?? 'Unable to delete shop.');
-				} catch {
-					setDeleteError('Unable to delete shop.');
-				}
-				return;
-			}
-			onDeleted(shop.id);
-		} catch {
-			setDeleteError('Unable to delete shop.');
-		} finally {
-			setDeleting(false);
-		}
-	};
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/shops/${encodeURIComponent(shop.id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok && response.status !== 204) {
+        try {
+          const errorBody = (await response.json()) as { error?: string };
+          setDeleteError(errorBody.error ?? 'Unable to delete shop.');
+        } catch {
+          setDeleteError('Unable to delete shop.');
+        }
+        return;
+      }
+      onDeleted(shop.id);
+    } catch {
+      setDeleteError('Unable to delete shop.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
-	if (editing) {
-		return (
-			<li class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-4">
-				<form class="flex flex-col gap-3" onSubmit={saveEdit}>
-					<div class="flex flex-col gap-1.5">
-						<label class="text-xs font-medium" for={`edit-name-${shop.id}`}>Name</label>
-						<input id={`edit-name-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" required value={name}
-							onInput={(e) => setName((e.currentTarget as HTMLInputElement).value)} />
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<label class="text-xs font-medium" for={`edit-address-${shop.id}`}>Address</label>
-						<input id={`edit-address-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" value={address}
-							onInput={(e) => setAddress((e.currentTarget as HTMLInputElement).value)} />
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<label class="text-xs font-medium" for={`edit-city-${shop.id}`}>City</label>
-						<input id={`edit-city-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" required value={city}
-							onInput={(e) => setCity((e.currentTarget as HTMLInputElement).value)} />
-					</div>
-					<div class="grid gap-3 sm:grid-cols-2">
-						<div class="flex flex-col gap-1.5">
-							<label class="text-xs font-medium" for={`edit-state-${shop.id}`}>State</label>
-							<input id={`edit-state-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" value={stateValue}
-								onInput={(e) => setStateValue((e.currentTarget as HTMLInputElement).value)} />
-						</div>
-						<div class="flex flex-col gap-1.5">
-							<label class="text-xs font-medium" for={`edit-zip-${shop.id}`}>ZIP</label>
-							<input id={`edit-zip-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" inputMode="numeric" value={zip}
-								onInput={(e) => setZip((e.currentTarget as HTMLInputElement).value)} />
-						</div>
-					</div>
-					<div class="flex flex-col gap-1.5">
-						<label class="text-xs font-medium" for={`edit-website-${shop.id}`}>Website</label>
-						<input id={`edit-website-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" value={websiteUrl}
-							onInput={(e) => setWebsiteUrl((e.currentTarget as HTMLInputElement).value)} />
-					</div>
-					<div class="grid gap-3 sm:grid-cols-2">
-						<div class="flex flex-col gap-1.5">
-							<label class="text-xs font-medium" for={`edit-latitude-${shop.id}`}>Latitude</label>
-							<input id={`edit-latitude-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" inputMode="decimal" value={latitude}
-								onInput={(e) => setLatitude((e.currentTarget as HTMLInputElement).value)} />
-						</div>
-						<div class="flex flex-col gap-1.5">
-							<label class="text-xs font-medium" for={`edit-longitude-${shop.id}`}>Longitude</label>
-							<input id={`edit-longitude-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" inputMode="decimal" value={longitude}
-								onInput={(e) => setLongitude((e.currentTarget as HTMLInputElement).value)} />
-						</div>
-					</div>
+  if (editing) {
+    return (
+      <li class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-4">
+        <form class="flex flex-col gap-3" onSubmit={saveEdit}>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium" for={`edit-name-${shop.id}`}>Name</label>
+            <input id={`edit-name-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" required value={name}
+              onInput={(e) => setName((e.currentTarget as HTMLInputElement).value)} />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium" for={`edit-address-${shop.id}`}>Address</label>
+            <input id={`edit-address-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" value={address}
+              onInput={(e) => setAddress((e.currentTarget as HTMLInputElement).value)} />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium" for={`edit-city-${shop.id}`}>City</label>
+            <input id={`edit-city-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" required value={city}
+              onInput={(e) => setCity((e.currentTarget as HTMLInputElement).value)} />
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium" for={`edit-state-${shop.id}`}>State</label>
+              <input id={`edit-state-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" value={stateValue}
+                onInput={(e) => setStateValue((e.currentTarget as HTMLInputElement).value)} />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium" for={`edit-zip-${shop.id}`}>ZIP</label>
+              <input id={`edit-zip-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" inputMode="numeric" value={zip}
+                onInput={(e) => setZip((e.currentTarget as HTMLInputElement).value)} />
+            </div>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-medium" for={`edit-website-${shop.id}`}>Website</label>
+            <input id={`edit-website-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" value={websiteUrl}
+              onInput={(e) => setWebsiteUrl((e.currentTarget as HTMLInputElement).value)} />
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium" for={`edit-latitude-${shop.id}`}>Latitude</label>
+              <input id={`edit-latitude-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" inputMode="decimal" value={latitude}
+                onInput={(e) => setLatitude((e.currentTarget as HTMLInputElement).value)} />
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-medium" for={`edit-longitude-${shop.id}`}>Longitude</label>
+              <input id={`edit-longitude-${shop.id}`} class="input input-bordered input-sm rounded-lg" type="text" inputMode="decimal" value={longitude}
+                onInput={(e) => setLongitude((e.currentTarget as HTMLInputElement).value)} />
+            </div>
+          </div>
 
-					{saveError ? <div class="alert alert-error rounded-xl"><span>{saveError}</span></div> : null}
+          {saveError ? <div class="alert alert-error rounded-xl"><span>{saveError}</span></div> : null}
 
-					<div class="flex justify-end gap-2 pt-1">
-						<button type="button" class="btn btn-ghost btn-sm rounded-lg" onClick={cancelEdit} disabled={saving}>Cancel</button>
-						<button type="submit" class="btn btn-primary btn-sm rounded-lg" disabled={saving}>
-							{saving ? 'Saving...' : 'Save'}
-						</button>
-					</div>
-				</form>
-			</li>
-		);
-	}
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" class="btn btn-ghost btn-sm rounded-lg" onClick={cancelEdit} disabled={saving}>Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm rounded-lg" disabled={saving}>
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </form>
+      </li>
+    );
+  }
 
-	return (
-		<li class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-4">
-			<p class="font-display text-lg leading-tight">{shop.name}</p>
-			{shop.address ? (
-				<p class="text-sm text-base-content/70">{shop.address}</p>
-			) : null}
-			<p class="text-sm text-base-content/70">{formatCityStateZip(shop.city, shop.state, shop.zip)}</p>
-			{shop.website_url ? (
-				<a class="text-sm text-primary hover:underline break-all" href={shop.website_url} target="_blank" rel="noreferrer">
-					{shop.website_url}
-				</a>
-			) : null}
-			{shop.latitude !== null && shop.longitude !== null ? (
-				<p class="mt-1 text-xs text-base-content/55 font-mono">{shop.latitude.toFixed(5)}, {shop.longitude.toFixed(5)}</p>
-			) : (
-				<p class="mt-1 text-xs text-warning/80">No coordinates · not on map</p>
-			)}
-			{deleteError ? <div class="alert alert-error rounded-xl mt-2"><span>{deleteError}</span></div> : null}
-			<div class="mt-3 flex justify-end gap-2 border-t border-base-300 pt-3">
-				<button type="button" class="btn btn-ghost btn-sm rounded-lg" onClick={startEdit} disabled={deleting}>Edit</button>
-				<button type="button" class="btn btn-error btn-sm rounded-lg" onClick={deleteShop} disabled={deleting}>
-					{deleting ? 'Deleting...' : 'Delete'}
-				</button>
-			</div>
-		</li>
-	);
+  return (
+    <li class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-4">
+      <p class="font-display text-lg leading-tight">{shop.name}</p>
+      {shop.address ? (
+        <p class="text-sm text-base-content/70">{shop.address}</p>
+      ) : null}
+      <p class="text-sm text-base-content/70">{formatCityStateZip(shop.city, shop.state, shop.zip)}</p>
+      {shop.website_url ? (
+        <a class="text-sm text-primary hover:underline break-all" href={shop.website_url} target="_blank" rel="noreferrer">
+          {shop.website_url}
+        </a>
+      ) : null}
+      {shop.latitude !== null && shop.longitude !== null ? (
+        <p class="mt-1 text-xs text-base-content/55 font-mono">{shop.latitude.toFixed(5)}, {shop.longitude.toFixed(5)}</p>
+      ) : (
+        <p class="mt-1 text-xs text-warning/80">No coordinates · not on map</p>
+      )}
+      {deleteError ? <div class="alert alert-error rounded-xl mt-2"><span>{deleteError}</span></div> : null}
+      <div class="mt-3 flex justify-end gap-2 border-t border-base-300 pt-3">
+        <button type="button" class="btn btn-ghost btn-sm rounded-lg" onClick={startEdit} disabled={deleting}>Edit</button>
+        <button type="button" class="btn btn-error btn-sm rounded-lg" onClick={deleteShop} disabled={deleting}>
+          {deleting ? 'Deleting...' : 'Delete'}
+        </button>
+      </div>
+    </li>
+  );
 }

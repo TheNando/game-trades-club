@@ -14,23 +14,23 @@ import { NotFound } from './pages/_404';
 import './style.css';
 
 export function App() {
-	return (
-		<LocationProvider>
-			<Header />
-			<main>
-				<Router>
-					<Route path="/" component={Home} />
-					<Route path="/games" component={Games} />
-					<Route path="/listings/:id" component={ListingDetail} />
-					<Route path="/users/:id" component={UserProfile} />
-					<Route path="/add-listing" component={AddListing} />
-					<Route path="/shops" component={Shops} />
-					<Route path="/admin/shops" component={Admin} />
-					<Route default component={NotFound} />
-				</Router>
-			</main>
-		</LocationProvider>
-	);
+  return (
+    <LocationProvider>
+      <Header />
+      <main>
+        <Router>
+          <Route path="/" component={Home} />
+          <Route path="/games" component={Games} />
+          <Route path="/listings/:id" component={ListingDetail} />
+          <Route path="/users/:id" component={UserProfile} />
+          <Route path="/add-listing" component={AddListing} />
+          <Route path="/shops" component={Shops} />
+          <Route path="/admin/shops" component={Admin} />
+          <Route default component={NotFound} />
+        </Router>
+      </main>
+    </LocationProvider>
+  );
 }
 
 render(<App />, document.getElementById('app'));

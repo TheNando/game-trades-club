@@ -1,9 +1,19 @@
 {
-	"extends": "../../tsconfig.base.json",
-	"compilerOptions": {
-		"types": ["bun", "vite/client"],
-		"strictNullChecks": false
-	},
-	"include": ["src/**/*", "vite.config.ts", "test/setup.ts"],
-	"exclude": ["dist", "node_modules"]
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": [
+      "bun",
+      "vite/client"
+    ],
+    "strictNullChecks": false
+  },
+  "include": [
+    "src/**/*",
+    "vite.config.ts",
+    "test/setup.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

@@ -346,5 +346,3 @@ describe('createGetListingImage', () => {
     await rm(uploadDir, { recursive: true, force: true });
   });
 });
-
-

@@ -11,19 +11,19 @@ delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIc
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
 export type ShopMapPoint = {
-	id: string;
-	name: string;
-	city: string;
-	address?: string | null;
-	website_url?: string | null;
-	latitude: number;
-	longitude: number;
+  id: string;
+  name: string;
+  city: string;
+  address?: string | null;
+  website_url?: string | null;
+  latitude: number;
+  longitude: number;
 };
 
 type ShopMapProps = {
-	points: ShopMapPoint[];
-	className?: string;
-	zoom?: number;
+  points: ShopMapPoint[];
+  className?: string;
+  zoom?: number;
 };
 
 const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -31,74 +31,74 @@ const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyrigh
 const FALLBACK_CENTER: [number, number] = [0, 0];
 
 export function ShopMap({ points, className, zoom }: ShopMapProps) {
-	const containerRef = useRef<HTMLDivElement | null>(null);
-	const mapRef = useRef<L.Map | null>(null);
-	const markersRef = useRef<L.Marker[]>([]);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
 
-	useEffect(() => {
-		if (!containerRef.current || mapRef.current) return;
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
 
-		const map = L.map(containerRef.current, {
-			center: FALLBACK_CENTER,
-			zoom: zoom ?? 2,
-			scrollWheelZoom: false,
-		});
-		L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(map);
-		mapRef.current = map;
+    const map = L.map(containerRef.current, {
+      center: FALLBACK_CENTER,
+      zoom: zoom ?? 2,
+      scrollWheelZoom: false,
+    });
+    L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(map);
+    mapRef.current = map;
 
-		return () => {
-			map.remove();
-			mapRef.current = null;
-			markersRef.current = [];
-		};
-	}, [zoom]);
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markersRef.current = [];
+    };
+  }, [zoom]);
 
-	useEffect(() => {
-		const map = mapRef.current;
-		if (!map) return;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
 
-		for (const marker of markersRef.current) marker.remove();
-		markersRef.current = [];
+    for (const marker of markersRef.current) marker.remove();
+    markersRef.current = [];
 
-		const validPoints = points.filter(
-			(point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude)
-		);
+    const validPoints = points.filter(
+      (point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude)
+    );
 
-		for (const point of validPoints) {
-			const marker = L.marker([point.latitude, point.longitude]).addTo(map);
-			marker.bindPopup(renderPopup(point));
-			markersRef.current.push(marker);
-		}
+    for (const point of validPoints) {
+      const marker = L.marker([point.latitude, point.longitude]).addTo(map);
+      marker.bindPopup(renderPopup(point));
+      markersRef.current.push(marker);
+    }
 
-		if (validPoints.length === 1) {
-			map.setView([validPoints[0].latitude, validPoints[0].longitude], zoom ?? 14);
-		} else if (validPoints.length > 1) {
-			const bounds = L.latLngBounds(validPoints.map((point) => [point.latitude, point.longitude]));
-			map.fitBounds(bounds, { padding: [32, 32], maxZoom: zoom ?? 14 });
-		} else {
-			map.setView(FALLBACK_CENTER, zoom ?? 2);
-		}
-	}, [points, zoom]);
+    if (validPoints.length === 1) {
+      map.setView([validPoints[0].latitude, validPoints[0].longitude], zoom ?? 14);
+    } else if (validPoints.length > 1) {
+      const bounds = L.latLngBounds(validPoints.map((point) => [point.latitude, point.longitude]));
+      map.fitBounds(bounds, { padding: [32, 32], maxZoom: zoom ?? 14 });
+    } else {
+      map.setView(FALLBACK_CENTER, zoom ?? 2);
+    }
+  }, [points, zoom]);
 
-	return <div ref={containerRef} class={className ?? 'h-64 w-full rounded-2xl border border-base-300'} />;
+  return <div ref={containerRef} class={className ?? 'h-64 w-full rounded-2xl border border-base-300'} />;
 }
 
 function escapeHtml(value: string): string {
-	return value
-		.replace(/&/g, '&amp;')
-		.replace(/</g, '&lt;')
-		.replace(/>/g, '&gt;')
-		.replace(/"/g, '&quot;');
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function renderPopup(point: ShopMapPoint): string {
-	const name = escapeHtml(point.name);
-	const city = escapeHtml(point.city);
-	const address = point.address ? escapeHtml(point.address) : '';
-	const query = encodeURIComponent([point.address, point.city].filter(Boolean).join(', ') || point.name);
-	const mapsHref = `https://www.google.com/maps/search/?api=1&query=${query}`;
+  const name = escapeHtml(point.name);
+  const city = escapeHtml(point.city);
+  const address = point.address ? escapeHtml(point.address) : '';
+  const query = encodeURIComponent([point.address, point.city].filter(Boolean).join(', ') || point.name);
+  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${query}`;
 
-	return `
+  return `
 		<div class="text-sm leading-tight">
 			<p class="font-medium">${name}</p>
 			<p class="text-base-content/70">${city}${address ? ` · ${address}` : ''}</p>
