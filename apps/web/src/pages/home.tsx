@@ -1,4 +1,4 @@
-import { useMemo } from "preact/hooks";
+import { HeroStack } from "../components/HeroStack";
 
 export function Home() {
   return (
@@ -6,7 +6,7 @@ export function Home() {
       {/* ── Hero ──────────────────────────────────────────────────── */}
       <section class="relative overflow-hidden bg-base-200 bg-paper grain">
         <div class="absolute inset-0 bg-dotgrid opacity-[0.35] pointer-events-none" />
-        <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-8 pt-16 pb-24 md:pt-24 md:pb-32 grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+        <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-8 pt-16 pb-24 md:py-16 grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div class="lg:col-span-7 rise-in">
             <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-base-300/80 bg-base-100/70 backdrop-blur text-xs font-medium tracking-wide text-base-content/75">
               <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
@@ -55,7 +55,7 @@ export function Home() {
               </a>
             </div>
 
-            <dl class="mt-10 grid grid-cols-3 gap-3 sm:gap-6 max-w-md">
+            <dl class="mt-10 grid grid-cols-3 gap-3 sm:gap-6 md:pb-16 max-w-md">
               {[
                 { k: "Local", v: "Meet within your city" },
                 { k: "$0", v: "No shipping, ever" },
@@ -74,7 +74,7 @@ export function Home() {
           </div>
 
           {/* Stacked "listing cards" composition */}
-          <div class="lg:col-span-5 relative h-105 sm:h-120 hidden md:block">
+          <div class="lg:col-span-5 relative h-105 sm:h-120">
             <HeroStack />
           </div>
         </div>
@@ -302,147 +302,5 @@ function Step({ n, title, body, tone }: StepProps) {
       <h3 class="font-display text-2xl mt-5 leading-snug">{title}</h3>
       <p class="mt-3 text-base-content/70 leading-relaxed">{body}</p>
     </li>
-  );
-}
-
-const HERO_CARDS: Array<
-  Pick<MiniCardProps, "title" | "meta" | "accent" | "emoji">
-> = [
-    {
-      title: "Wingspan",
-      meta: "Like new · $42",
-      accent: "secondary",
-      emoji: "🐦",
-    },
-    {
-      title: "Brass: Birmingham",
-      meta: "Good · trade",
-      accent: "primary",
-      emoji: "🏭",
-    },
-    { title: "Catan", meta: "Open box · $25", accent: "accent", emoji: "🐑" },
-    {
-      title: "Ticket to Ride",
-      meta: "Good · $30",
-      accent: "primary",
-      emoji: "🚂",
-    },
-    {
-      title: "Carcassonne",
-      meta: "Like new · trade",
-      accent: "accent",
-      emoji: "🏰",
-    },
-    { title: "Pandemic", meta: "Good · $20", accent: "secondary", emoji: "🦠" },
-    {
-      title: "7 Wonders",
-      meta: "Like new · $28",
-      accent: "primary",
-      emoji: "🏛️",
-    },
-    { title: "Azul", meta: "Open box · $24", accent: "accent", emoji: "🎨" },
-    { title: "Splendor", meta: "Good · trade", accent: "secondary", emoji: "💎" },
-    {
-      title: "Terraforming Mars",
-      meta: "Like new · $48",
-      accent: "primary",
-      emoji: "🚀",
-    },
-    { title: "Root", meta: "Good · $40", accent: "accent", emoji: "🦝" },
-    {
-      title: "Everdell",
-      meta: "Like new · $55",
-      accent: "secondary",
-      emoji: "🌳",
-    },
-    { title: "Gloomhaven", meta: "Good · trade", accent: "primary", emoji: "⚔️" },
-  ];
-
-const HERO_SLOTS: Array<{ style: Record<string, string>; className: string }> =
-  [
-    { style: { top: "8%", left: "8%", "--r": "-7deg" }, className: "float-y" },
-    {
-      style: { top: "22%", right: "6%", "--r": "6deg", animationDelay: "1.2s" },
-      className: "float-y",
-    },
-    {
-      style: {
-        bottom: "6%",
-        left: "18%",
-        "--r": "-2deg",
-        animationDelay: "2.4s",
-      },
-      className: "float-y",
-    },
-  ];
-
-function HeroStack() {
-  const cards = useMemo(() => {
-    const shuffled = [...HERO_CARDS];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled.slice(0, HERO_SLOTS.length);
-  }, []);
-
-  return (
-    <div class="absolute inset-0">
-      {cards.map((card, i) => (
-        <MiniCard
-          key={card.title}
-          style={HERO_SLOTS[i].style as any}
-          className={HERO_SLOTS[i].className}
-          title={card.title}
-          meta={card.meta}
-          accent={card.accent}
-          emoji={card.emoji}
-        />
-      ))}
-    </div>
-  );
-}
-
-type MiniCardProps = {
-  title: string;
-  meta: string;
-  accent: "primary" | "secondary" | "accent";
-  emoji: string;
-  style?: Record<string, string>;
-  className?: string;
-};
-
-function MiniCard({
-  title,
-  meta,
-  accent,
-  emoji,
-  style,
-  className = "",
-}: MiniCardProps) {
-  const tint =
-    accent === "primary"
-      ? "bg-primary/15 text-primary"
-      : accent === "secondary"
-        ? "bg-secondary/15 text-secondary"
-        : "bg-accent/20 text-accent-content";
-  return (
-    <div
-      class={`absolute w-56 sm:w-64 rounded-2xl border border-base-300 bg-base-100 shadow-lg p-4 rotate-(--r,0deg) ${className}`}
-      style={style}
-    >
-      <div
-        class={`aspect-4/3 rounded-xl grid place-items-center text-5xl ${tint}`}
-      >
-        <span aria-hidden="true">{emoji}</span>
-      </div>
-      <div class="mt-3 flex items-baseline justify-between gap-2">
-        <p class="font-display text-lg leading-tight truncate">{title}</p>
-        <span class="text-[10px] uppercase tracking-wider text-base-content/55">
-          Listing
-        </span>
-      </div>
-      <p class="text-sm text-base-content/65 mt-0.5">{meta}</p>
-    </div>
   );
 }
