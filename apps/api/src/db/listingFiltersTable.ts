@@ -32,10 +32,3 @@ export function createListingFiltersStore(database: Database) {
     },
   };
 }
-
-const listingFiltersStore = createListingFiltersStore(db);
-
-export const {
-  listCategoriesWithListings,
-  listMechanicsWithListings,
-} = listingFiltersStore;

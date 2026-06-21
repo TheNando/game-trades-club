@@ -1,4 +1,4 @@
-export type UploadStatus = 'pending' | 'uploading' | 'uploaded' | 'failed' | 'cancelled';
+type UploadStatus = 'pending' | 'uploading' | 'uploaded' | 'failed' | 'cancelled';
 
 export type UploadItem = {
   file: File;

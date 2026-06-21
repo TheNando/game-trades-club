@@ -160,11 +160,5 @@ export function createGamesStore(database: typeof db) {
 
 const gamesStore = createGamesStore(db);
 
-export const {
-  createGamesBatch,
-  findGameById,
-  listGameIdsMissingStats,
-  searchGamesByName,
-  updateGameImageUrl,
-  updateGameStats,
-} = gamesStore;
+// Only export what's used in routes - other methods accessed via createGamesStore
+export const { searchGamesByName } = gamesStore;

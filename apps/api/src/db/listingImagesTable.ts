@@ -60,7 +60,3 @@ export function createListingImagesStore(database: Database) {
     },
   };
 }
-
-const listingImagesStore = createListingImagesStore(db);
-
-export const { createListingImage, findListingImageById } = listingImagesStore;

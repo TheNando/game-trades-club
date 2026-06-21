@@ -197,10 +197,3 @@ export function createGameInfoStore(database: Database) {
     },
   };
 }
-
-const GameInfoStore = createGameInfoStore(db);
-
-export const {
-  listGameIdsMissingCredits,
-  replaceGameInfo,
-} = GameInfoStore;

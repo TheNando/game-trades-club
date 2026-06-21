@@ -6,7 +6,7 @@ export type RequireAdminOptions = {
   findUser?: (id: string) => UserRecord | null;
 };
 
-export function isAdminUser(user: UserRecord | null): boolean {
+function isAdminUser(user: UserRecord | null): boolean {
   return !!user && user.is_admin === 1;
 }
 

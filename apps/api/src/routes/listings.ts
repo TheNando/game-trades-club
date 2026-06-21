@@ -39,7 +39,7 @@ type ParsedCreateListingBody = {
 
 type ListingsStore = Pick<
   ReturnType<typeof createListingsStore>,
-  'createListing' | 'listAllListings' | 'listFilteredListings' | 'removeListing' | 'updateListing'
+  'createListing' | 'listFilteredListings' | 'removeListing' | 'updateListing'
 >;
 
 type GetListingsStore = Pick<

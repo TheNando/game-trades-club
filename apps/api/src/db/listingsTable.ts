@@ -451,7 +451,6 @@ export const {
   createListing,
   findListingByIdForUser,
   findListingDetailById,
-  listAllListings,
   listFilteredListings,
   listListingsByUser,
   removeListing,

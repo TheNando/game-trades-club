@@ -1,3 +1,6 @@
+// Auto-generated types for BoardGameGeek API responses.
+// Many types are unused but kept for potential future use and documentation.
+// Only GeekData, Item, and ItemLink are currently actively used.
 export interface GeekData {
   item?: Item;
   media?: Media;
