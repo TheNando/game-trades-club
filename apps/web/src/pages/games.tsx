@@ -1,14 +1,13 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CONDITION_OPTIONS } from '@game-trades-club/shared/constants';
+import { toggleNumberInList, toggleStringInList } from '@game-trades-club/shared/utils';
 import { ListingCard, type ListingCardData } from '../components/ListingCard';
 import {
   emptyGamesFilters,
   gamesFiltersToSearch,
   isEmptyGamesFilters,
   parseGamesFiltersFromSearch,
-  toggleNumberInList,
-  toggleStringInList,
   type GamesFilterState,
 } from './gamesFilters';
 

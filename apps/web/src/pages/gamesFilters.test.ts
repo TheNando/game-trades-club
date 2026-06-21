@@ -4,8 +4,6 @@ import {
   gamesFiltersToSearch,
   isEmptyGamesFilters,
   parseGamesFiltersFromSearch,
-  toggleNumberInList,
-  toggleStringInList,
 } from './gamesFilters';
 
 describe('emptyGamesFilters / isEmptyGamesFilters', () => {
@@ -153,17 +151,5 @@ describe('gamesFiltersToSearch', () => {
     };
     const params = gamesFiltersToSearch(original);
     expect(parseGamesFiltersFromSearch(params)).toEqual(original);
-  });
-});
-
-describe('toggleStringInList / toggleNumberInList', () => {
-  test('adds the value when absent', () => {
-    expect(toggleStringInList(['a'], 'b')).toEqual(['a', 'b']);
-    expect(toggleNumberInList([1], 2)).toEqual([1, 2]);
-  });
-
-  test('removes the value when present', () => {
-    expect(toggleStringInList(['a', 'b'], 'a')).toEqual(['b']);
-    expect(toggleNumberInList([1, 2], 1)).toEqual([2]);
   });
 });
