@@ -23,6 +23,12 @@
       ],
       "react-dom": [
         "./node_modules/preact/compat/"
+      ],
+      "@game-trades-club/shared": [
+        "./packages/shared/src/index.ts"
+      ],
+      "@game-trades-club/shared/*": [
+        "./packages/shared/src/*"
       ]
     }
   }

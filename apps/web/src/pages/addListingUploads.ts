@@ -6,26 +6,6 @@ export type UploadItem = {
   error: string | null;
 };
 
-const allowedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const allowedImageExtensions = new Set(['.jpg', '.jpeg', '.png', '.webp']);
-
-function hasSupportedExtension(fileName: string) {
-  const lowerCaseName = fileName.toLowerCase();
-  return [...allowedImageExtensions].some((extension) => lowerCaseName.endsWith(extension));
-}
-
-export function validateSelectedImages(files: File[]) {
-  if (files.length > 3) {
-    return { ok: false as const, message: 'You can upload up to 3 images.' };
-  }
-
-  if (files.some((file) => !allowedImageTypes.has(file.type) && !hasSupportedExtension(file.name))) {
-    return { ok: false as const, message: 'Images must be webp, png, or jpg.' };
-  }
-
-  return { ok: true as const };
-}
-
 export function createUploadItems(files: File[]): UploadItem[] {
   return files.map((file) => ({
     file,

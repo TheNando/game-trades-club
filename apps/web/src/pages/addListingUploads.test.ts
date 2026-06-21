@@ -3,33 +3,7 @@ import {
   cancelPendingUploads,
   createUploadItems,
   runUploadQueue,
-  validateSelectedImages,
 } from './addListingUploads';
-
-describe('validateSelectedImages', () => {
-  test('rejects more than three files', () => {
-    const files = [
-      new File(['1'], 'one.png', { type: 'image/png' }),
-      new File(['2'], 'two.png', { type: 'image/png' }),
-      new File(['3'], 'three.png', { type: 'image/png' }),
-      new File(['4'], 'four.png', { type: 'image/png' }),
-    ];
-
-    expect(validateSelectedImages(files)).toEqual({
-      ok: false,
-      message: 'You can upload up to 3 images.',
-    });
-  });
-
-  test('rejects unsupported file types', () => {
-    const files = [new File(['gif'], 'cover.gif', { type: 'image/gif' })];
-
-    expect(validateSelectedImages(files)).toEqual({
-      ok: false,
-      message: 'Images must be webp, png, or jpg.',
-    });
-  });
-});
 
 describe('runUploadQueue', () => {
   test('uploads sequentially and stops on the first failure', async () => {

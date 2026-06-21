@@ -1,3 +1,5 @@
+import { CONDITION_OPTIONS } from '@game-trades-club/shared/constants';
+
 export type GamesFilterState = {
   conditions: string[];
   priceMin: string;
@@ -13,14 +15,6 @@ export type GamesFilterState = {
   minRating: string;
   ratingType: 'average' | 'adjusted';
 };
-
-export const CONDITION_OPTIONS: { value: string; label: string; }[] = [
-  { value: 'new', label: 'New' },
-  { value: 'like_new', label: 'Like New' },
-  { value: 'good', label: 'Good' },
-  { value: 'fair', label: 'Fair' },
-  { value: 'poor', label: 'Poor' },
-];
 
 export function emptyGamesFilters(): GamesFilterState {
   return {
@@ -120,12 +114,4 @@ export function gamesFiltersToSearch(state: GamesFilterState): URLSearchParams {
     params.set('rating_type', state.ratingType);
   }
   return params;
-}
-
-export function toggleStringInList(list: string[], value: string): string[] {
-  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
-}
-
-export function toggleNumberInList(list: number[], value: number): number[] {
-  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }

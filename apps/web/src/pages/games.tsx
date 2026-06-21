@@ -1,8 +1,8 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
+import { CONDITION_OPTIONS } from '@game-trades-club/shared/constants';
 import { ListingCard, type ListingCardData } from '../components/ListingCard';
 import {
-  CONDITION_OPTIONS,
   emptyGamesFilters,
   gamesFiltersToSearch,
   isEmptyGamesFilters,

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'preact/hooks';
+import { formatShopOptionLabel, validateListingImages } from '@game-trades-club/shared';
+import type { GameSearchResult, ShopOption } from '@game-trades-club/shared/types';
 import {
   cancelPendingUploads,
   createUploadItems,
   runUploadQueue,
   type UploadItem,
-  validateSelectedImages,
 } from './addListingUploads';
 
 type CurrentUser = {
@@ -12,12 +13,6 @@ type CurrentUser = {
   email: string;
   name: string | null;
   avatarUrl: string | null;
-};
-
-type GameSearchResult = {
-  id: number;
-  name: string;
-  year: number | null;
 };
 
 type GamesResponse = {
@@ -29,18 +24,6 @@ type ListingResponse = {
     id: string;
   };
 };
-
-type ShopOption = {
-  id: string;
-  name: string;
-  city: string;
-  state: string | null;
-};
-
-function formatShopOptionLabel(shop: ShopOption): string {
-  const location = [shop.city, shop.state].filter(Boolean).join(', ');
-  return `${shop.name} — ${location}`;
-}
 
 type ShopsResponse = {
   items: ShopOption[];
@@ -231,12 +214,12 @@ export function AddListing() {
 
   const handleFileChange = (event: Event) => {
     const files = Array.from((event.currentTarget as HTMLInputElement).files ?? []);
-    const validation = validateSelectedImages(files);
+    const validation = validateListingImages(files);
 
     if (!validation.ok) {
       setSelectedFiles([]);
       setUploadItems([]);
-      setSubmitError(validation.message);
+      setSubmitError('message' in validation ? validation.message : 'Invalid images');
       return;
     }
 
@@ -262,9 +245,9 @@ export function AddListing() {
       return;
     }
 
-    const validation = validateSelectedImages(selectedFiles);
+    const validation = validateListingImages(selectedFiles);
     if (!validation.ok) {
-      setSubmitError(validation.message);
+      setSubmitError('message' in validation ? validation.message : 'Invalid images');
       return;
     }
 

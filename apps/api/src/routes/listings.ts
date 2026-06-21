@@ -1,12 +1,11 @@
 import { BunRequest } from 'bun';
+import { VALID_CONDITIONS } from '@game-trades-club/shared/constants';
 import { db } from '../db/client';
 import { createListingsStore, type ListingFilters } from '../db/listingsTable';
 import { syncGameInfoIfMissing } from '../bgg/syncGameInfo';
 import { RouteDependencies } from '../middleware/dependencies';
 import { badRequest, json, notFound, readJson } from '../utils/http';
 import { randomToken } from '../utils/security';
-
-const VALID_CONDITIONS = new Set(['new', 'like_new', 'good', 'fair', 'poor']);
 
 type ListingDetailStore = Pick<
   ReturnType<typeof createListingsStore>,

@@ -1,3 +1,5 @@
+import { formatCondition, formatPrice } from '@game-trades-club/shared/formatters';
+import type { ListingStatus } from '@game-trades-club/shared/types';
 import { RatingHexagon } from './RatingHexagon';
 
 export type ListingCardData = {
@@ -9,24 +11,8 @@ export type ListingCardData = {
   game_image_path: string | null;
   condition: string;
   price: number;
-  status: 'open' | 'pending' | 'complete';
+  status: ListingStatus;
 };
-
-const CONDITION_LABELS: Record<string, string> = {
-  new: 'New',
-  like_new: 'Like New',
-  good: 'Good',
-  fair: 'Fair',
-  poor: 'Poor',
-};
-
-function formatCondition(condition: string): string {
-  return CONDITION_LABELS[condition] ?? condition;
-}
-
-function formatPrice(price: number): string {
-  return `$${price}`;
-}
 
 type ListingCardProps = {
   listing: ListingCardData;

@@ -1,35 +1,20 @@
 import { useEffect, useState } from 'preact/hooks';
+import {
+  formatCityStateZip,
+  formatCondition,
+  formatPrice,
+  formatMemberSince,
+  buildGoogleMapsUrl,
+} from '@game-trades-club/shared/formatters';
+import type { ListingImage, ListingStatus, Seller, Shop } from '@game-trades-club/shared/types';
+import { STATUS_LABELS } from '@game-trades-club/shared/constants';
 import { ShopMap, type ShopMapPoint } from '../components/ShopMap';
 
 type CurrentUser = {
   id: string;
 };
 
-type ListingImage = { id: string; has_thumb: boolean };
-
-type Seller = {
-  id: string;
-  name: string | null;
-  avatar_url: string | null;
-  created_at: string;
-};
-
-type PreferredShop = {
-  id: string;
-  name: string;
-  city: string;
-  state: string | null;
-  zip: string | null;
-  address: string | null;
-  website_url: string | null;
-  latitude: number | null;
-  longitude: number | null;
-};
-
-function formatCityStateZip(city: string, state: string | null, zip: string | null): string {
-  const stateZip = [state, zip].filter(Boolean).join(' ');
-  return stateZip ? `${city}, ${stateZip}` : city;
-}
+type PreferredShop = Shop;
 
 type Listing = {
   id: string;
@@ -41,49 +26,13 @@ type Listing = {
   seller: Seller;
   condition: string;
   price: number;
-  status: 'open' | 'pending' | 'complete';
+  status: ListingStatus;
   preferred_shop: PreferredShop | null;
   created_at: string;
   updated_at: string;
 };
 
-function buildGoogleMapsUrl(shop: PreferredShop): string {
-  if (shop.latitude !== null && shop.longitude !== null) {
-    return `https://www.google.com/maps/search/?api=1&query=${shop.latitude},${shop.longitude}`;
-  }
-  const query = [shop.name, shop.address, shop.city, shop.state, shop.zip].filter(Boolean).join(', ');
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-}
-
 type ListingResponse = { item: Listing };
-
-const CONDITION_LABELS: Record<string, string> = {
-  new: 'New',
-  like_new: 'Like New',
-  good: 'Good',
-  fair: 'Fair',
-  poor: 'Poor',
-};
-
-const STATUS_LABELS: Record<Listing['status'], string> = {
-  open: 'Open',
-  pending: 'Pending',
-  complete: 'Complete',
-};
-
-function formatCondition(condition: string): string {
-  return CONDITION_LABELS[condition] ?? condition;
-}
-
-function formatPrice(price: number): string {
-  return `$${price}`;
-}
-
-function formatMemberSince(value: string): string {
-  const date = new Date(value.replace(' ', 'T') + 'Z');
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-}
 
 export function ListingDetail({ id }: { id?: string }) {
   const [listing, setListing] = useState<Listing | null>(null);
@@ -246,7 +195,7 @@ function ListingGallery({ images, activeImage, onSelect, gameName, gameId, fallb
           class="w-full h-auto rounded-2xl border border-base-300 bg-base-200 object-contain"
         />
       ) : (
-        <div class="w-full aspect-[4/3] rounded-2xl border border-base-300 bg-base-200/60 flex items-center justify-center text-base-content/40">
+        <div class="w-full aspect-4/3 rounded-2xl border border-base-300 bg-base-200/60 flex items-center justify-center text-base-content/40">
           No image
         </div>
       )}
@@ -261,8 +210,8 @@ function ListingGallery({ images, activeImage, onSelect, gameName, gameId, fallb
                   type="button"
                   onClick={() => onSelect(image.id)}
                   class={`block w-full aspect-square rounded-xl overflow-hidden border transition-colors ${isActive
-                      ? 'border-primary ring-2 ring-primary/40'
-                      : 'border-base-300 hover:border-base-content/30'
+                    ? 'border-primary ring-2 ring-primary/40'
+                    : 'border-base-300 hover:border-base-content/30'
                     }`}
                   aria-label={`Show image ${image.id}`}
                   aria-pressed={isActive}
