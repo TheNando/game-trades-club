@@ -416,6 +416,7 @@ describe('parseListingFilters', () => {
 
   test('parses repeated and comma-separated multi-value params', () => {
     const params = new URLSearchParams();
+    params.set('q', '  catan  ');
     params.append('condition', 'new');
     params.append('condition', 'like_new,good');
     params.append('category', '1,2');
@@ -428,6 +429,7 @@ describe('parseListingFilters', () => {
     params.set('playtime', '60');
 
     expect(parseListingFilters(params)).toEqual({
+      query: 'catan',
       conditions: ['new', 'like_new', 'good'],
       priceMin: 5,
       priceMax: 50,
@@ -508,6 +510,11 @@ describe('parseListingFilters', () => {
     const result = parseListingFilters(params);
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(400);
+  });
+
+  test('ignores blank search query values', () => {
+    const params = new URLSearchParams({ q: '   ' });
+    expect(parseListingFilters(params)).toEqual({});
   });
 });
 
@@ -681,6 +688,40 @@ describe('createListingsStore.listFilteredListings', () => {
 
     const lowBar = store.listFilteredListings({ minRating: 6.0, ratingType: 'adjusted' }).map((item) => item.id).sort();
     expect(lowBar).toEqual(['high-rated', 'low-rated']);
+  });
+
+  test('searches game names and listing descriptions case-insensitively', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedGame(database, 1);
+    seedGame(database, 2);
+    database.run(`UPDATE games SET name = 'Azul' WHERE id = 1`);
+    database.run(`UPDATE games SET name = 'Cascadia' WHERE id = 2`);
+    seedListing(database, { id: 'azul-listing', gameId: 1 });
+    seedListing(database, { id: 'cascadia-listing', gameId: 2 });
+    database.run(`UPDATE listings SET description = 'Tile-laying classic' WHERE id = 'azul-listing'`);
+    database.run(`UPDATE listings SET description = 'Cozy wildlife puzzle' WHERE id = 'cascadia-listing'`);
+
+    const store = createListingsStore(database);
+
+    expect(store.listFilteredListings({ query: 'azu' }).map((item) => item.id)).toEqual(['azul-listing']);
+    expect(store.listFilteredListings({ query: 'WILDLIFE' }).map((item) => item.id)).toEqual(['cascadia-listing']);
+  });
+
+  test('treats wildcard characters in search text literally', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedGame(database, 1);
+    seedGame(database, 2);
+    database.run(`UPDATE games SET name = '100% Fun' WHERE id = 1`);
+    database.run(`UPDATE games SET name = '100 Acre Wood' WHERE id = 2`);
+    seedListing(database, { id: 'percent-listing', gameId: 1 });
+    seedListing(database, { id: 'plain-listing', gameId: 2 });
+
+    const store = createListingsStore(database);
+    const ids = store.listFilteredListings({ query: '100%' }).map((item) => item.id);
+
+    expect(ids).toEqual(['percent-listing']);
   });
 });
 

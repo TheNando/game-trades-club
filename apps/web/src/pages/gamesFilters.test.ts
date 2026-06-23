@@ -12,6 +12,7 @@ describe('emptyGamesFilters / isEmptyGamesFilters', () => {
   });
 
   test('any populated field flips the empty check', () => {
+    expect(isEmptyGamesFilters({ ...emptyGamesFilters(), query: 'catan' })).toBe(false);
     expect(isEmptyGamesFilters({ ...emptyGamesFilters(), priceMin: '5' })).toBe(false);
     expect(isEmptyGamesFilters({ ...emptyGamesFilters(), conditions: ['new'] })).toBe(false);
     expect(isEmptyGamesFilters({ ...emptyGamesFilters(), categoryIds: [1] })).toBe(false);
@@ -35,8 +36,10 @@ describe('parseGamesFiltersFromSearch', () => {
     params.set('year_max', '2024');
     params.set('players', '4');
     params.set('playtime', '60');
+    params.set('q', '  catan  ');
 
     expect(parseGamesFiltersFromSearch(params)).toEqual({
+      query: 'catan',
       conditions: ['new', 'like_new', 'good'],
       priceMin: '5',
       priceMax: '50',
@@ -104,11 +107,13 @@ describe('gamesFiltersToSearch', () => {
   test('serializes only populated fields', () => {
     const params = gamesFiltersToSearch({
       ...emptyGamesFilters(),
+      query: 'catan',
       conditions: ['new', 'good'],
       priceMin: '5',
       players: '4',
       categoryIds: [10, 20],
     });
+    expect(params.get('q')).toEqual('catan');
     expect(params.getAll('condition')).toEqual(['new', 'good']);
     expect(params.get('price_min')).toEqual('5');
     expect(params.has('price_max')).toBe(false);
@@ -120,6 +125,7 @@ describe('gamesFiltersToSearch', () => {
   test('round trips through parse and serialize', () => {
     const original = {
       ...emptyGamesFilters(),
+      query: 'azul',
       conditions: ['new', 'good'],
       priceMin: '5',
       priceMax: '50',

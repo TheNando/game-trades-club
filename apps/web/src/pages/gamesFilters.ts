@@ -1,6 +1,7 @@
 import { CONDITION_OPTIONS } from '@game-trades-club/shared/constants';
 
 export type GamesFilterState = {
+  query: string;
   conditions: string[];
   priceMin: string;
   priceMax: string;
@@ -18,6 +19,7 @@ export type GamesFilterState = {
 
 export function emptyGamesFilters(): GamesFilterState {
   return {
+    query: '',
     conditions: [],
     priceMin: '',
     priceMax: '',
@@ -36,6 +38,7 @@ export function emptyGamesFilters(): GamesFilterState {
 
 export function isEmptyGamesFilters(state: GamesFilterState): boolean {
   return (
+    state.query.trim() === '' &&
     state.conditions.length === 0 &&
     state.priceMin === '' &&
     state.priceMax === '' &&
@@ -72,6 +75,8 @@ function parseNumberInput(value: string | null): string {
 export function parseGamesFiltersFromSearch(search: URLSearchParams): GamesFilterState {
   const state = emptyGamesFilters();
 
+  state.query = search.get('q')?.trim() ?? '';
+
   const conditions = search.getAll('condition')
     .flatMap((value) => value.split(','))
     .map((value) => value.trim())
@@ -98,6 +103,8 @@ export function parseGamesFiltersFromSearch(search: URLSearchParams): GamesFilte
 
 export function gamesFiltersToSearch(state: GamesFilterState): URLSearchParams {
   const params = new URLSearchParams();
+  const query = state.query.trim();
+  if (query !== '') params.set('q', query);
   for (const condition of state.conditions) params.append('condition', condition);
   if (state.priceMin !== '') params.set('price_min', state.priceMin);
   if (state.priceMax !== '') params.set('price_max', state.priceMax);

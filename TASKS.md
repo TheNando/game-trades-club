@@ -18,7 +18,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 - [x] Owner controls on `/listings/:id` (edit description / price / condition, delete) when the viewer owns the listing. Add a "Profile" link to the signed-in user menu so users can find their own listings via the existing user profile page. Status transitions are intentionally excluded for now — they'll be driven by the future offer flow.
 - [x] Public user profile pages (member since, current listings, trade history).
 - [x] Messaging / contact flow between buyer and seller. The landing page promises "message the owner"; nothing implements it.
-- [ ] Search bar on `/games`. 
+- [x] Search bar on `/games`. 
 - [x] Filters on `/games`: condition, price range, category, mechanic, player count, year.
 - [ ] Close the game-stats data gaps. `rating`/`adjusted_rating` are bulk-loaded from `scripts/boardgames_ranks.csv` (with `weight` still backfilled per-game from the BGG API on listing creation). Two follow-ups: (1) **Coverage gap** — games absent from the CSV have no rating/adjusted_rating until a BGG sync fires; decide on a fallback (e.g. populate ratings during the same BGG sync that fetches weight, or fetch the CSV row on demand). (2) **Staleness** — the CSV is a static snapshot, so ratings freeze at export time; add a feature to periodically re-fetch/refresh the ranks CSV and re-run the loader to keep stats current. No decision now; tracked for later.
 - [ ] Sort options on `/games` (newest, price asc/desc).

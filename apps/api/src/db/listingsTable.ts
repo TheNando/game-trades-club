@@ -109,6 +109,7 @@ type UpdateListingInput = {
 };
 
 export type ListingFilters = {
+  query?: string;
   userId?: string;
   status?: 'open' | 'pending' | 'complete';
   conditions?: string[];
@@ -125,6 +126,10 @@ export type ListingFilters = {
   minRating?: number;
   ratingType?: 'average' | 'adjusted';
 };
+
+function escapeLikeValue(value: string) {
+  return value.replace(/[\\%_]/g, '\\$&');
+}
 
 function rowToListing(row: ListingRow): Listing {
   const cover = row.cover_image_id
@@ -214,6 +219,13 @@ function buildFilteredListingsQuery(filters: ListingFilters, viewerId: string): 
   if (filters.status !== undefined) {
     where.push('listings.status = ?');
     params.push(filters.status);
+  }
+  if (filters.query !== undefined) {
+    const searchPattern = `%${escapeLikeValue(filters.query)}%`;
+    where.push(
+      `(games.name LIKE ? ESCAPE '\\' COLLATE NOCASE OR COALESCE(listings.description, '') LIKE ? ESCAPE '\\' COLLATE NOCASE)`
+    );
+    params.push(searchPattern, searchPattern);
   }
 
   if (filters.conditions && filters.conditions.length > 0) {

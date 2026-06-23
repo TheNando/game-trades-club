@@ -84,6 +84,11 @@ function normalizeOptionalText(value: string | undefined) {
   return normalized ? normalized : null;
 }
 
+function parseSearchQuery(value: string | null): string | undefined {
+  const query = value?.trim();
+  return query ? query : undefined;
+}
+
 export function parseCreateListingBody(
   body: ListingBody | null
 ): ParsedCreateListingBody | Response {
@@ -155,6 +160,9 @@ function parseConditionQueryParam(values: string[]): string[] | Response {
 
 export function parseListingFilters(searchParams: URLSearchParams): ListingFilters | Response {
   const filters: ListingFilters = {};
+
+  const query = parseSearchQuery(searchParams.get('q'));
+  if (query !== undefined) filters.query = query;
 
   const userId = searchParams.get('user_id');
   if (userId) filters.userId = userId;

@@ -108,6 +108,8 @@ export function Games() {
 
   const clearFilters = () => setFilters(emptyGamesFilters());
 
+  const onChangeQuery = (query: string) => updateFilters({ query });
+
   const hasFilters = !isEmptyGamesFilters(filters);
 
   return (
@@ -130,6 +132,34 @@ export function Games() {
 
       <section class="max-w-6xl mx-auto px-4 md:px-8 py-10 grid gap-8 lg:grid-cols-[1fr_18rem]">
         <div>
+          <div class="mb-5">
+            <label class="input input-bordered flex items-center gap-3 h-12 rounded-xl bg-base-100 shadow-sm">
+              <span class="text-base-content/45" aria-hidden="true">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="size-5"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </span>
+              <input
+                type="search"
+                class="grow min-w-0"
+                placeholder="Search games or listing notes"
+                aria-label="Search listings"
+                value={filters.query}
+                onInput={(event) => onChangeQuery(event.currentTarget.value)}
+              />
+            </label>
+          </div>
+
           {loading ? (
             <div class="rounded-2xl border border-base-300 bg-base-200/60 p-4 text-base-content/75">
               <span>Loading listings...</span>
