@@ -316,6 +316,68 @@ describe('createListingsStore', () => {
     expect(detail?.preferred_shop).toBeNull();
   });
 
+  test('has_unread is true for the owner when a buyer sends an unread message', async () => {
+    const database = await createTestDatabase();
+    seedUser(database, 'owner');
+    seedUser(database, 'buyer');
+    seedGame(database, 1);
+    const listings = createListingsStore(database);
+    listings.createListing('owner', { id: 'listing-1', description: null, game_id: 1, condition: 'good', price: 20, status: 'open' });
+
+    // recipient_last_read_at set in the past so the new message appears unread
+    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id, recipient_last_read_at) VALUES (?, ?, ?, ?, ?)`)
+      .run('conv-1', 'buyer', 'owner', 'listing-1', '2020-01-01 00:00:00');
+    database.query(`INSERT INTO messages (id, conversation_id, sender_id, text) VALUES (?, ?, ?, ?)`)
+      .run('msg-1', 'conv-1', 'buyer', 'Hello!');
+
+    const ownerView = listings.findListingDetailById('listing-1', 'owner');
+    expect(ownerView?.has_unread).toBe(true);
+
+    const visitorView = listings.findListingDetailById('listing-1', 'visitor');
+    expect(visitorView?.has_unread).toBe(false);
+
+    const anonView = listings.findListingDetailById('listing-1');
+    expect(anonView?.has_unread).toBe(false);
+  });
+
+  test('has_unread is false for the owner once they read the message', async () => {
+    const database = await createTestDatabase();
+    seedUser(database, 'owner');
+    seedUser(database, 'buyer');
+    seedGame(database, 1);
+    const listings = createListingsStore(database);
+    listings.createListing('owner', { id: 'listing-1', description: null, game_id: 1, condition: 'good', price: 20, status: 'open' });
+
+    const past = '2020-01-01 00:00:00';
+    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id, recipient_last_read_at) VALUES (?, ?, ?, ?, ?)`)
+      .run('conv-1', 'buyer', 'owner', 'listing-1', '2099-01-01 00:00:00');
+    database.query(`INSERT INTO messages (id, conversation_id, sender_id, text, created_at) VALUES (?, ?, ?, ?, ?)`)
+      .run('msg-1', 'conv-1', 'buyer', 'Hello!', past);
+
+    const ownerView = listings.findListingDetailById('listing-1', 'owner');
+    expect(ownerView?.has_unread).toBe(false);
+  });
+
+  test('has_unread is visible in listListingsByUser only for the owner viewer', async () => {
+    const database = await createTestDatabase();
+    seedUser(database, 'owner');
+    seedUser(database, 'buyer');
+    seedGame(database, 1);
+    const listings = createListingsStore(database);
+    listings.createListing('owner', { id: 'listing-1', description: null, game_id: 1, condition: 'good', price: 20, status: 'open' });
+
+    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id, recipient_last_read_at) VALUES (?, ?, ?, ?, ?)`)
+      .run('conv-1', 'buyer', 'owner', 'listing-1', '2020-01-01 00:00:00');
+    database.query(`INSERT INTO messages (id, conversation_id, sender_id, text) VALUES (?, ?, ?, ?)`)
+      .run('msg-1', 'conv-1', 'buyer', 'Hi!');
+
+    const [ownerListing] = listings.listListingsByUser('owner', 'owner');
+    expect(ownerListing.has_unread).toBe(true);
+
+    const [visitorListing] = listings.listListingsByUser('owner', 'buyer');
+    expect(visitorListing.has_unread).toBe(false);
+  });
+
   test('updateListing leaves preferred_shop_id untouched when omitted', async () => {
     const database = await createTestDatabase();
     const user = seedUser(database);
@@ -429,6 +491,20 @@ describe('parseListingFilters', () => {
   test('rejects non-numeric weight params', async () => {
     const params = new URLSearchParams();
     params.set('weight_min', 'heavy');
+    const result = parseListingFilters(params);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(400);
+  });
+
+  test('parses valid status values', () => {
+    for (const status of ['open', 'pending', 'complete'] as const) {
+      const params = new URLSearchParams({ status });
+      expect(parseListingFilters(params)).toMatchObject({ status });
+    }
+  });
+
+  test('rejects invalid status values', () => {
+    const params = new URLSearchParams({ status: 'sold' });
     const result = parseListingFilters(params);
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(400);

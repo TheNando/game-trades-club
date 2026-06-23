@@ -27,6 +27,8 @@ export function Header() {
   const [theme, setTheme] = useState<Theme>('daylight');
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+
 
   useEffect(() => {
     const initialTheme = getSavedTheme();
@@ -36,6 +38,7 @@ export function Header() {
 
   useEffect(() => {
     let isMounted = true;
+
     const loadCurrentUser = async () => {
       try {
         const response = await fetch('/api/me', { credentials: 'include' });
@@ -52,9 +55,26 @@ export function Header() {
       }
     };
 
+    const loadUnreadCount = async () => {
+      try {
+        const response = await fetch('/api/conversations/unread-count', { credentials: 'include' });
+        if (response.ok) {
+          const data = await response.json();
+          if (isMounted) setUnreadCount(data.count);
+        }
+      } catch (error) {
+        console.error('Failed to load unread count', error);
+      }
+    };
+
     loadCurrentUser();
+    loadUnreadCount();
+
+    const interval = setInterval(loadUnreadCount, 60000);
+
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, []);
 
@@ -111,6 +131,14 @@ export function Header() {
           <a href="/add-listing" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
             List a game
           </a>
+          {user && (
+            <a href="/inbox" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors flex items-center gap-1.5">
+              Messages
+              {unreadCount > 0 && (
+                <span class="badge badge-primary badge-sm px-1.5 min-w-5 h-5">{unreadCount}</span>
+              )}
+            </a>
+          )}
           <a href="/shops" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors">
             Shops
           </a>
@@ -150,7 +178,7 @@ export function Header() {
               >
                 <div class="w-9 rounded-full">
                   {user.avatarUrl ? (
-                    <img alt={user.name ?? user.email} src={user.avatarUrl} />
+                    <img alt={user.name ?? user.email} src={user.avatarUrl} referrerpolicy="no-referrer" />
                   ) : (
                     <div class="w-full h-full grid place-items-center bg-secondary text-secondary-content text-sm font-semibold">
                       {(user.name ?? user.email).slice(0, 1).toUpperCase()}
@@ -165,7 +193,15 @@ export function Header() {
                 <li class="menu-title">
                   <span class="truncate">{user.name ?? user.email}</span>
                 </li>
-                <li><a href={`/users/${user.id}`}>Profile</a></li>
+                <li>
+                  <a href="/inbox" class="flex items-center justify-between">
+                    Inbox
+                    {unreadCount > 0 && <span class="badge badge-primary badge-sm">{unreadCount}</span>}
+                  </a>
+                </li>
+                <li>
+                  <a href={`/users/${user.id}`}>Profile</a>
+                </li>
                 <li><a href="/add-listing">List a game</a></li>
                 {user.isAdmin ? (
                   <li class="group/admin relative">

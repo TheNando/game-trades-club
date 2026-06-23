@@ -40,7 +40,7 @@ export function createGetUserProfile({
 }: CreateGetUserProfileOptions = {}) {
   return async function getUserProfile(
     _: BunRequest<'/api/users/:id'>,
-    { url }: RouteDependencies
+    { auth, url }: RouteDependencies
   ) {
     const userId = matchUserId(url);
     if (!userId) return badRequest('Invalid user ID');
@@ -48,7 +48,7 @@ export function createGetUserProfile({
     const user = findUserPublicProfile(userId);
     if (!user) return notFound('User not found');
 
-    const { current, past } = partitionListings(listingsStore.listListingsByUser(userId));
+    const { current, past } = partitionListings(listingsStore.listListingsByUser(userId, auth.userId));
 
     return json({
       user,

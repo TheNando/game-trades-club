@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { MessageForm } from '../components/MessageForm';
 import { ListingCard, type ListingCardData } from '../components/ListingCard';
 
 type Listing = ListingCardData & {
@@ -30,6 +31,17 @@ export function UserProfile({ id }: { id?: string }) {
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [me, setMe] = useState<{ id: string } | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/me', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then(setMe)
+      .catch(() => setMe(null));
+  }, []);
+
 
   useEffect(() => {
     if (!id) {
@@ -100,7 +112,16 @@ export function UserProfile({ id }: { id?: string }) {
 
   return (
     <div class="min-h-screen bg-base-100 text-base-content">
-      <ProfileHeader user={user} displayName={displayName} initial={initial} />
+      <ProfileHeader
+        user={user}
+        displayName={displayName}
+        initial={initial}
+        me={me}
+        showForm={showForm}
+        setShowForm={setShowForm}
+        sent={sent}
+        setSent={setSent}
+      />
       <section class="max-w-5xl mx-auto px-4 md:px-8 pt-6 md:pt-8 pb-16 flex flex-col gap-10">
         <ListingsSection
           title="Current listings"
@@ -121,30 +142,82 @@ type HeaderProps = {
   user: PublicUser;
   displayName: string;
   initial: string;
+  me: { id: string } | null;
+  showForm: boolean;
+  setShowForm: (show: boolean) => void;
+  sent: boolean;
+  setSent: (sent: boolean) => void;
 };
 
-function ProfileHeader({ user, displayName, initial }: HeaderProps) {
+function ProfileHeader({
+  user,
+  displayName,
+  initial,
+  me,
+  showForm,
+  setShowForm,
+  sent,
+  setSent,
+}: HeaderProps) {
   return (
     <section class="relative overflow-hidden border-b border-base-300 bg-base-200 bg-paper">
       <div class="absolute inset-0 bg-dotgrid opacity-[0.25] pointer-events-none" />
-      <div class="relative z-10 max-w-5xl mx-auto px-4 md:px-8 pt-12 pb-10 flex items-center gap-5">
-        <div class="w-20 h-20 rounded-2xl overflow-hidden border border-base-300 bg-base-100 grid place-items-center shadow-sm">
-          {user.avatar_url ? (
-            <img alt={displayName} src={user.avatar_url} class="w-full h-full object-cover" />
-          ) : (
-            <span class="font-display text-3xl text-base-content/70">{initial}</span>
-          )}
+      <div class="relative z-10 max-w-5xl mx-auto px-4 md:px-8 pt-12 pb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="flex items-center gap-5">
+          <div class="w-20 h-20 rounded-2xl overflow-hidden border border-base-300 bg-base-100 grid place-items-center shadow-sm">
+            {user.avatar_url ? (
+              <img alt={displayName} src={user.avatar_url} referrerpolicy="no-referrer" class="w-full h-full object-cover" />
+            ) : (
+              <span class="font-display text-3xl text-base-content/70">{initial}</span>
+            )}
+          </div>
+          <div class="flex flex-col">
+            <p class="text-xs uppercase tracking-[0.22em] text-primary/80 font-semibold">Member</p>
+            <h1 class="font-display text-3xl md:text-4xl font-medium mt-1 leading-tight">
+              {displayName}
+            </h1>
+            <p class="mt-2 text-sm text-base-content/65">
+              Member since {formatMemberSince(user.created_at)}
+            </p>
+          </div>
         </div>
-        <div class="flex flex-col">
-          <p class="text-xs uppercase tracking-[0.22em] text-primary/80 font-semibold">
-            Member
-          </p>
-          <h1 class="font-display text-3xl md:text-4xl font-medium mt-1 leading-tight">
-            {displayName}
-          </h1>
-          <p class="mt-2 text-sm text-base-content/65">
-            Member since {formatMemberSince(user.created_at)}
-          </p>
+
+        <div class="w-full md:w-auto md:min-w-[320px]">
+          {sent ? (
+            <div class="p-4 bg-success/10 text-success-content rounded-lg border border-success/20 text-sm">
+              Message sent! Check your{' '}
+              <a href="/inbox" class="link link-primary">
+                Inbox
+              </a>{' '}
+              for replies.
+            </div>
+          ) : me?.id === user.id ? (
+            <div class="text-right">
+              <a href="/add-listing" class="btn btn-primary btn-sm">
+                Add a Listing
+              </a>
+            </div>
+          ) : me ? (
+            showForm ? (
+              <MessageForm
+                recipientId={user.id}
+                recipientName={displayName}
+                onSuccess={() => setSent(true)}
+                onCancel={() => setShowForm(false)}
+              />
+            ) : (
+              <button class="btn btn-primary w-full md:w-auto" onClick={() => setShowForm(true)}>
+                Message {displayName}
+              </button>
+            )
+          ) : (
+            <div class="bg-base-100 p-4 rounded-xl border border-base-300 text-center">
+              <p class="text-xs mb-3">Sign in to message {displayName}</p>
+              <a href="/api/auth/google/start" class="btn btn-primary btn-sm btn-block">
+                Sign in
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </section>

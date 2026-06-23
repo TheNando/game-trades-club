@@ -8,6 +8,7 @@ import {
 } from '@game-trades-club/shared/formatters';
 import type { ListingImage, ListingStatus, Seller, Shop } from '@game-trades-club/shared/types';
 import { STATUS_LABELS } from '@game-trades-club/shared/constants';
+import { MessageForm } from '../components/MessageForm';
 import { ShopMap, type ShopMapPoint } from '../components/ShopMap';
 
 type CurrentUser = {
@@ -28,6 +29,8 @@ type Listing = {
   price: number;
   status: ListingStatus;
   preferred_shop: PreferredShop | null;
+  has_unread?: boolean;
+
   created_at: string;
   updated_at: string;
 };
@@ -162,6 +165,7 @@ export function ListingDetail({ id }: { id?: string }) {
           sellerLabel={sellerLabel}
           sellerInitial={sellerInitial}
           isOwner={isOwner}
+          me={me}
           onListingChange={setListing}
         />
       </section>
@@ -237,11 +241,14 @@ type SummaryProps = {
   sellerLabel: string;
   sellerInitial: string;
   isOwner: boolean;
+  me: CurrentUser | null;
   onListingChange: (listing: Listing) => void;
 };
 
-function ListingSummary({ listing, sellerLabel, sellerInitial, isOwner, onListingChange }: SummaryProps) {
+function ListingSummary({ listing, sellerLabel, sellerInitial, isOwner, me, onListingChange }: SummaryProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [sent, setSent] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
@@ -368,9 +375,40 @@ function ListingSummary({ listing, sellerLabel, sellerInitial, isOwner, onListin
             </span>
           </div>
         </a>
-        <p class="mt-4 text-xs text-base-content/55">
-          Messaging is coming soon. For now, save this listing and check back.
-        </p>
+        <div class="mt-8">
+          {sent ? (
+            <div class="p-4 bg-success/10 text-success-content rounded-lg border border-success/20 text-sm">
+              Message sent! Check your{' '}
+              <a href="/inbox" class="link link-primary">
+                Inbox
+              </a>{' '}
+              for replies.
+            </div>
+          ) : me?.id === listing.seller.id ? (
+            <p class="text-xs text-base-content/55 italic text-center">This is your listing.</p>
+          ) : me ? (
+            showForm ? (
+              <MessageForm
+                recipientId={listing.seller.id}
+                recipientName={listing.seller.name || 'the seller'}
+                listingId={listing.id}
+                onSuccess={() => setSent(true)}
+                onCancel={() => setShowForm(false)}
+              />
+            ) : (
+              <button class="btn btn-primary w-full" onClick={() => setShowForm(true)}>
+                Message the Seller
+              </button>
+            )
+          ) : (
+            <div class="bg-base-200 p-6 rounded-xl text-center">
+              <p class="text-sm mb-4">Sign in to message the owner</p>
+              <a href="/api/auth/google/start" class="btn btn-primary btn-sm">
+                Sign in
+              </a>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

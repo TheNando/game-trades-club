@@ -156,6 +156,17 @@ function parseConditionQueryParam(values: string[]): string[] | Response {
 export function parseListingFilters(searchParams: URLSearchParams): ListingFilters | Response {
   const filters: ListingFilters = {};
 
+  const userId = searchParams.get('user_id');
+  if (userId) filters.userId = userId;
+
+  const status = searchParams.get('status');
+  if (status !== null && status !== '') {
+    if (status !== 'open' && status !== 'pending' && status !== 'complete') {
+      return badRequest('status must be "open", "pending", or "complete"');
+    }
+    filters.status = status;
+  }
+
   const conditions = parseConditionQueryParam(searchParams.getAll('condition'));
   if (conditions instanceof Response) return conditions;
   if (conditions.length > 0) filters.conditions = conditions;
@@ -220,12 +231,12 @@ export function createGetListings({
 }: CreateGetListingsOptions = {}) {
   return async function getListings(
     _: BunRequest<'/api/listings'>,
-    { url }: RouteDependencies
+    { auth, url }: RouteDependencies
   ) {
     const filters = parseListingFilters(url.searchParams);
     if (filters instanceof Response) return filters;
 
-    return json({ items: listingsStore.listFilteredListings(filters) });
+    return json({ items: listingsStore.listFilteredListings(filters, auth.userId) });
   };
 }
 
@@ -236,12 +247,12 @@ export function createGetListingDetail({
 }: CreateGetListingDetailOptions = {}) {
   return async function getListingDetail(
     _: BunRequest<'/api/listings/:id'>,
-    { url }: RouteDependencies
+    { auth, url }: RouteDependencies
   ) {
     const listingId = matchListingId(url);
     if (!listingId) return badRequest('Invalid listing ID');
 
-    const listing = listingsStore.findListingDetailById(listingId);
+    const listing = listingsStore.findListingDetailById(listingId, auth.userId);
     if (!listing) return notFound('Listing not found');
 
     return json({ item: listing });

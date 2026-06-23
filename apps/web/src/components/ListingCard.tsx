@@ -12,6 +12,8 @@ export type ListingCardData = {
   condition: string;
   price: number;
   status: ListingStatus;
+  has_unread?: boolean;
+
 };
 
 type ListingCardProps = {
@@ -26,6 +28,14 @@ export function ListingCard({ listing, showDescription = false }: ListingCardPro
       class="h-full rounded-2xl border border-base-300 bg-base-100 shadow-sm p-5 flex flex-col gap-3 hover:border-base-content/30 hover:shadow-md transition-all"
     >
       <div class="relative">
+        {listing.has_unread && (
+          <div class="absolute top-2 left-2 z-10" title="Unread messages">
+            <span class="flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+            </span>
+          </div>
+        )}
         {listing.cover_image ? (
           <img
             src={`/api/listing-images/${listing.cover_image.id}${listing.cover_image.has_thumb ? '?variant=thumb' : ''}`}

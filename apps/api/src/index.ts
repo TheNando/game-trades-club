@@ -8,6 +8,7 @@ import { getListingImage, postListingImage } from './routes/listingImages';
 import { deleteListing, getListingDetail, getListings, patchListing, postListing } from './routes/listings';
 import { deleteShop, getShops, patchShop, postShop } from './routes/shops';
 import { getUserProfile } from './routes/users';
+import { getConversations, getConversationDetail, postConversation, postMessage, getUnreadCount, getExistingConversations } from './routes/conversations';
 import { json } from './utils/http';
 
 const port = Number(process.env.PORT ?? 3000);
@@ -23,6 +24,22 @@ Bun.serve({
     },
     "/api/auth/logout": {
       POST: withDeps(postAuthLogout)
+    },
+    "/api/conversations": {
+      GET: withDeps(getConversations),
+      POST: withDeps(postConversation),
+    },
+    "/api/conversations/unread-count": {
+      GET: withDeps(getUnreadCount),
+    },
+    "/api/conversations/existing": {
+      GET: withDeps(getExistingConversations),
+    },
+    "/api/conversations/:id": {
+      GET: withDeps(getConversationDetail),
+    },
+    "/api/conversations/:id/messages": {
+      POST: withDeps(postMessage),
     },
     "/api/bgg/image": {
       GET: withDeps(getBggImage)

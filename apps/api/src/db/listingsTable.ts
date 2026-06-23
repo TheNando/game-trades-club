@@ -14,6 +14,7 @@ export type Listing = {
   price: number;
   status: 'open' | 'pending' | 'complete';
   preferred_shop_id: string | null;
+  has_unread?: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -47,6 +48,7 @@ type ListingDetailRow = {
   condition: string;
   price: number;
   status: 'open' | 'pending' | 'complete';
+  has_unread: number | null;
   preferred_shop_id: string | null;
   shop_id: string | null;
   shop_name: string | null;
@@ -82,6 +84,7 @@ type ListingRow = {
   price: number;
   status: 'open' | 'pending' | 'complete';
   preferred_shop_id: string | null;
+  has_unread: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -106,6 +109,8 @@ type UpdateListingInput = {
 };
 
 export type ListingFilters = {
+  userId?: string;
+  status?: 'open' | 'pending' | 'complete';
   conditions?: string[];
   priceMin?: number;
   priceMax?: number;
@@ -141,6 +146,7 @@ function rowToListing(row: ListingRow): Listing {
     price: row.price,
     status: row.status,
     preferred_shop_id: row.preferred_shop_id,
+    has_unread: row.has_unread === 1,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
@@ -163,6 +169,22 @@ function rowToPreferredShop(row: ListingDetailRow): Shop | null {
   };
 }
 
+// has_unread is private to the listing owner, so it is gated on the viewer
+// matching listings.user_id. The leading `?` binds the viewer id and must be
+// the first positional parameter of any query selecting these columns.
+const hasUnreadColumn = `(CASE WHEN listings.user_id = ? THEN (
+              SELECT 1 FROM conversations c
+              WHERE c.listing_id = listings.id
+                AND (c.sender_id = listings.user_id OR c.recipient_id = listings.user_id)
+                AND EXISTS (
+                  SELECT 1 FROM messages m
+                  WHERE m.conversation_id = c.id
+                    AND m.sender_id != listings.user_id
+                    AND m.created_at > (CASE WHEN c.sender_id = listings.user_id THEN c.sender_last_read_at ELSE c.recipient_last_read_at END)
+                )
+              LIMIT 1
+            ) END)`;
+
 const listingSelectColumns = `listings.id, listings.user_id, listings.description, listings.game_id,
             games.name AS game_name,
             games.image_url AS game_image_url,
@@ -170,6 +192,7 @@ const listingSelectColumns = `listings.id, listings.user_id, listings.descriptio
             cover.id AS cover_image_id,
             CASE WHEN cover.thumb_stored_filename IS NOT NULL THEN 1 ELSE 0 END AS cover_image_has_thumb,
             listings.condition, listings.price, listings.status, listings.preferred_shop_id,
+            ${hasUnreadColumn} as has_unread,
             listings.created_at, listings.updated_at`;
 
 const listingCoverJoin = `JOIN games ON games.id = listings.game_id
@@ -180,9 +203,18 @@ const listingCoverJoin = `JOIN games ON games.id = listings.game_id
        LIMIT 1
      )`;
 
-function buildFilteredListingsQuery(filters: ListingFilters): { sql: string; params: (string | number)[]; } {
+function buildFilteredListingsQuery(filters: ListingFilters, viewerId: string): { sql: string; params: (string | number)[]; } {
   const where: string[] = [];
-  const params: (string | number)[] = [];
+  const params: (string | number)[] = [viewerId];
+
+  if (filters.userId !== undefined) {
+    where.push('listings.user_id = ?');
+    params.push(filters.userId);
+  }
+  if (filters.status !== undefined) {
+    where.push('listings.status = ?');
+    params.push(filters.status);
+  }
 
   if (filters.conditions && filters.conditions.length > 0) {
     where.push(`listings.condition IN (${filters.conditions.map(() => '?').join(', ')})`);
@@ -253,14 +285,14 @@ function buildFilteredListingsQuery(filters: ListingFilters): { sql: string; par
 }
 
 export function createListingsStore(database: Database) {
-  const listAllStmt = database.query<ListingRow, []>(
+  const listAllStmt = database.query<ListingRow, [string]>(
     `SELECT ${listingSelectColumns}
      FROM listings
      ${listingCoverJoin}
      ORDER BY listings.created_at DESC`
   );
 
-  const listStmt = database.query<ListingRow, [string]>(
+  const listStmt = database.query<ListingRow, [string, string]>(
     `SELECT ${listingSelectColumns}
      FROM listings
      ${listingCoverJoin}
@@ -268,7 +300,7 @@ export function createListingsStore(database: Database) {
      ORDER BY listings.created_at DESC`
   );
 
-  const findStmt = database.query<ListingRow, [string, string]>(
+  const findStmt = database.query<ListingRow, [string, string, string]>(
     `SELECT ${listingSelectColumns}
      FROM listings
      ${listingCoverJoin}
@@ -314,7 +346,7 @@ export function createListingsStore(database: Database) {
 
   const deleteStmt = database.query(`DELETE FROM listings WHERE id = ? AND user_id = ?`);
 
-  const findDetailStmt = database.query<ListingDetailRow, [string]>(
+  const findDetailStmt = database.query<ListingDetailRow, [string, string]>(
     `SELECT listings.id, listings.user_id, listings.description, listings.game_id,
             games.name AS game_name,
             games.image_url AS game_image_url,
@@ -323,6 +355,7 @@ export function createListingsStore(database: Database) {
             users.avatar_url AS seller_avatar_url,
             users.created_at AS seller_created_at,
             listings.condition, listings.price, listings.status,
+            ${hasUnreadColumn} as has_unread,
             listings.preferred_shop_id,
             shops.id AS shop_id,
             shops.name AS shop_name,
@@ -352,22 +385,22 @@ export function createListingsStore(database: Database) {
   );
 
   return {
-    listAllListings(): Listing[] {
-      return listAllStmt.all().map(rowToListing);
+    listAllListings(viewerId = ''): Listing[] {
+      return listAllStmt.all(viewerId).map(rowToListing);
     },
-    listFilteredListings(filters: ListingFilters): Listing[] {
-      const { sql, params } = buildFilteredListingsQuery(filters);
+    listFilteredListings(filters: ListingFilters, viewerId = ''): Listing[] {
+      const { sql, params } = buildFilteredListingsQuery(filters, viewerId);
       return database.query<ListingRow, (string | number)[]>(sql).all(...params).map(rowToListing);
     },
-    listListingsByUser(userId: string): Listing[] {
-      return listStmt.all(userId).map(rowToListing);
+    listListingsByUser(userId: string, viewerId = ''): Listing[] {
+      return listStmt.all(viewerId, userId).map(rowToListing);
     },
     findListingByIdForUser(listingId: string, userId: string): Listing | null {
-      const row = findStmt.get(listingId, userId);
+      const row = findStmt.get(userId, listingId, userId);
       return row ? rowToListing(row) : null;
     },
-    findListingDetailById(listingId: string): ListingDetail | null {
-      const row = findDetailStmt.get(listingId);
+    findListingDetailById(listingId: string, viewerId = ''): ListingDetail | null {
+      const row = findDetailStmt.get(viewerId, listingId);
       if (!row) return null;
 
       const images = listImagesStmt
@@ -387,6 +420,7 @@ export function createListingsStore(database: Database) {
         price: row.price,
         status: row.status,
         preferred_shop_id: row.preferred_shop_id,
+        has_unread: row.has_unread === 1,
         created_at: row.created_at,
         updated_at: row.updated_at,
         images,
@@ -411,7 +445,7 @@ export function createListingsStore(database: Database) {
         input.preferred_shop_id ?? null
       );
 
-      return rowToListing(findStmt.get(input.id, userId)!);
+      return rowToListing(findStmt.get(userId, input.id, userId)!);
     },
     updateListing(userId: string, listingId: string, input: UpdateListingInput) {
       const includeShop = input.preferred_shop_id !== undefined;
