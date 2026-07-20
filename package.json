@@ -13,6 +13,8 @@
     "server": "bun run apps/api/src/index.ts",
     "build": "cd apps/web && bunx vite build",
     "preview": "cd apps/web && bunx vite preview",
+    "games:load": "bun run scripts/load_games.ts",
+    "games:refresh": "bun run scripts/refresh_game_ranks.ts",
     "typecheck": "bunx tsc --noEmit -p apps/web/tsconfig.json && bunx tsc --noEmit -p apps/api/tsconfig.json",
     "test": "bun test --preload ./apps/web/test/setup.ts"
   },

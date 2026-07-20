@@ -72,7 +72,8 @@ Required variables:
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_REDIRECT_URI`
 - `SESSION_SECRET`
-- `DATABASE_PATH` (default `./data/app.db`)
+- `DATA_PATH` (default `./data`; contains the SQLite database and application
+  generated files)
 
 ## Notes
 The `writing-plans` skill referenced by brainstorming is not available in this session’s skill list, so implementation proceeds directly from this approved design.

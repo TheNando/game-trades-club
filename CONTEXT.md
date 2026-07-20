@@ -41,10 +41,13 @@ roadmap and `docs/` for design notes and plans.
   `storage/` (image files on disk), `utils/`.
 - `packages/shared` — `@game-trades-club/shared`; barrel-exported from
   `src/index.ts`.
-- `scripts` — one-off utilities (e.g. `load_games.ts` bulk-loads game ranks from
-  `scripts/boardgames_ranks.csv`).
-- `data` — runtime SQLite DB (`app.db`) and uploaded image directories
-  (`listing-images/`, `game-images/`). Dev DBs are disposable.
+- `scripts` — one-off utilities. `load_games.ts` bulk-loads game ranks from the
+  checked-in `scripts/boardgames_ranks.csv`; `refresh_game_ranks.ts` downloads a
+  configured BoardGameGeek ranks CSV to `<DATA_PATH>/boardgames_ranks.csv` and
+  loads it. `gameRanks.ts` contains shared parsing and path-resolution logic.
+- `data` — default runtime data directory. `DATA_PATH` controls the location of
+  the SQLite DB (`app.db`), uploaded listing images, fetched game images, and
+  refreshed rank CSV. Dev data is disposable.
 - `docs` — design notes and implementation plans.
 
 ## Key Commands
@@ -53,6 +56,8 @@ roadmap and `docs/` for design notes and plans.
 - `bun run server` — API only (`http://localhost:3000`).
 - `bun run client` — Vite frontend (`http://localhost:5173`, proxies `/api/*`).
 - `bun run build` — build the frontend bundle.
+- `bun run games:load` — load the checked-in BoardGameGeek ranks snapshot.
+- `bun run games:refresh` — download and load a configured ranks CSV snapshot.
 - `bun run typecheck` — TypeScript checks for both apps.
 - `bun run test` — full test suite (preloads `apps/web/test/setup.ts`).
 
@@ -94,17 +99,44 @@ Primary entities (see `apps/api/src/db/schema.sql`):
 
 - **users** — accounts (id, `google_sub`, email, name, avatar, `is_admin`).
 - **sessions** — server-side login sessions (FK → users).
-- **games** — board games (BGG `id`, name, players, playtime, `rating`,
-  `adjusted_rating`, `weight`, `is_expansion`).
+- **games** — board games (BGG `id`, name, image, publication year, players,
+  playtime, `rating`, `adjusted_rating`, `weight`, `is_expansion`).
 - **Game taxonomy** — `publishers`, `designers`, `artists`, `categories`,
   `mechanics`, joined to games via `game_*` many-to-many tables.
 - **listings** — a user's offer to sell a game (FK → users, games, shops;
   `condition`, `price` in cents, `status`, `preferred_shop_id`).
 - **listing_images** — uploaded images for a listing (files stored on disk via
-  `storage/listingImageStorage.ts`; rows reference stored + thumbnail names).
-- **shops** — physical game stores used as pickup spots (city, address,
-  latitude/longitude for map display).
+  `storage/listingImageStorage.ts`; rows track ownership, original/stored names,
+  MIME type, dimensions, and optional thumbnail names).
+- **shops** — physical game stores used as pickup spots (name, city, state, ZIP,
+  address, website, and latitude/longitude for map display).
 - **conversations** / **messages** — see Messaging below.
+
+## API Surface
+
+Routes are registered in `apps/api/src/index.ts`. The current API includes:
+
+- `GET /api/health`
+- `GET /api/auth/google/start`
+- `GET /api/auth/google/callback`
+- `POST /api/auth/logout`
+- `GET /api/me`
+- `GET /api/bgg/image`
+- `GET /api/game-images/:id`
+- `GET /api/games`
+- `GET /api/listing-filters`
+- `GET|POST /api/listings`
+- `GET|PATCH|DELETE /api/listings/:id`
+- `POST /api/listing-images`
+- `GET /api/listing-images/:id` (supports the `thumb` variant)
+- `GET|POST /api/shops`
+- `PATCH|DELETE /api/shops/:id`
+- `GET /api/users/:id`
+- `GET|POST /api/conversations`
+- `GET /api/conversations/unread-count`
+- `GET /api/conversations/existing`
+- `GET /api/conversations/:id`
+- `POST /api/conversations/:id/messages`
 
 ## External Integrations
 
@@ -114,7 +146,7 @@ Primary entities (see `apps/api/src/db/schema.sql`):
 - **BoardGameGeek (BGG) XML API** (`bgg/`) — fetches game credits, stats, and
   cover images. On listing creation, missing game info is synced on demand
   (`syncGameInfoIfMissing`); bulk ratings come from
-  `scripts/boardgames_ranks.csv`.
+  `scripts/boardgames_ranks.csv` and the `games:refresh` CSV workflow.
 
 ## Domain Vocabulary
 
@@ -131,8 +163,9 @@ _Avoid_: post, ad, item.
 
 **Game**:
 A board game in the catalog, keyed by its BoardGameGeek id and enriched with BGG
-metadata (players, playtime, rating, weight, taxonomy). A Game is reference data
-shared across many Listings — distinct from a Listing.
+metadata (image, publication year, players, playtime, rating, weight, expansion
+status, and taxonomy). A Game is reference data shared across many Listings —
+distinct from a Listing.
 
 **Condition**:
 The physical state of the copy being sold. Fixed enum:

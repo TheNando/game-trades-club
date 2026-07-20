@@ -140,6 +140,48 @@ describe('createSyncGameInfoIfMissing', () => {
     expect(updateGameStats).toHaveBeenCalledWith(7, stats);
   });
 
+  test('fetches stats when ratings are missing even if other info is present', async () => {
+    const updateGameStats = mock(() => undefined);
+    const stats = {
+      minPlayers: 1,
+      maxPlayers: 5,
+      minPlaytime: 20,
+      maxPlaytime: 40,
+      rating: 7.6,
+      adjusted_rating: 7.2,
+      weight: 2.7,
+    };
+    const fetchGameInfoFn = mock(async () => ({
+      credits: emptyCredits,
+      imageUrl: null,
+      stats,
+    }));
+
+    const sync = createSyncGameInfoIfMissing({
+      fetchGameInfoFn,
+      ensureBggGameImageFn: mock(async () => null),
+      findGameImageFn: mock(async () => ({
+        originalFilename: '7.jpg',
+        mimeType: 'image/jpeg',
+        thumbFilename: 'thumb_7.webp',
+      })),
+      GameInfoStore: {
+        listGameIdsMissingCredits: () => [],
+        replaceGameInfo: () => undefined,
+      },
+      gamesStore: {
+        findGameById: () => gameRow(),
+        listGameIdsMissingStats: () => [7],
+        updateGameStats,
+        updateGameImageUrl: () => undefined,
+      },
+    });
+
+    await expect(sync(7)).resolves.toBe(true);
+    expect(fetchGameInfoFn).toHaveBeenCalledWith({ gameId: 7, gameName: 'Game 7' });
+    expect(updateGameStats).toHaveBeenCalledWith(7, stats);
+  });
+
   test('fetches when only credits are missing and still writes stats', async () => {
     const replaceGameInfo = mock(() => undefined);
     const updateGameStats = mock(() => undefined);

@@ -1,5 +1,6 @@
 import { mkdir, rm, stat } from 'node:fs/promises';
 import { extname, join } from 'node:path';
+import { getDataPath } from '../utils/paths';
 
 const THUMB_MAX_DIMENSION = 200;
 const THUMB_WEBP_QUALITY = 78;
@@ -18,7 +19,7 @@ const mimeTypeByExtension = new Map<string, string>([
 ]);
 
 export function getGameImageStorageDir() {
-  return process.env.GAME_IMAGE_STORAGE_DIR ?? './data/game-images';
+  return join(getDataPath(), 'game-images');
 }
 
 export type GameImagePaths = {
