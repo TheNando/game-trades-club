@@ -87,7 +87,3 @@ Optional variables:
 
 - `DATA_PATH` (default `./data`; contains the SQLite database and application
   generated files)
-
-## Notes
-
-The `writing-plans` skill referenced by brainstorming is not available in this session’s skill list, so implementation proceeds directly from this approved design.

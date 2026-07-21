@@ -126,7 +126,7 @@ export function loadGameRanksCsv(
 
   if (logger && total === 0) {
     logger.log('100% complete (0/0)');
-  } else if (logger && progressInterval > 0 && nextProgress <= 100) {
+  } else if (logger) {
     logger.log(`100% complete (${inserted}/${total})`);
   }
 

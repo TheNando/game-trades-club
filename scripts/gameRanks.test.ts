@@ -76,6 +76,19 @@ describe('game ranks CSV helpers', () => {
     expect(batches).toMatchObject([[{ id: 1 }, { id: 2 }], [{ id: 3 }]]);
   });
 
+  test('logs final completion when the progress interval does not divide 100', () => {
+    const messages: string[] = [];
+
+    const result = loadGameRanksCsv(validCsv, () => {}, {
+      batchSize: 3,
+      logger: { log: (message) => messages.push(message) },
+      progressInterval: 60,
+    });
+
+    expect(result).toEqual({ inserted: 3, total: 3 });
+    expect(messages).toEqual(['60% complete (3/3)', '100% complete (3/3)']);
+  });
+
   test('rejects non-positive and non-integer batch sizes before parsing', () => {
     for (const batchSize of [0, -1, 1.5]) {
       expect(() => loadGameRanksCsv('invalid CSV', () => {}, { batchSize })).toThrow(
