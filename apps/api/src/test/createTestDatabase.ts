@@ -14,7 +14,7 @@ export async function createTestDatabase() {
 export function seedUser(
   database: Database,
   userId = 'user-1',
-  { isAdmin = false }: { isAdmin?: boolean; } = {},
+  { isAdmin = false }: { isAdmin?: boolean } = {},
 ) {
   database
     .query(
@@ -45,7 +45,7 @@ export function seedListing(
     id = 'listing-1',
     userId = 'user-1',
     gameId = 1,
-  }: { id?: string; userId?: string; gameId?: number; } = {},
+  }: { id?: string; userId?: string; gameId?: number } = {},
 ) {
   seedGame(database, gameId);
 

@@ -40,7 +40,7 @@ export interface Item {
   'itemstate': Itemstate;
   'label': string;
   'labelpl': string;
-  'linkcounts': { [key: string]: number; };
+  'linkcounts': { [key: string]: number };
   'linkedforum_types': LinkedforumType[];
   'links': Record<ItemLinkKey, ItemLink[]>;
   'maxplayers': string;

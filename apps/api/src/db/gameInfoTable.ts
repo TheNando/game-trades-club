@@ -107,7 +107,7 @@ function normalizeGameInfo(credits: GameInfo): NormalizedGameInfo {
 /** Creates database operations for enriched game taxonomy. */
 export function createGameInfoStore(database: Database) {
   type ClearJoinStatement = Statement<unknown, [number]>;
-  type FindEntityStatement = Statement<{ id: number; }, [string]>;
+  type FindEntityStatement = Statement<{ id: number }, [string]>;
   type InsertJoinStatement = Statement<unknown, [number, number]>;
   type UpsertEntityStatement = Statement<unknown, [number | null, string, string | null]>;
 
@@ -121,7 +121,7 @@ export function createGameInfoStore(database: Database) {
   const findEntityStatements = Object.fromEntries(
     Object.entries(creditTableConfigs).map(([bucket, config]) => [
       bucket,
-      database.query<{ id: number; }, [string]>(
+      database.query<{ id: number }, [string]>(
         `SELECT id FROM ${config.entityTable} WHERE name = ?`,
       ),
     ]),
@@ -152,7 +152,7 @@ export function createGameInfoStore(database: Database) {
 
   const listGamesWithAnyCreditsStmt = (gameIds: number[]) =>
     database
-      .query<{ game_id: number; }, number[]>(
+      .query<{ game_id: number }, number[]>(
         `SELECT DISTINCT game_id
          FROM (
            SELECT game_id FROM game_publishers WHERE game_id IN (${gameIds.map(() => '?').join(', ')})
@@ -177,7 +177,7 @@ export function createGameInfoStore(database: Database) {
       for (const record of normalized[bucket]) {
         upsertEntityStatements[bucket].run(record.bggId, record.name, record.description);
 
-        const entity = findEntityStatements[bucket].get(record.name) as { id: number; } | null;
+        const entity = findEntityStatements[bucket].get(record.name) as { id: number } | null;
         if (!entity) {
           throw new Error(`Unable to find ${bucket} row for ${record.name}`);
         }

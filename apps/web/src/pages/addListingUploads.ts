@@ -25,7 +25,7 @@ export async function runUploadQueue({
 }: {
   items: UploadItem[];
   listingId: string;
-  uploadImage: (args: { listingId: string; file: File; }) => Promise<void>;
+  uploadImage: (args: { listingId: string; file: File }) => Promise<void>;
   onItemsChange?: (items: UploadItem[]) => void;
 }) {
   const nextItems = [...items];

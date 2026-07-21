@@ -598,7 +598,7 @@ describe('createGetListings', () => {
     });
 
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { items: { id: string; }[]; };
+    const body = (await response.json()) as { items: { id: string }[] };
     expect(body.items.map((item) => item.id)).toEqual(['listing-cheap']);
   });
 
@@ -824,7 +824,7 @@ describe('createGetListingDetail', () => {
     });
 
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { item: { id: string; seller: { id: string; }; }; };
+    const body = (await response.json()) as { item: { id: string; seller: { id: string } } };
     expect(body.item.id).toBe('listing-1');
     expect(body.item.seller.id).toBe('user-1');
   });

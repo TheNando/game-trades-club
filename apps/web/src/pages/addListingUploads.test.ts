@@ -13,7 +13,7 @@ describe('runUploadQueue', () => {
     const result = await runUploadQueue({
       items,
       listingId: 'listing-1',
-      uploadImage: mock(async ({ file }: { file: File; }) => {
+      uploadImage: mock(async ({ file }: { file: File }) => {
         calls.push(file.name);
         if (file.name === 'back.png') {
           throw new Error('Unable to upload image.');
@@ -44,7 +44,7 @@ describe('runUploadQueue', () => {
     const result = await runUploadQueue({
       items: [...items],
       listingId: 'listing-1',
-      uploadImage: mock(async ({ file }: { file: File; }) => {
+      uploadImage: mock(async ({ file }: { file: File }) => {
         calls.push(file.name);
       }),
     });

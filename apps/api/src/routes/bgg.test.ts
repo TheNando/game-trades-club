@@ -27,7 +27,7 @@ function createGamesStoreStub(initial: Record<number, StubGame | null> = {}) {
   const games = new Map<number, StubGame | null>(
     Object.entries(initial).map(([key, value]) => [Number(key), value]),
   );
-  const updates: Array<{ id: number; url: string; }> = [];
+  const updates: Array<{ id: number; url: string }> = [];
 
   return {
     games,

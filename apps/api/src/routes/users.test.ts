@@ -4,9 +4,9 @@ import { createTestDatabase, seedGame, seedUser } from '../test/createTestDataba
 import { createGetUserProfile } from './users';
 
 type UserProfileBody = {
-  user: { id: string; name: string | null; avatar_url: string | null; created_at: string; };
-  current_listings: { id: string; status: string; }[];
-  past_listings: { id: string; status: string; }[];
+  user: { id: string; name: string | null; avatar_url: string | null; created_at: string };
+  current_listings: { id: string; status: string }[];
+  past_listings: { id: string; status: string }[];
 };
 
 function callHandler(userId: string, deps: Parameters<typeof createGetUserProfile>[0]) {

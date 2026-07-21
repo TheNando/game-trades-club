@@ -5,7 +5,7 @@ export type Listing = {
   id: string;
   user_id: string;
   description: string | null;
-  game: { id: number; name: string; };
+  game: { id: number; name: string };
   rating: number | null;
   cover_image: ListingImage | null;
   game_image_path: string | null;

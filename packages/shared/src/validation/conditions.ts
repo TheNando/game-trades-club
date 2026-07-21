@@ -8,7 +8,7 @@ export function isValidCondition(condition: string): boolean {
 /** Validates that every supplied condition is supported. */
 export function validateConditions(
   conditions: string[],
-): { valid: true; } | { valid: false; error: string; } {
+): { valid: true } | { valid: false; error: string } {
   for (const condition of conditions) {
     if (!isValidCondition(condition)) {
       return {

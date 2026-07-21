@@ -195,7 +195,7 @@ describe('createGetShops', () => {
     const response = await callGet({ shopsStore });
 
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { items: { id: string; name: string; }[]; };
+    const body = (await response.json()) as { items: { id: string; name: string }[] };
     expect(body.items).toHaveLength(1);
     expect(body.items[0]).toMatchObject({ id: 'shop-1', name: 'Catan Cafe' });
   });
@@ -238,7 +238,7 @@ describe('createPostShop', () => {
 
     expect(response.status).toBe(201);
     const body = (await response.json()) as {
-      item: { id: string; name: string; city: string; state: string | null; zip: string | null; };
+      item: { id: string; name: string; city: string; state: string | null; zip: string | null };
     };
     expect(body.item).toMatchObject({
       id: 'shop-1',
@@ -268,7 +268,7 @@ describe('createPostShop', () => {
 
     expect(response.status).toBe(201);
     const body = (await response.json()) as {
-      item: { latitude: number | null; longitude: number | null; };
+      item: { latitude: number | null; longitude: number | null };
     };
     expect(body.item.latitude).toBeCloseTo(40.7128);
     expect(body.item.longitude).toBeCloseTo(-74.006);
@@ -347,7 +347,7 @@ describe('createPatchShop', () => {
 
     expect(response.status).toBe(200);
     const body = (await response.json()) as {
-      item: { name: string; city: string; state: string | null; latitude: number | null; };
+      item: { name: string; city: string; state: string | null; latitude: number | null };
     };
     expect(body.item).toMatchObject({
       name: 'Catan Cafe Renamed',

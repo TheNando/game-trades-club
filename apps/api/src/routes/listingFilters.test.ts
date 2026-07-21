@@ -72,8 +72,8 @@ describe('createGetListingFilters', () => {
 
     expect(response.status).toBe(200);
     const body = (await response.json()) as {
-      categories: { id: number; name: string; }[];
-      mechanics: { id: number; name: string; }[];
+      categories: { id: number; name: string }[];
+      mechanics: { id: number; name: string }[];
     };
     expect(body.categories.map((c) => c.id)).toEqual([10, 20]);
     expect(body.mechanics.map((m) => m.id)).toEqual([100, 200]);

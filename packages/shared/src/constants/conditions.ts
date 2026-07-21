@@ -10,7 +10,7 @@ export const CONDITION_LABELS: Record<string, string> = {
 } as const;
 
 /** Listing conditions formatted for selection controls. */
-export const CONDITION_OPTIONS: { value: ListingCondition; label: string; }[] = [
+export const CONDITION_OPTIONS: { value: ListingCondition; label: string }[] = [
   { value: 'new', label: 'New' },
   { value: 'like_new', label: 'Like New' },
   { value: 'good', label: 'Good' },

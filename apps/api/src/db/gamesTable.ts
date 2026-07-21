@@ -97,7 +97,7 @@ export function createGamesStore(database: typeof db) {
 
   const listGameIdsMissingStatsStmt = (gameIds: number[]) =>
     database
-      .query<{ id: number; }, number[]>(
+      .query<{ id: number }, number[]>(
         `SELECT id FROM games
          WHERE id IN (${gameIds.map(() => '?').join(', ')})
            AND (min_players IS NULL OR max_players IS NULL

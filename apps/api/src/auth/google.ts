@@ -124,7 +124,7 @@ export async function exchangeCodeForGoogleProfile(
     throw new Error('Failed to exchange Google OAuth code');
   }
 
-  const tokenData = (await tokenResponse.json()) as { access_token?: string; };
+  const tokenData = (await tokenResponse.json()) as { access_token?: string };
   if (!tokenData.access_token) {
     throw new Error('Google token response did not include access_token');
   }

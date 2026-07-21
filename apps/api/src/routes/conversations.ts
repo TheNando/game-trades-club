@@ -18,7 +18,7 @@ type ConversationRouteOptions = {
   conversationsStore?: ConversationsStore;
   messagesStore?: MessagesStore;
   listingsStore?: ListingsStore;
-  findUser?: (id: string) => { id: string; } | null;
+  findUser?: (id: string) => { id: string } | null;
   createId?: () => string;
 };
 
@@ -30,7 +30,7 @@ function matchConversationId(url: URL) {
   return url.pathname.match(/^\/api\/conversations\/([^/]+)(?:\/messages)?$/)?.[1];
 }
 
-function isMember(conversation: { sender_id: string; recipient_id: string; }, userId: string) {
+function isMember(conversation: { sender_id: string; recipient_id: string }, userId: string) {
   return conversation.sender_id === userId || conversation.recipient_id === userId;
 }
 

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { fetchGameInfo } from './gameInfo';
 
-type XmlLink = { type: string; id: string | number; value: string; };
+type XmlLink = { type: string; id: string | number; value: string };
 type XmlStats = {
   minplayers?: string;
   maxplayers?: string;
@@ -19,7 +19,7 @@ function createThingXml({
   links = [],
   stats = {},
   ratings,
-}: { image?: string; links?: XmlLink[]; stats?: XmlStats; ratings?: XmlRatings; } = {}) {
+}: { image?: string; links?: XmlLink[]; stats?: XmlStats; ratings?: XmlRatings } = {}) {
   const linkLines = links
     .map((l) => `    <link type="${l.type}" id="${l.id}" value="${l.value}" />`)
     .join('\n');

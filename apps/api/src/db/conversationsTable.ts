@@ -105,7 +105,7 @@ export function createConversationsStore(database: Database) {
     ORDER BY COALESCE(m.created_at, c.created_at) DESC`,
   );
 
-  const unreadCountStmt = database.query<{ count: number; }, [string, string, string, string]>(
+  const unreadCountStmt = database.query<{ count: number }, [string, string, string, string]>(
     `SELECT COUNT(*) as count
      FROM conversations c
      WHERE (c.sender_id = ? OR c.recipient_id = ?)

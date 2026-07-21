@@ -31,7 +31,7 @@ const revokeSessionStmt = db.query(
 export async function createSession(
   userId: string,
   request: Request,
-): Promise<{ id: string; expiresAt: string; }> {
+): Promise<{ id: string; expiresAt: string }> {
   const id = randomToken(48);
   const expiresAt = toIsoAfterDays(SESSION_DAYS);
   const userAgent = request.headers.get('user-agent');

@@ -18,7 +18,7 @@ db.run(schemaSql);
 // migration system lands (see TASKS.md).
 function addColumnIfMissing(table: string, column: string, definition: string) {
   const existing = db
-    .query<{ name: string; }, []>(`PRAGMA table_info(${table})`)
+    .query<{ name: string }, []>(`PRAGMA table_info(${table})`)
     .all()
     .map((row) => row.name);
   if (!existing.includes(column)) {

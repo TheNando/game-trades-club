@@ -7,9 +7,9 @@ export type Listing = {
   id: string;
   user_id: string;
   description: string | null;
-  game: { id: number; name: string; };
+  game: { id: number; name: string };
   rating: number | null;
-  cover_image: { id: string; has_thumb: boolean; } | null;
+  cover_image: { id: string; has_thumb: boolean } | null;
   game_image_path: string | null;
   condition: string;
   price: number;
@@ -22,7 +22,7 @@ export type Listing = {
 
 /** Represents a listing with seller, shop, and image details. */
 export type ListingDetail = Omit<Listing, 'cover_image'> & {
-  images: { id: string; has_thumb: boolean; }[];
+  images: { id: string; has_thumb: boolean }[];
   seller: {
     id: string;
     name: string | null;
@@ -137,9 +137,9 @@ function escapeLikeValue(value: string) {
 function rowToListing(row: ListingRow): Listing {
   const cover = row.cover_image_id
     ? {
-      id: row.cover_image_id,
-      has_thumb: row.cover_image_has_thumb === 1,
-    }
+        id: row.cover_image_id,
+        has_thumb: row.cover_image_has_thumb === 1,
+      }
     : null;
 
   return {
@@ -214,7 +214,7 @@ const listingCoverJoin = `JOIN games ON games.id = listings.game_id
 function buildFilteredListingsQuery(
   filters: ListingFilters,
   viewerId: string,
-): { sql: string; params: (string | number)[]; } {
+): { sql: string; params: (string | number)[] } {
   const where: string[] = [];
   const params: (string | number)[] = [viewerId];
 
@@ -472,24 +472,24 @@ export function createListingsStore(database: Database) {
       const includeShop = input.preferred_shop_id !== undefined;
       const result = includeShop
         ? updateWithShopStmt.run(
-          input.description ?? null,
-          input.game_id ?? null,
-          input.condition ?? null,
-          input.price ?? null,
-          input.status ?? null,
-          input.preferred_shop_id ?? null,
-          listingId,
-          userId,
-        )
+            input.description ?? null,
+            input.game_id ?? null,
+            input.condition ?? null,
+            input.price ?? null,
+            input.status ?? null,
+            input.preferred_shop_id ?? null,
+            listingId,
+            userId,
+          )
         : updateWithoutShopStmt.run(
-          input.description ?? null,
-          input.game_id ?? null,
-          input.condition ?? null,
-          input.price ?? null,
-          input.status ?? null,
-          listingId,
-          userId,
-        );
+            input.description ?? null,
+            input.game_id ?? null,
+            input.condition ?? null,
+            input.price ?? null,
+            input.status ?? null,
+            listingId,
+            userId,
+          );
 
       return Number(result.changes) > 0;
     },

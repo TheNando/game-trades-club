@@ -78,8 +78,8 @@ describe('game ranks CSV helpers', () => {
 
   test('rejects non-positive and non-integer batch sizes before parsing', () => {
     for (const batchSize of [0, -1, 1.5]) {
-      expect(() => loadGameRanksCsv('invalid CSV', () => { }, { batchSize })).toThrow(
-        'batchSize must be a positive integer.'
+      expect(() => loadGameRanksCsv('invalid CSV', () => {}, { batchSize })).toThrow(
+        'batchSize must be a positive integer.',
       );
     }
   });

@@ -168,14 +168,14 @@ describe('createPostConversation', () => {
       makeDeps('user-a', new URL('http://t/api/conversations')),
     );
     expect(res1.status).toBe(201);
-    const first = ((await res1.json()) as { item: { id: string; }; }).item;
+    const first = ((await res1.json()) as { item: { id: string } }).item;
 
     const res2 = await handler(
       make() as never,
       makeDeps('user-a', new URL('http://t/api/conversations')),
     );
     expect(res2.status).toBe(200);
-    const second = ((await res2.json()) as { item: { id: string; }; }).item;
+    const second = ((await res2.json()) as { item: { id: string } }).item;
 
     expect(second.id).toBe(first.id);
     expect(conversationsStore.findExistingBetween('user-a', 'user-b', 'listing-1')).toHaveLength(1);
@@ -256,7 +256,7 @@ describe('createPostMessage', () => {
     });
     const res = await handler(req as never, makeDeps('user-b', url));
     expect(res.status).toBe(201);
-    const body = (await res.json()) as { item: { text: string; sender_id: string; }; };
+    const body = (await res.json()) as { item: { text: string; sender_id: string } };
     expect(body.item.text).toBe('reply here');
     expect(body.item.sender_id).toBe('user-b');
   });
@@ -294,7 +294,7 @@ describe('createGetConversationDetail', () => {
     const req = new Request(url);
     const res = await handler(req as never, makeDeps('user-a', url));
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { item: { id: string; }; messages: { text: string; }[]; };
+    const body = (await res.json()) as { item: { id: string }; messages: { text: string }[] };
     expect(body.item.id).toBe('conv-1');
     expect(body.messages[0].text).toBe('Hello!');
   });

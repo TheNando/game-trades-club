@@ -18,8 +18,8 @@
     "typecheck": "bunx tsc --noEmit -p apps/web/tsconfig.json && bunx tsc --noEmit -p apps/api/tsconfig.json",
     "test": "bun test --preload ./apps/web/test/setup.ts",
     "lint": "bunx eslint .",
-    "format": "bunx prettier --write --ignore-unknown .",
-    "format:check": "bunx prettier --check --ignore-unknown ."
+    "format": "bunx eslint . --fix && bunx prettier --write --ignore-unknown .",
+    "format:check": "bunx eslint . && bunx prettier --check --ignore-unknown ."
   },
   "dependencies": {
     "@std/csv": "npm:@jsr/std__csv",
