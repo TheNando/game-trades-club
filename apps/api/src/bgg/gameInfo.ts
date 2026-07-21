@@ -1,7 +1,7 @@
 import type { GameCreditRecord, GameInfo } from '../db/gameInfoTable';
 import type { GameStats } from '../db/gamesTable';
-import type { GeekData, Item, ItemLink } from '../types/bgg';
 
+/** Groups game details parsed from BoardGameGeek XML. */
 export type GamePageData = {
   credits: GameInfo;
   imageUrl: string | null;
@@ -69,7 +69,7 @@ function extractTagText(xml: string, tag: string): string | null {
 function getCreditRecordsFromXmlLinks(xml: string, type: string): GameCreditRecord[] {
   const pattern = new RegExp(
     `<link\\s+type="${type}"\\s+id="(\\d+)"\\s+value="([^"]*)"\\s*/?>`,
-    'g'
+    'g',
   );
   const records = new Map<number, GameCreditRecord>();
   for (const match of xml.matchAll(pattern)) {
@@ -85,6 +85,7 @@ function getCreditRecordsFromXmlLinks(xml: string, type: string): GameCreditReco
   return [...records.values()];
 }
 
+/** Fetches and parses enriched game details from BoardGameGeek. */
 export async function fetchGameInfo({
   fetchFn = fetch,
   gameId,

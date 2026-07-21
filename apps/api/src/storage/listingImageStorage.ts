@@ -1,6 +1,5 @@
 import { mkdir, rm } from 'node:fs/promises';
-import { extname } from 'node:path';
-import { join } from 'node:path';
+import { extname, join } from 'node:path';
 import { getDataPath } from '../utils/paths';
 
 const supportedImageExtensions = new Map<string, string>([
@@ -19,10 +18,12 @@ const supportedImageMimeTypesByExtension = new Map<string, string>([
 const THUMB_MAX_DIMENSION = 200;
 const THUMB_WEBP_QUALITY = 78;
 
+/** Returns the directory used for uploaded listing images. */
 export function getListingImageUploadDir() {
   return join(getDataPath(), 'listing-images');
 }
 
+/** Determines whether a file has a supported listing image type. */
 export function isSupportedListingImage(file: File) {
   return getListingImageDetails(file) !== null;
 }
@@ -77,10 +78,8 @@ async function writeThumbnail(uploadDir: string, sourcePath: string, baseId: str
   };
 }
 
-export async function saveListingImage(
-  uploadDir: string,
-  file: File
-): Promise<SavedListingImage> {
+/** Saves a listing image and attempts to create a thumbnail. */
+export async function saveListingImage(uploadDir: string, file: File): Promise<SavedListingImage> {
   const imageDetails = getListingImageDetails(file);
   if (!imageDetails) throw new Error('Unsupported image type');
 
@@ -111,6 +110,7 @@ export async function saveListingImage(
   };
 }
 
+/** Removes a stored listing image file if it exists. */
 export async function removeListingImageFile(absolutePath: string) {
   await rm(absolutePath, { force: true });
 }

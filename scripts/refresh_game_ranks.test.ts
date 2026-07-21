@@ -1,6 +1,6 @@
-import { mkdtemp, readFile } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
+import { mkdtemp, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { describe, expect, test } from 'bun:test';
 import { RANKS_CSV_HEADER } from './gameRanks';
 import { downloadRanksCsv, refreshGameRanks } from './refresh_game_ranks';
@@ -24,7 +24,7 @@ describe('refresh game ranks', () => {
       downloadRanksCsv({
         csvUrl: 'https://example.test/ranks.csv',
         fetchFn: async () => new Response('nope', { status: 503, statusText: 'Unavailable' }),
-      })
+      }),
     ).rejects.toThrow('Failed to download ranks CSV: 503 Unavailable');
   });
 
@@ -51,7 +51,7 @@ describe('refresh game ranks', () => {
         createGamesBatch: () => undefined,
         csvUrl: '',
         outputPath: 'unused.csv',
-      })
+      }),
     ).rejects.toThrow('BOARDGAMES_RANKS_CSV_URL is required.');
   });
 });

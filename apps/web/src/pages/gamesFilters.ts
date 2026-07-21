@@ -1,5 +1,6 @@
 import { CONDITION_OPTIONS } from '@game-trades-club/shared/constants';
 
+/** Represents the catalog filter values persisted in the URL. */
 export type GamesFilterState = {
   query: string;
   conditions: string[];
@@ -17,6 +18,7 @@ export type GamesFilterState = {
   ratingType: 'average' | 'adjusted';
 };
 
+/** Creates the default catalog filter state. */
 export function emptyGamesFilters(): GamesFilterState {
   return {
     query: '',
@@ -36,6 +38,7 @@ export function emptyGamesFilters(): GamesFilterState {
   };
 }
 
+/** Reports whether a filter state has no active filters. */
 export function isEmptyGamesFilters(state: GamesFilterState): boolean {
   return (
     state.query.trim() === '' &&
@@ -55,7 +58,10 @@ export function isEmptyGamesFilters(state: GamesFilterState): boolean {
 }
 
 function parseIntList(values: string[]): number[] {
-  const flattened = values.flatMap((value) => value.split(',')).map((value) => value.trim()).filter(Boolean);
+  const flattened = values
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim())
+    .filter(Boolean);
   const parsed: number[] = [];
   for (const value of flattened) {
     const num = Number(value);
@@ -72,12 +78,14 @@ function parseNumberInput(value: string | null): string {
   return Number.isFinite(num) ? String(num) : '';
 }
 
+/** Parses catalog filters from URL search parameters. */
 export function parseGamesFiltersFromSearch(search: URLSearchParams): GamesFilterState {
   const state = emptyGamesFilters();
 
   state.query = search.get('q')?.trim() ?? '';
 
-  const conditions = search.getAll('condition')
+  const conditions = search
+    .getAll('condition')
     .flatMap((value) => value.split(','))
     .map((value) => value.trim())
     .filter((value) => CONDITION_OPTIONS.some((option) => option.value === value));
@@ -101,6 +109,7 @@ export function parseGamesFiltersFromSearch(search: URLSearchParams): GamesFilte
   return state;
 }
 
+/** Serializes catalog filters into URL search parameters. */
 export function gamesFiltersToSearch(state: GamesFilterState): URLSearchParams {
   const params = new URLSearchParams();
   const query = state.query.trim();

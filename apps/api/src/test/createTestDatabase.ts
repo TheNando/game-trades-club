@@ -2,6 +2,7 @@ import { Database } from 'bun:sqlite';
 
 const schemaPath = new URL('../db/schema.sql', import.meta.url);
 
+/** Creates an in-memory database initialized with the application schema. */
 export async function createTestDatabase() {
   const database = new Database(':memory:', { create: true, strict: true });
   const schemaSql = await Bun.file(schemaPath).text();
@@ -9,52 +10,56 @@ export async function createTestDatabase() {
   return database;
 }
 
+/** Inserts a user fixture and returns its identifier. */
 export function seedUser(
   database: Database,
   userId = 'user-1',
-  { isAdmin = false }: { isAdmin?: boolean; } = {}
+  { isAdmin = false }: { isAdmin?: boolean; } = {},
 ) {
   database
     .query(
       `INSERT INTO users (id, google_sub, email, name, avatar_url, is_admin)
-       VALUES (?, ?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .run(userId, `${userId}-google`, `${userId}@example.com`, 'Test User', null, isAdmin ? 1 : 0);
 
   return { id: userId };
 }
 
+/** Inserts a game fixture and returns its identifier. */
 export function seedGame(database: Database, gameId = 1) {
   database
     .query(
       `INSERT OR IGNORE INTO games (id, name, year, is_expansion)
-       VALUES (?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?)`,
     )
     .run(gameId, `Game ${gameId}`, 2024, 0);
 
   return { id: gameId };
 }
 
+/** Inserts a listing fixture and its required game fixture. */
 export function seedListing(
   database: Database,
   {
     id = 'listing-1',
     userId = 'user-1',
     gameId = 1,
-  }: { id?: string; userId?: string; gameId?: number; } = {}
+  }: { id?: string; userId?: string; gameId?: number; } = {},
 ) {
   seedGame(database, gameId);
 
   database
     .query(
       `INSERT INTO listings (id, user_id, description, game_id, condition, price, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(id, userId, 'Seed listing', gameId, 'good', 20, 'open');
 
   return { id, user_id: userId };
 }
 
+/** Inserts a listing image fixture and returns its ownership identifiers. */
 export function seedListingImage(
   database: Database,
   {
@@ -79,22 +84,43 @@ export function seedListingImage(
     height?: number | null;
     mimeType?: string;
     createdAt?: string;
-  } = {}
+  } = {},
 ) {
   if (createdAt) {
     database
       .query(
         `INSERT INTO listing_images (id, listing_id, owner_id, original_filename, stored_filename, thumb_stored_filename, width, height, mime_type, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run(id, listingId, ownerId, originalFilename, storedFilename, thumbStoredFilename, width, height, mimeType, createdAt);
+      .run(
+        id,
+        listingId,
+        ownerId,
+        originalFilename,
+        storedFilename,
+        thumbStoredFilename,
+        width,
+        height,
+        mimeType,
+        createdAt,
+      );
   } else {
     database
       .query(
         `INSERT INTO listing_images (id, listing_id, owner_id, original_filename, stored_filename, thumb_stored_filename, width, height, mime_type)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run(id, listingId, ownerId, originalFilename, storedFilename, thumbStoredFilename, width, height, mimeType);
+      .run(
+        id,
+        listingId,
+        ownerId,
+        originalFilename,
+        storedFilename,
+        thumbStoredFilename,
+        width,
+        height,
+        mimeType,
+      );
   }
 
   return { id, listing_id: listingId, owner_id: ownerId };

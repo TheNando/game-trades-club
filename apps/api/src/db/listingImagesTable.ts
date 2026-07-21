@@ -1,6 +1,6 @@
 import type { Database } from 'bun:sqlite';
-import { db } from './client';
 
+/** Represents metadata for a stored listing image. */
 export type ListingImage = {
   id: string;
   listing_id: string;
@@ -16,6 +16,7 @@ export type ListingImage = {
 
 type CreateListingImageInput = Omit<ListingImage, 'created_at'>;
 
+/** Creates database operations for listing images. */
 export function createListingImagesStore(database: Database) {
   const createStmt = database.query(
     `INSERT INTO listing_images (
@@ -29,14 +30,14 @@ export function createListingImagesStore(database: Database) {
        height,
        mime_type
      )
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const findStmt = database.query<ListingImage, [string]>(
     `SELECT id, listing_id, owner_id, original_filename, stored_filename,
             thumb_stored_filename, width, height, mime_type, created_at
      FROM listing_images
-     WHERE id = ?`
+     WHERE id = ?`,
   );
 
   return {
@@ -50,7 +51,7 @@ export function createListingImagesStore(database: Database) {
         input.thumb_stored_filename,
         input.width,
         input.height,
-        input.mime_type
+        input.mime_type,
       );
 
       return findStmt.get(input.id)!;

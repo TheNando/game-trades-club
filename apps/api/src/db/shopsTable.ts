@@ -1,5 +1,6 @@
 import type { Database } from 'bun:sqlite';
 
+/** Represents a physical game shop pickup location. */
 export type Shop = {
   id: string;
   name: string;
@@ -37,35 +38,35 @@ type UpdateShopInput = {
   longitude: number | null;
 };
 
-const shopColumns = 'id, name, city, state, zip, address, website_url, latitude, longitude, created_at, updated_at';
+const shopColumns =
+  'id, name, city, state, zip, address, website_url, latitude, longitude, created_at, updated_at';
 
+/** Creates database operations for game shops. */
 export function createShopsStore(database: Database) {
   const listAllStmt = database.query<Shop, []>(
     `SELECT ${shopColumns}
      FROM shops
-     ORDER BY city ASC, name ASC`
+     ORDER BY city ASC, name ASC`,
   );
 
   const findStmt = database.query<Shop, [string]>(
     `SELECT ${shopColumns}
      FROM shops
-     WHERE id = ?`
+     WHERE id = ?`,
   );
 
   const createStmt = database.query(
     `INSERT INTO shops (id, name, city, state, zip, address, website_url, latitude, longitude)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const updateStmt = database.query(
     `UPDATE shops
      SET name = ?, city = ?, state = ?, zip = ?, address = ?, website_url = ?, latitude = ?, longitude = ?, updated_at = CURRENT_TIMESTAMP
-     WHERE id = ?`
+     WHERE id = ?`,
   );
 
-  const deleteStmt = database.query(
-    `DELETE FROM shops WHERE id = ?`
-  );
+  const deleteStmt = database.query(`DELETE FROM shops WHERE id = ?`);
 
   return {
     listAllShops(): Shop[] {
@@ -84,7 +85,7 @@ export function createShopsStore(database: Database) {
         input.address,
         input.website_url,
         input.latitude,
-        input.longitude
+        input.longitude,
       );
       return findStmt.get(input.id)!;
     },
@@ -98,7 +99,7 @@ export function createShopsStore(database: Database) {
         input.website_url,
         input.latitude,
         input.longitude,
-        id
+        id,
       );
       if (Number(result.changes) === 0) return null;
       return findStmt.get(id) ?? null;

@@ -1,12 +1,13 @@
 import type { Database, Statement } from 'bun:sqlite';
-import { db } from './client';
 
+/** Represents one BoardGameGeek game credit. */
 export type GameCreditRecord = {
   bggId: number | null;
   description?: string | null;
   name: string;
 };
 
+/** Groups BoardGameGeek credits by taxonomy. */
 export type GameInfo = {
   artists: GameCreditRecord[];
   categories: GameCreditRecord[];
@@ -103,6 +104,7 @@ function normalizeGameInfo(credits: GameInfo): NormalizedGameInfo {
   };
 }
 
+/** Creates database operations for enriched game taxonomy. */
 export function createGameInfoStore(database: Database) {
   type ClearJoinStatement = Statement<unknown, [number]>;
   type FindEntityStatement = Statement<{ id: number; }, [string]>;
@@ -113,14 +115,16 @@ export function createGameInfoStore(database: Database) {
     Object.entries(creditTableConfigs).map(([bucket, config]) => [
       bucket,
       database.query<unknown, [number]>(`DELETE FROM ${config.joinTable} WHERE game_id = ?`),
-    ])
+    ]),
   ) as Record<CreditBucket, ClearJoinStatement>;
 
   const findEntityStatements = Object.fromEntries(
     Object.entries(creditTableConfigs).map(([bucket, config]) => [
       bucket,
-      database.query<{ id: number; }, [string]>(`SELECT id FROM ${config.entityTable} WHERE name = ?`),
-    ])
+      database.query<{ id: number; }, [string]>(
+        `SELECT id FROM ${config.entityTable} WHERE name = ?`,
+      ),
+    ]),
   ) as Record<CreditBucket, FindEntityStatement>;
 
   const insertJoinStatements = Object.fromEntries(
@@ -128,9 +132,9 @@ export function createGameInfoStore(database: Database) {
       bucket,
       database.query<unknown, [number, number]>(
         `INSERT OR IGNORE INTO ${config.joinTable} (game_id, ${config.entityColumn})
-         VALUES (?, ?)`
+         VALUES (?, ?)`,
       ),
-    ])
+    ]),
   ) as Record<CreditBucket, InsertJoinStatement>;
 
   const upsertEntityStatements = Object.fromEntries(
@@ -141,9 +145,9 @@ export function createGameInfoStore(database: Database) {
          VALUES (?, ?, ?)
          ON CONFLICT(name) DO UPDATE SET
            bgg_id = COALESCE(${config.entityTable}.bgg_id, excluded.bgg_id),
-           description = COALESCE(${config.entityTable}.description, excluded.description)`
+           description = COALESCE(${config.entityTable}.description, excluded.description)`,
       ),
-    ])
+    ]),
   ) as Record<CreditBucket, UpsertEntityStatement>;
 
   const listGamesWithAnyCreditsStmt = (gameIds: number[]) =>
@@ -160,7 +164,7 @@ export function createGameInfoStore(database: Database) {
            SELECT game_id FROM game_categories WHERE game_id IN (${gameIds.map(() => '?').join(', ')})
            UNION
            SELECT game_id FROM game_mechanics WHERE game_id IN (${gameIds.map(() => '?').join(', ')})
-         )`
+         )`,
       )
       .all(...gameIds, ...gameIds, ...gameIds, ...gameIds, ...gameIds);
 
@@ -188,7 +192,7 @@ export function createGameInfoStore(database: Database) {
       if (gameIds.length === 0) return [];
 
       const gamesWithAnyCredits = new Set(
-        listGamesWithAnyCreditsStmt(gameIds).map((row) => row.game_id)
+        listGamesWithAnyCreditsStmt(gameIds).map((row) => row.game_id),
       );
       return gameIds.filter((gameId) => !gamesWithAnyCredits.has(gameId));
     },

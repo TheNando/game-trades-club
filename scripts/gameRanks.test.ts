@@ -59,7 +59,7 @@ describe('game ranks CSV helpers', () => {
 
   test('rejects CSV files with an unexpected header', () => {
     expect(() => validateRanksCsvHeader('id,name\n1,Azul\n')).toThrow(
-      'Ranks CSV header does not match'
+      'Ranks CSV header does not match',
     );
   });
 
@@ -73,10 +73,7 @@ describe('game ranks CSV helpers', () => {
 
     expect(result).toEqual({ inserted: 3, total: 3 });
     expect(batches).toHaveLength(2);
-    expect(batches).toMatchObject([
-      [{ id: 1 }, { id: 2 }],
-      [{ id: 3 }],
-    ]);
+    expect(batches).toMatchObject([[{ id: 1 }, { id: 2 }], [{ id: 3 }]]);
   });
 
   test('rejects non-positive and non-integer batch sizes before parsing', () => {
@@ -92,21 +89,21 @@ describe('game ranks CSV helpers', () => {
       resolveCsvPath({
         args: ['--csv', 'cli.csv'],
         defaultPath: 'default.csv',
-      })
+      }),
     ).toBe('cli.csv');
 
     expect(
       resolveCsvPath({
         args: [],
         defaultPath: 'default.csv',
-      })
+      }),
     ).toBe('default.csv');
 
     expect(
       resolveCsvPath({
         args: [],
         defaultPath: 'default.csv',
-      })
+      }),
     ).toBe('default.csv');
   });
 });

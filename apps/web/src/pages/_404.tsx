@@ -1,3 +1,4 @@
+/** Renders the fallback page for unmatched routes. */
 export function NotFound() {
   return (
     <section class="relative overflow-hidden min-h-[70vh] bg-base-200 bg-paper grain">
@@ -10,22 +11,17 @@ export function NotFound() {
           Error 404
         </p>
         <h1 class="font-display text-5xl md:text-6xl font-medium leading-tight mt-3">
-          This card got{' '}
-          <span class="font-display-wonk italic text-primary">shuffled</span>{' '}
-          out of the deck.
+          This card got <span class="font-display-wonk italic text-primary">shuffled</span> out of
+          the deck.
         </h1>
         <p class="mt-5 text-lg text-base-content/70 max-w-xl mx-auto">
-          The page you're looking for isn't on the table. Let's get you back to
-          the games.
+          The page you're looking for isn't on the table. Let's get you back to the games.
         </p>
         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a href="/" class="btn btn-primary btn-lg rounded-xl">
             Back to home
           </a>
-          <a
-            href="/add-listing"
-            class="btn btn-ghost btn-lg rounded-xl border border-base-300"
-          >
+          <a href="/add-listing" class="btn btn-ghost btn-lg rounded-xl border border-base-300">
             List a game instead
           </a>
         </div>

@@ -25,7 +25,7 @@ type StubGame = {
 
 function createGamesStoreStub(initial: Record<number, StubGame | null> = {}) {
   const games = new Map<number, StubGame | null>(
-    Object.entries(initial).map(([key, value]) => [Number(key), value])
+    Object.entries(initial).map(([key, value]) => [Number(key), value]),
   );
   const updates: Array<{ id: number; url: string; }> = [];
 
@@ -109,7 +109,20 @@ describe('createGetBggImage', () => {
     const handler = createGetBggImage({
       fetchFn: async () => new Response('broken', { status: 503 }),
       gamesStore: createGamesStoreStub({
-        42: { id: 42, name: 'Catan', image_url: null, year: 1995, is_expansion: 0, min_players: null, max_players: null, min_playtime: null, max_playtime: null, rating: null, adjusted_rating: null, weight: null },
+        42: {
+          id: 42,
+          name: 'Catan',
+          image_url: null,
+          year: 1995,
+          is_expansion: 0,
+          min_players: null,
+          max_players: null,
+          min_playtime: null,
+          max_playtime: null,
+          rating: null,
+          adjusted_rating: null,
+          weight: null,
+        },
       }).store,
     });
 
@@ -122,7 +135,20 @@ describe('createGetBggImage', () => {
 
   test('extracts the image URL from the BGG XML API and persists it on the game', async () => {
     const stub = createGamesStoreStub({
-      42: { id: 42, name: 'Catan', image_url: null, year: 1995, is_expansion: 0, min_players: null, max_players: null, min_playtime: null, max_playtime: null, rating: null, adjusted_rating: null, weight: null },
+      42: {
+        id: 42,
+        name: 'Catan',
+        image_url: null,
+        year: 1995,
+        is_expansion: 0,
+        min_players: null,
+        max_players: null,
+        min_playtime: null,
+        max_playtime: null,
+        rating: null,
+        adjusted_rating: null,
+        weight: null,
+      },
     });
 
     const handler = createGetBggImage({
@@ -188,10 +214,9 @@ describe('createGetBggImage', () => {
       cacheTtlMs: 100,
       fetchFn: async () => {
         fetchCount += 1;
-        return new Response(
-          xmlWithImage(`https://cf.geekdo-images.com/game-${fetchCount}/image`),
-          { status: 200 },
-        );
+        return new Response(xmlWithImage(`https://cf.geekdo-images.com/game-${fetchCount}/image`), {
+          status: 200,
+        });
       },
       gamesStore: createGamesStoreStub().store,
       now: () => now,

@@ -14,7 +14,10 @@ import { badRequest, json, notFound, serverError } from '../utils/http';
 
 type ListingsStore = Pick<ReturnType<typeof createListingsStore>, 'findListingByIdForUser'>;
 type ListingImagesStore = Pick<ReturnType<typeof createListingImagesStore>, 'createListingImage'>;
-type ListingImagesReadStore = Pick<ReturnType<typeof createListingImagesStore>, 'findListingImageById'>;
+type ListingImagesReadStore = Pick<
+  ReturnType<typeof createListingImagesStore>,
+  'findListingImageById'
+>;
 
 type CreatePostListingImageOptions = {
   listingsStore?: ListingsStore;
@@ -34,6 +37,7 @@ function matchListingImageId(url: URL) {
   return url.pathname.match(/^\/api\/listing-images\/([^/]+)$/)?.[1];
 }
 
+/** Creates the handler that uploads an image for an owned listing. */
 export function createPostListingImage({
   listingsStore = defaultListingsStore,
   listingImagesStore = defaultListingImagesStore,
@@ -41,7 +45,7 @@ export function createPostListingImage({
 }: CreatePostListingImageOptions = {}) {
   return async function postListingImage(
     request: BunRequest<'/api/listing-images'>,
-    { auth }: RouteDependencies
+    { auth }: RouteDependencies,
   ) {
     const formData = await request.formData();
     const files = formData
@@ -88,17 +92,19 @@ export function createPostListingImage({
   };
 }
 
+/** Uploads an image for an owned listing using application dependencies. */
 export const postListingImage = createPostListingImage();
 
 const IMMUTABLE_IMAGE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
+/** Creates the handler that serves stored listing image variants. */
 export function createGetListingImage({
   listingImagesStore = defaultListingImagesStore,
   uploadDir = getListingImageUploadDir(),
 }: CreateGetListingImageOptions = {}) {
   return async function getListingImage(
     _: BunRequest<'/api/listing-images/:id'>,
-    { url }: RouteDependencies
+    { url }: RouteDependencies,
   ) {
     const imageId = matchListingImageId(url);
     if (!imageId) return notFound('Image not found');
@@ -108,9 +114,7 @@ export function createGetListingImage({
 
     const variant = url.searchParams.get('variant');
     const wantsThumb = variant === 'thumb' && image.thumb_stored_filename !== null;
-    const storedFilename = wantsThumb
-      ? image.thumb_stored_filename!
-      : image.stored_filename;
+    const storedFilename = wantsThumb ? image.thumb_stored_filename! : image.stored_filename;
     const contentType = wantsThumb ? 'image/webp' : image.mime_type;
 
     const file = Bun.file(join(uploadDir, storedFilename));
@@ -125,4 +129,5 @@ export function createGetListingImage({
   };
 }
 
+/** Serves stored listing image variants using application dependencies. */
 export const getListingImage = createGetListingImage();

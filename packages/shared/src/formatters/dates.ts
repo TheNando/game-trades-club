@@ -1,3 +1,4 @@
+/** Formats a database timestamp as a month and year. */
 export function formatMemberSince(value: string): string {
   const date = new Date(value.replace(' ', 'T') + 'Z');
   if (Number.isNaN(date.getTime())) return value;

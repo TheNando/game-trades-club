@@ -1,5 +1,6 @@
 import { db } from './client';
 
+/** Represents an authenticated user row. */
 export type UserRecord = {
   id: string;
   google_sub: string;
@@ -9,6 +10,7 @@ export type UserRecord = {
   is_admin: number;
 };
 
+/** Represents profile fields safe to expose publicly. */
 export type PublicUserProfile = {
   id: string;
   name: string | null;
@@ -24,11 +26,11 @@ type GoogleProfile = {
 };
 
 const selectByGoogleSubStmt = db.query<UserRecord, [string]>(
-  `SELECT id, google_sub, email, name, avatar_url, is_admin FROM users WHERE google_sub = ?`
+  `SELECT id, google_sub, email, name, avatar_url, is_admin FROM users WHERE google_sub = ?`,
 );
 
 const selectPublicProfileByIdStmt = db.query<PublicUserProfile, [string]>(
-  `SELECT id, name, avatar_url, created_at FROM users WHERE id = ?`
+  `SELECT id, name, avatar_url, created_at FROM users WHERE id = ?`,
 );
 
 const upsertStmt = db.query(
@@ -39,22 +41,25 @@ const upsertStmt = db.query(
      email = excluded.email,
      name = excluded.name,
      avatar_url = excluded.avatar_url,
-     updated_at = CURRENT_TIMESTAMP`
+     updated_at = CURRENT_TIMESTAMP`,
 );
 
 const selectByIdStmt = db.query<UserRecord, [string]>(
-  `SELECT id, google_sub, email, name, avatar_url, is_admin FROM users WHERE id = ?`
+  `SELECT id, google_sub, email, name, avatar_url, is_admin FROM users WHERE id = ?`,
 );
 
+/** Creates or refreshes a user from a Google profile. */
 export function upsertGoogleUser(id: string, profile: GoogleProfile): UserRecord {
   upsertStmt.run(id, profile.sub, profile.email, profile.name ?? null, profile.picture ?? null);
   return selectByGoogleSubStmt.get(profile.sub)!;
 }
 
+/** Finds an authenticated user by identifier. */
 export function findUserById(id: string): UserRecord | null {
   return selectByIdStmt.get(id) ?? null;
 }
 
+/** Finds the public profile for a user identifier. */
 export function findUserPublicProfileById(id: string): PublicUserProfile | null {
   return selectPublicProfileByIdStmt.get(id) ?? null;
 }

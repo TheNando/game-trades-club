@@ -1,5 +1,6 @@
-import { HeroStack } from "../components/HeroStack";
+import { HeroStack } from '../components/HeroStack';
 
+/** Renders the marketplace landing page. */
 export function Home() {
   return (
     <div class="min-h-screen bg-base-100 text-base-content">
@@ -9,14 +10,14 @@ export function Home() {
         <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-8 pt-16 pb-24 md:py-16 grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           <div class="lg:col-span-7 rise-in">
             <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-base-300/80 bg-base-100/70 backdrop-blur text-xs font-medium tracking-wide text-base-content/75">
-              <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-              A friendly trading community
+              <span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />A friendly trading
+              community
             </span>
 
             <h1 class="font-display mt-5 text-[3.25rem] sm:text-6xl lg:text-[5.25rem] leading-[0.95] font-medium tracking-tight">
               Trade board games
               <br />
-              with neighbors you'll{" "}
+              with neighbors you'll{' '}
               <span class="font-display-wonk italic deco-underline text-primary">
                 actually meet
               </span>
@@ -24,9 +25,8 @@ export function Home() {
             </h1>
 
             <p class="mt-6 max-w-xl text-lg text-base-content/75 leading-relaxed">
-              No shipping anxiety. No mystery sellers. Swap games with people in
-              your city and hand them off at a local game shop you already know
-              and trust.
+              No shipping anxiety. No mystery sellers. Swap games with people in your city and hand
+              them off at a local game shop you already know and trust.
             </p>
 
             <div class="mt-8 flex flex-wrap items-center gap-3">
@@ -40,11 +40,7 @@ export function Home() {
                   class="w-4 h-4 ml-1 fill-none stroke-current"
                   stroke-width="2"
                 >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M5 12h14M13 6l6 6-6 6"
-                  />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
               </a>
               <a
@@ -57,17 +53,13 @@ export function Home() {
 
             <dl class="mt-10 grid grid-cols-3 gap-3 sm:gap-6 md:pb-16 max-w-md">
               {[
-                { k: "Local", v: "Meet within your city" },
-                { k: "$0", v: "No shipping, ever" },
-                { k: "Verified", v: "Trusted game shops" },
+                { k: 'Local', v: 'Meet within your city' },
+                { k: '$0', v: 'No shipping, ever' },
+                { k: 'Verified', v: 'Trusted game shops' },
               ].map((s) => (
                 <div key={s.k} class="border-l-2 border-primary/60 pl-3">
-                  <dt class="font-display text-2xl sm:text-3xl font-medium leading-none">
-                    {s.k}
-                  </dt>
-                  <dd class="mt-1 text-xs sm:text-sm text-base-content/65 leading-snug">
-                    {s.v}
-                  </dd>
+                  <dt class="font-display text-2xl sm:text-3xl font-medium leading-none">{s.k}</dt>
+                  <dd class="mt-1 text-xs sm:text-sm text-base-content/65 leading-snug">{s.v}</dd>
                 </div>
               ))}
             </dl>
@@ -93,8 +85,8 @@ export function Home() {
               </h2>
             </div>
             <p class="text-base-content/65 max-w-sm">
-              Built around the simplest, most human way to swap a game: agree
-              online, meet in person.
+              Built around the simplest, most human way to swap a game: agree online, meet in
+              person.
             </p>
           </div>
 
@@ -134,10 +126,10 @@ export function Home() {
               </h3>
               <ul class="mt-6 space-y-3 text-base-content/65">
                 {[
-                  "Shipping a heavy box costs more than the game",
-                  "Damage and lost packages are on you",
-                  "You never actually meet another player",
-                  "Days or weeks before anything happens",
+                  'Shipping a heavy box costs more than the game',
+                  'Damage and lost packages are on you',
+                  'You never actually meet another player',
+                  'Days or weeks before anything happens',
                 ].map((t) => (
                   <li key={t} class="flex gap-3">
                     <span class="mt-2 w-1.5 h-1.5 rounded-full bg-base-content/30 flex-none" />
@@ -152,18 +144,17 @@ export function Home() {
                 The Club way
               </p>
               <h3 class="font-display text-3xl md:text-4xl mt-2 leading-tight">
-                Trade in person with someone from{" "}
-                <span class="text-primary">your own scene</span>.
+                Trade in person with someone from <span class="text-primary">your own scene</span>.
               </h3>
               <ul class="mt-6 space-y-3">
                 {[
-                  { k: "Zero shipping cost", v: "Always free — you meet up" },
+                  { k: 'Zero shipping cost', v: 'Always free — you meet up' },
                   {
-                    k: "Inspect before you trade",
-                    v: "See the box, count the pieces",
+                    k: 'Inspect before you trade',
+                    v: 'See the box, count the pieces',
                   },
-                  { k: "Real community", v: "Faces, not usernames" },
-                  { k: "Same-week swaps", v: "Most trades happen within days" },
+                  { k: 'Real community', v: 'Faces, not usernames' },
+                  { k: 'Same-week swaps', v: 'Most trades happen within days' },
                 ].map((row) => (
                   <li key={row.k} class="flex items-start gap-3">
                     <span class="mt-1 inline-flex w-5 h-5 rounded-md bg-primary/15 text-primary items-center justify-center flex-none">
@@ -172,15 +163,11 @@ export function Home() {
                         class="w-3.5 h-3.5 fill-none stroke-current"
                         stroke-width="3"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="m5 12 5 5L20 7"
-                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7" />
                       </svg>
                     </span>
                     <span>
-                      <span class="font-medium">{row.k}.</span>{" "}
+                      <span class="font-medium">{row.k}.</span>{' '}
                       <span class="text-base-content/70">{row.v}</span>
                     </span>
                   </li>
@@ -204,10 +191,10 @@ export function Home() {
           </div>
           <div class="flex flex-wrap gap-2 md:justify-end">
             {[
-              "Friendly Local Game Store",
-              "Café & Board Game Bar",
-              "Hobby Shop",
-              "Community Library",
+              'Friendly Local Game Store',
+              'Café & Board Game Bar',
+              'Hobby Shop',
+              'Community Library',
             ].map((label) => (
               <span
                 key={label}
@@ -231,9 +218,8 @@ export function Home() {
                 Your shelf has stories left to tell.
               </h2>
               <p class="mt-4 text-primary-content/85 max-w-md">
-                Hand a beloved game to someone who'll play it tonight. Join the
-                Club — it takes a minute, and your first listing is on the
-                house.
+                Hand a beloved game to someone who'll play it tonight. Join the Club — it takes a
+                minute, and your first listing is on the house.
               </p>
             </div>
             <div class="flex flex-wrap gap-3 md:justify-end">
@@ -266,8 +252,7 @@ export function Home() {
             </p>
           </div>
           <p class="text-sm text-base-content/55 sm:text-right">
-            © {new Date().getFullYear()} Game Trades Club · Made for tabletop
-            people.
+            © {new Date().getFullYear()} Game Trades Club · Made for tabletop people.
           </p>
         </div>
       </footer>
@@ -279,22 +264,16 @@ type StepProps = {
   n: string;
   title: string;
   body: string;
-  tone: "primary" | "secondary" | "accent";
+  tone: 'primary' | 'secondary' | 'accent';
 };
 
 function Step({ n, title, body, tone }: StepProps) {
   const ring =
-    tone === "primary"
-      ? "text-primary"
-      : tone === "secondary"
-        ? "text-secondary"
-        : "text-accent";
+    tone === 'primary' ? 'text-primary' : tone === 'secondary' ? 'text-secondary' : 'text-accent';
   return (
     <li class="group relative rounded-2xl border border-base-300 bg-base-100 p-6 md:p-7 hover:border-base-content/30 transition-colors">
       <div class="flex items-start justify-between gap-3">
-        <span
-          class={`font-display text-5xl md:text-6xl font-medium leading-none ${ring}`}
-        >
+        <span class={`font-display text-5xl md:text-6xl font-medium leading-none ${ring}`}>
           {n}
         </span>
         <span class="mt-2 h-px flex-1 bg-base-300 group-hover:bg-base-content/30 transition-colors" />

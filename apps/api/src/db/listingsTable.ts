@@ -2,6 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { db } from './client';
 import type { Shop } from './shopsTable';
 
+/** Represents a marketplace listing returned to clients. */
 export type Listing = {
   id: string;
   user_id: string;
@@ -19,6 +20,7 @@ export type Listing = {
   updated_at: string;
 };
 
+/** Represents a listing with seller, shop, and image details. */
 export type ListingDetail = Omit<Listing, 'cover_image'> & {
   images: { id: string; has_thumb: boolean; }[];
   seller: {
@@ -108,6 +110,7 @@ type UpdateListingInput = {
   preferred_shop_id?: string | null;
 };
 
+/** Defines filters for listing catalog queries. */
 export type ListingFilters = {
   query?: string;
   userId?: string;
@@ -208,7 +211,10 @@ const listingCoverJoin = `JOIN games ON games.id = listings.game_id
        LIMIT 1
      )`;
 
-function buildFilteredListingsQuery(filters: ListingFilters, viewerId: string): { sql: string; params: (string | number)[]; } {
+function buildFilteredListingsQuery(
+  filters: ListingFilters,
+  viewerId: string,
+): { sql: string; params: (string | number)[]; } {
   const where: string[] = [];
   const params: (string | number)[] = [viewerId];
 
@@ -223,7 +229,7 @@ function buildFilteredListingsQuery(filters: ListingFilters, viewerId: string): 
   if (filters.query !== undefined) {
     const searchPattern = `%${escapeLikeValue(filters.query)}%`;
     where.push(
-      `(games.name LIKE ? ESCAPE '\\' COLLATE NOCASE OR COALESCE(listings.description, '') LIKE ? ESCAPE '\\' COLLATE NOCASE)`
+      `(games.name LIKE ? ESCAPE '\\' COLLATE NOCASE OR COALESCE(listings.description, '') LIKE ? ESCAPE '\\' COLLATE NOCASE)`,
     );
     params.push(searchPattern, searchPattern);
   }
@@ -260,7 +266,7 @@ function buildFilteredListingsQuery(filters: ListingFilters, viewerId: string): 
     where.push(
       `EXISTS (SELECT 1 FROM game_categories
                 WHERE game_categories.game_id = games.id
-                  AND game_categories.category_id IN (${filters.categoryIds.map(() => '?').join(', ')}))`
+                  AND game_categories.category_id IN (${filters.categoryIds.map(() => '?').join(', ')}))`,
     );
     params.push(...filters.categoryIds);
   }
@@ -268,7 +274,7 @@ function buildFilteredListingsQuery(filters: ListingFilters, viewerId: string): 
     where.push(
       `EXISTS (SELECT 1 FROM game_mechanics
                 WHERE game_mechanics.game_id = games.id
-                  AND game_mechanics.mechanic_id IN (${filters.mechanicIds.map(() => '?').join(', ')}))`
+                  AND game_mechanics.mechanic_id IN (${filters.mechanicIds.map(() => '?').join(', ')}))`,
     );
     params.push(...filters.mechanicIds);
   }
@@ -296,12 +302,13 @@ function buildFilteredListingsQuery(filters: ListingFilters, viewerId: string): 
   return { sql, params };
 }
 
+/** Creates database operations for marketplace listings. */
 export function createListingsStore(database: Database) {
   const listAllStmt = database.query<ListingRow, [string]>(
     `SELECT ${listingSelectColumns}
      FROM listings
      ${listingCoverJoin}
-     ORDER BY listings.created_at DESC`
+     ORDER BY listings.created_at DESC`,
   );
 
   const listStmt = database.query<ListingRow, [string, string]>(
@@ -309,14 +316,14 @@ export function createListingsStore(database: Database) {
      FROM listings
      ${listingCoverJoin}
      WHERE listings.user_id = ?
-     ORDER BY listings.created_at DESC`
+     ORDER BY listings.created_at DESC`,
   );
 
   const findStmt = database.query<ListingRow, [string, string, string]>(
     `SELECT ${listingSelectColumns}
      FROM listings
      ${listingCoverJoin}
-     WHERE listings.id = ? AND listings.user_id = ?`
+     WHERE listings.id = ? AND listings.user_id = ?`,
   );
 
   const createStmt = database.query(
@@ -330,7 +337,7 @@ export function createListingsStore(database: Database) {
        status,
        preferred_shop_id
      )
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const updateWithoutShopStmt = database.query(
@@ -341,7 +348,7 @@ export function createListingsStore(database: Database) {
          price = COALESCE(?, price),
          status = COALESCE(?, status),
          updated_at = CURRENT_TIMESTAMP
-     WHERE id = ? AND user_id = ?`
+     WHERE id = ? AND user_id = ?`,
   );
 
   const updateWithShopStmt = database.query(
@@ -353,7 +360,7 @@ export function createListingsStore(database: Database) {
          status = COALESCE(?, status),
          preferred_shop_id = ?,
          updated_at = CURRENT_TIMESTAMP
-     WHERE id = ? AND user_id = ?`
+     WHERE id = ? AND user_id = ?`,
   );
 
   const deleteStmt = database.query(`DELETE FROM listings WHERE id = ? AND user_id = ?`);
@@ -385,7 +392,7 @@ export function createListingsStore(database: Database) {
      JOIN games ON games.id = listings.game_id
      JOIN users ON users.id = listings.user_id
      LEFT JOIN shops ON shops.id = listings.preferred_shop_id
-     WHERE listings.id = ?`
+     WHERE listings.id = ?`,
   );
 
   const listImagesStmt = database.query<ListingImageRow, [string]>(
@@ -393,7 +400,7 @@ export function createListingsStore(database: Database) {
             CASE WHEN thumb_stored_filename IS NOT NULL THEN 1 ELSE 0 END AS has_thumb
      FROM listing_images
      WHERE listing_id = ?
-     ORDER BY created_at ASC, id ASC`
+     ORDER BY created_at ASC, id ASC`,
   );
 
   return {
@@ -402,7 +409,10 @@ export function createListingsStore(database: Database) {
     },
     listFilteredListings(filters: ListingFilters, viewerId = ''): Listing[] {
       const { sql, params } = buildFilteredListingsQuery(filters, viewerId);
-      return database.query<ListingRow, (string | number)[]>(sql).all(...params).map(rowToListing);
+      return database
+        .query<ListingRow, (string | number)[]>(sql)
+        .all(...params)
+        .map(rowToListing);
     },
     listListingsByUser(userId: string, viewerId = ''): Listing[] {
       return listStmt.all(viewerId, userId).map(rowToListing);
@@ -425,9 +435,8 @@ export function createListingsStore(database: Database) {
         description: row.description,
         game: { id: row.game_id, name: row.game_name },
         rating: row.game_rating,
-        game_image_path: images.length > 0
-          ? null
-          : buildGameImagePath(row.game_id, row.game_image_url),
+        game_image_path:
+          images.length > 0 ? null : buildGameImagePath(row.game_id, row.game_image_url),
         condition: row.condition,
         price: row.price,
         status: row.status,
@@ -454,7 +463,7 @@ export function createListingsStore(database: Database) {
         input.condition,
         input.price,
         input.status,
-        input.preferred_shop_id ?? null
+        input.preferred_shop_id ?? null,
       );
 
       return rowToListing(findStmt.get(userId, input.id, userId)!);
@@ -470,7 +479,7 @@ export function createListingsStore(database: Database) {
           input.status ?? null,
           input.preferred_shop_id ?? null,
           listingId,
-          userId
+          userId,
         )
         : updateWithoutShopStmt.run(
           input.description ?? null,
@@ -479,7 +488,7 @@ export function createListingsStore(database: Database) {
           input.price ?? null,
           input.status ?? null,
           listingId,
-          userId
+          userId,
         );
 
       return Number(result.changes) > 0;
@@ -493,6 +502,7 @@ export function createListingsStore(database: Database) {
 
 const listingsStore = createListingsStore(db);
 
+/** Provides shared listing operations backed by the application database. */
 export const {
   createListing,
   findListingByIdForUser,

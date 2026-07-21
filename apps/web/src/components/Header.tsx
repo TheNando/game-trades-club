@@ -23,12 +23,12 @@ function getSavedTheme(): Theme {
   return prefersDark ? 'tabletop' : 'daylight';
 }
 
+/** Renders the site header, account controls, and theme toggle. */
 export function Header() {
   const [theme, setTheme] = useState<Theme>('daylight');
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
-
 
   useEffect(() => {
     const initialTheme = getSavedTheme();
@@ -107,9 +107,7 @@ export function Header() {
           class="group inline-flex items-center gap-2.5"
           aria-label="Game Trades Club home"
         >
-          <span
-            class="relative inline-flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-content shadow-sm ring-1 ring-primary/30 transition-transform group-hover:-rotate-6"
-          >
+          <span class="relative inline-flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-content shadow-sm ring-1 ring-primary/30 transition-transform group-hover:-rotate-6">
             <svg viewBox="0 0 32 32" class="w-5 h-5 fill-current" aria-hidden="true">
               <path d="M16 4c-3 0-5.2 2.4-5.2 5.4 0 1.7.8 3 1.8 3.9-3 .7-5.6 2.9-6.4 6.1-.5 2 .2 3.9 1.9 4.9 1.4.8 3 1 4.5.6L13 23v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3l.4-.1c1.5.4 3.1.2 4.5-.6 1.7-1 2.4-2.9 1.9-4.9-.8-3.2-3.4-5.4-6.4-6.1 1-.9 1.8-2.2 1.8-3.9C21.2 6.4 19 4 16 4Z" />
             </svg>
@@ -132,7 +130,10 @@ export function Header() {
             List a game
           </a>
           {user && (
-            <a href="/inbox" class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors flex items-center gap-1.5">
+            <a
+              href="/inbox"
+              class="px-3 py-2 rounded-lg hover:bg-base-200 transition-colors flex items-center gap-1.5"
+            >
               Messages
               {unreadCount > 0 && (
                 <span class="badge badge-primary badge-sm px-1.5 min-w-5 h-5">{unreadCount}</span>
@@ -156,9 +157,17 @@ export function Header() {
             title={isDark ? 'Switch to daylight' : 'Switch to tabletop'}
           >
             {isDark ? (
-              <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 fill-none stroke-current" stroke-width="1.6" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                class="w-4.5 h-4.5 fill-none stroke-current"
+                stroke-width="1.6"
+                aria-hidden="true"
+              >
                 <circle cx="12" cy="12" r="4" />
-                <path stroke-linecap="round" d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4" />
+                <path
+                  stroke-linecap="round"
+                  d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"
+                />
               </svg>
             ) : (
               <svg viewBox="0 0 24 24" class="w-4.5 h-4.5 fill-current" aria-hidden="true">
@@ -178,7 +187,11 @@ export function Header() {
               >
                 <div class="w-9 rounded-full">
                   {user.avatarUrl ? (
-                    <img alt={user.name ?? user.email} src={user.avatarUrl} referrerpolicy="no-referrer" />
+                    <img
+                      alt={user.name ?? user.email}
+                      src={user.avatarUrl}
+                      referrerpolicy="no-referrer"
+                    />
                   ) : (
                     <div class="w-full h-full grid place-items-center bg-secondary text-secondary-content text-sm font-semibold">
                       {(user.name ?? user.email).slice(0, 1).toUpperCase()}
@@ -196,27 +209,39 @@ export function Header() {
                 <li>
                   <a href="/inbox" class="flex items-center justify-between">
                     Inbox
-                    {unreadCount > 0 && <span class="badge badge-primary badge-sm">{unreadCount}</span>}
+                    {unreadCount > 0 && (
+                      <span class="badge badge-primary badge-sm">{unreadCount}</span>
+                    )}
                   </a>
                 </li>
                 <li>
                   <a href={`/users/${user.id}`}>Profile</a>
                 </li>
-                <li><a href="/add-listing">List a game</a></li>
+                <li>
+                  <a href="/add-listing">List a game</a>
+                </li>
                 {user.isAdmin ? (
                   <li class="group/admin relative">
                     <a class="flex items-center justify-between gap-2">
                       <span>Admin</span>
-                      <svg viewBox="0 0 20 20" class="w-2.5 h-2.5 fill-current opacity-50" aria-hidden="true">
+                      <svg
+                        viewBox="0 0 20 20"
+                        class="w-2.5 h-2.5 fill-current opacity-50"
+                        aria-hidden="true"
+                      >
                         <path d="M13 10 7 5v10l6-5Z" />
                       </svg>
                     </a>
                     <ul class="hidden group-hover/admin:block absolute right-full top-0 z-20 ms-0 menu menu-sm bg-base-100 rounded-box p-2 w-32 shadow-lg border border-base-300 before:hidden">
-                      <li><a href="/admin/shops">Shops</a></li>
+                      <li>
+                        <a href="/admin/shops">Shops</a>
+                      </li>
                     </ul>
                   </li>
                 ) : null}
-                <li><a onClick={logout}>Sign out</a></li>
+                <li>
+                  <a onClick={logout}>Sign out</a>
+                </li>
               </ul>
             </div>
           ) : (

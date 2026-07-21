@@ -71,7 +71,7 @@ describe('createGetListingFilters', () => {
     });
 
     expect(response.status).toBe(200);
-    const body = await response.json() as {
+    const body = (await response.json()) as {
       categories: { id: number; name: string; }[];
       mechanics: { id: number; name: string; }[];
     };

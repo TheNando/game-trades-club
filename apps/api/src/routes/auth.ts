@@ -1,14 +1,26 @@
 import { BunRequest } from 'bun';
-import { buildGoogleStartResponse, buildClearOAuthStateCookie, exchangeCodeForGoogleProfile, validateGoogleCallbackState } from '../auth/google';
-import { buildSessionClearCookie, buildSessionCookie, createSession, getSessionIdFromRequest, revokeSession } from '../auth/session';
+import {
+  buildGoogleStartResponse,
+  buildClearOAuthStateCookie,
+  exchangeCodeForGoogleProfile,
+  validateGoogleCallbackState,
+} from '../auth/google';
+import {
+  buildSessionClearCookie,
+  buildSessionCookie,
+  createSession,
+  getSessionIdFromRequest,
+  revokeSession,
+} from '../auth/session';
 import { findUserById, upsertGoogleUser } from '../db/usersTable';
 import { RouteDependencies } from '../middleware/dependencies';
 import { json, unauthorized } from '../utils/http';
 import { randomToken } from '../utils/security';
 
+/** Handles the Google OAuth callback and starts an application session. */
 export async function getAuthGoogleCallback(
-  request: BunRequest<"/api/auth/google/callback">,
-  { url }: RouteDependencies
+  request: BunRequest<'/api/auth/google/callback'>,
+  { url }: RouteDependencies,
 ) {
   const state = url.searchParams.get('state');
   const code = url.searchParams.get('code');
@@ -36,9 +48,11 @@ export async function getAuthGoogleCallback(
   }
 }
 
+/** Starts the Google OAuth authorization redirect. */
 export async function getAuthGoogleStart(
-  request: BunRequest<"/api/auth/google/start">,
-  { url }: RouteDependencies) {
+  request: BunRequest<'/api/auth/google/start'>,
+  { url }: RouteDependencies,
+) {
   try {
     return buildGoogleStartResponse(request, url);
   } catch (error) {
@@ -47,7 +61,8 @@ export async function getAuthGoogleStart(
   }
 }
 
-export async function postAuthLogout(request: BunRequest<"/api/auth/logout">) {
+/** Revokes the current session and clears its cookie. */
+export async function postAuthLogout(request: BunRequest<'/api/auth/logout'>) {
   const sessionId = getSessionIdFromRequest(request);
   if (sessionId) revokeSession(sessionId);
 
@@ -59,7 +74,8 @@ export async function postAuthLogout(request: BunRequest<"/api/auth/logout">) {
   });
 }
 
-export async function getMe(request: BunRequest<"/api/me">, { auth }: RouteDependencies) {
+/** Returns the authenticated user's account details. */
+export async function getMe(request: BunRequest<'/api/me'>, { auth }: RouteDependencies) {
   const user = findUserById(auth.userId);
   if (!user) return unauthorized();
 

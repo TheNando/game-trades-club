@@ -5,6 +5,7 @@ Shared isomorphic library for the Game Trades Club application. This package con
 ## Purpose
 
 This package ensures:
+
 - **Type Safety**: Shared TypeScript types guarantee API/frontend contract consistency
 - **DRY Principle**: Single source of truth for business logic
 - **Consistency**: Same validation, formatting, and labels across the entire application

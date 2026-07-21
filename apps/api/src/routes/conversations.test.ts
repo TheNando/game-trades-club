@@ -31,7 +31,12 @@ async function setupStores() {
 describe('createPostConversation', () => {
   test('returns 400 when recipient_id is missing', async () => {
     const { conversationsStore, messagesStore, listingsStore } = await setupStores();
-    const handler = createPostConversation({ conversationsStore, messagesStore, listingsStore, findUser: () => null });
+    const handler = createPostConversation({
+      conversationsStore,
+      messagesStore,
+      listingsStore,
+      findUser: () => null,
+    });
 
     const req = new Request('http://t/api/conversations', {
       method: 'POST',
@@ -45,7 +50,12 @@ describe('createPostConversation', () => {
 
   test('returns 400 when sending to yourself', async () => {
     const { conversationsStore, messagesStore, listingsStore } = await setupStores();
-    const handler = createPostConversation({ conversationsStore, messagesStore, listingsStore, findUser: (id) => ({ id }) });
+    const handler = createPostConversation({
+      conversationsStore,
+      messagesStore,
+      listingsStore,
+      findUser: (id) => ({ id }),
+    });
 
     const req = new Request('http://t/api/conversations', {
       method: 'POST',
@@ -59,7 +69,12 @@ describe('createPostConversation', () => {
 
   test('returns 400 when recipient does not exist', async () => {
     const { conversationsStore, messagesStore, listingsStore } = await setupStores();
-    const handler = createPostConversation({ conversationsStore, messagesStore, listingsStore, findUser: () => null });
+    const handler = createPostConversation({
+      conversationsStore,
+      messagesStore,
+      listingsStore,
+      findUser: () => null,
+    });
 
     const req = new Request('http://t/api/conversations', {
       method: 'POST',
@@ -73,7 +88,12 @@ describe('createPostConversation', () => {
 
   test('returns 400 when listing does not belong to recipient', async () => {
     const { conversationsStore, messagesStore, listingsStore } = await setupStores();
-    const handler = createPostConversation({ conversationsStore, messagesStore, listingsStore, findUser: (id) => ({ id }) });
+    const handler = createPostConversation({
+      conversationsStore,
+      messagesStore,
+      listingsStore,
+      findUser: (id) => ({ id }),
+    });
 
     // listing-1 belongs to user-b; claiming it belongs to user-a should fail
     const req = new Request('http://t/api/conversations', {
@@ -89,7 +109,9 @@ describe('createPostConversation', () => {
   test('creates conversation successfully when listing belongs to recipient', async () => {
     const { conversationsStore, messagesStore, listingsStore } = await setupStores();
     const handler = createPostConversation({
-      conversationsStore, messagesStore, listingsStore,
+      conversationsStore,
+      messagesStore,
+      listingsStore,
       findUser: (id) => ({ id }),
       createId: () => 'conv-new',
     });
@@ -105,7 +127,12 @@ describe('createPostConversation', () => {
 
   test('returns 400 when text is empty', async () => {
     const { conversationsStore, messagesStore, listingsStore } = await setupStores();
-    const handler = createPostConversation({ conversationsStore, messagesStore, listingsStore, findUser: (id) => ({ id }) });
+    const handler = createPostConversation({
+      conversationsStore,
+      messagesStore,
+      listingsStore,
+      findUser: (id) => ({ id }),
+    });
 
     const req = new Request('http://t/api/conversations', {
       method: 'POST',
@@ -121,23 +148,34 @@ describe('createPostConversation', () => {
     const { conversationsStore, messagesStore, listingsStore } = await setupStores();
     let idCounter = 0;
     const handler = createPostConversation({
-      conversationsStore, messagesStore, listingsStore,
+      conversationsStore,
+      messagesStore,
+      listingsStore,
       findUser: (id) => ({ id }),
       createId: () => `id-${++idCounter}`,
     });
 
     const body = JSON.stringify({ recipient_id: 'user-b', listing_id: 'listing-1', text: 'first' });
-    const make = () => new Request('http://t/api/conversations', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body,
-    });
+    const make = () =>
+      new Request('http://t/api/conversations', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body,
+      });
 
-    const res1 = await handler(make() as never, makeDeps('user-a', new URL('http://t/api/conversations')));
+    const res1 = await handler(
+      make() as never,
+      makeDeps('user-a', new URL('http://t/api/conversations')),
+    );
     expect(res1.status).toBe(201);
-    const first = (await res1.json() as { item: { id: string; }; }).item;
+    const first = ((await res1.json()) as { item: { id: string; }; }).item;
 
-    const res2 = await handler(make() as never, makeDeps('user-a', new URL('http://t/api/conversations')));
+    const res2 = await handler(
+      make() as never,
+      makeDeps('user-a', new URL('http://t/api/conversations')),
+    );
     expect(res2.status).toBe(200);
-    const second = (await res2.json() as { item: { id: string; }; }).item;
+    const second = ((await res2.json()) as { item: { id: string; }; }).item;
 
     expect(second.id).toBe(first.id);
     expect(conversationsStore.findExistingBetween('user-a', 'user-b', 'listing-1')).toHaveLength(1);
@@ -145,7 +183,12 @@ describe('createPostConversation', () => {
 
   test('returns 400 when text exceeds 5000 characters', async () => {
     const { conversationsStore, messagesStore, listingsStore } = await setupStores();
-    const handler = createPostConversation({ conversationsStore, messagesStore, listingsStore, findUser: (id) => ({ id }) });
+    const handler = createPostConversation({
+      conversationsStore,
+      messagesStore,
+      listingsStore,
+      findUser: (id) => ({ id }),
+    });
 
     const req = new Request('http://t/api/conversations', {
       method: 'POST',
@@ -174,7 +217,10 @@ describe('createPostMessage', () => {
 
   test('returns 403 when sender is not a member of the conversation', async () => {
     const { database, conversationsStore, messagesStore } = await setupStores();
-    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id) VALUES (?, ?, ?, ?)`)
+    database
+      .query(
+        `INSERT INTO conversations (id, sender_id, recipient_id, listing_id) VALUES (?, ?, ?, ?)`,
+      )
       .run('conv-1', 'user-a', 'user-b', null);
     const handler = createPostMessage({ conversationsStore, messagesStore });
 
@@ -190,10 +236,17 @@ describe('createPostMessage', () => {
 
   test('adds a message and returns 201 for a valid member', async () => {
     const { database, conversationsStore, messagesStore } = await setupStores();
-    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id) VALUES (?, ?, ?, ?)`)
+    database
+      .query(
+        `INSERT INTO conversations (id, sender_id, recipient_id, listing_id) VALUES (?, ?, ?, ?)`,
+      )
       .run('conv-1', 'user-a', 'user-b', null);
     let idN = 0;
-    const handler = createPostMessage({ conversationsStore, messagesStore, createId: () => `msg-${++idN}` });
+    const handler = createPostMessage({
+      conversationsStore,
+      messagesStore,
+      createId: () => `msg-${++idN}`,
+    });
 
     const url = new URL('http://t/api/conversations/conv-1/messages');
     const req = new Request(url, {
@@ -203,7 +256,7 @@ describe('createPostMessage', () => {
     });
     const res = await handler(req as never, makeDeps('user-b', url));
     expect(res.status).toBe(201);
-    const body = await res.json() as { item: { text: string; sender_id: string; }; };
+    const body = (await res.json()) as { item: { text: string; sender_id: string; }; };
     expect(body.item.text).toBe('reply here');
     expect(body.item.sender_id).toBe('user-b');
   });
@@ -212,7 +265,10 @@ describe('createPostMessage', () => {
 describe('createGetConversationDetail', () => {
   test('returns 403 when user is not a member', async () => {
     const { database, conversationsStore, messagesStore } = await setupStores();
-    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id) VALUES (?, ?, ?, ?)`)
+    database
+      .query(
+        `INSERT INTO conversations (id, sender_id, recipient_id, listing_id) VALUES (?, ?, ?, ?)`,
+      )
       .run('conv-1', 'user-a', 'user-b', null);
     const handler = createGetConversationDetail({ conversationsStore, messagesStore });
 
@@ -224,9 +280,13 @@ describe('createGetConversationDetail', () => {
 
   test('returns 200 with conversation and messages for a member', async () => {
     const { database, conversationsStore, messagesStore } = await setupStores();
-    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id) VALUES (?, ?, ?, ?)`)
+    database
+      .query(
+        `INSERT INTO conversations (id, sender_id, recipient_id, listing_id) VALUES (?, ?, ?, ?)`,
+      )
       .run('conv-1', 'user-a', 'user-b', null);
-    database.query(`INSERT INTO messages (id, conversation_id, sender_id, text) VALUES (?, ?, ?, ?)`)
+    database
+      .query(`INSERT INTO messages (id, conversation_id, sender_id, text) VALUES (?, ?, ?, ?)`)
       .run('msg-1', 'conv-1', 'user-a', 'Hello!');
     const handler = createGetConversationDetail({ conversationsStore, messagesStore });
 
@@ -234,7 +294,7 @@ describe('createGetConversationDetail', () => {
     const req = new Request(url);
     const res = await handler(req as never, makeDeps('user-a', url));
     expect(res.status).toBe(200);
-    const body = await res.json() as { item: { id: string; }; messages: { text: string; }[]; };
+    const body = (await res.json()) as { item: { id: string; }; messages: { text: string; }[]; };
     expect(body.item.id).toBe('conv-1');
     expect(body.messages[0].text).toBe('Hello!');
   });

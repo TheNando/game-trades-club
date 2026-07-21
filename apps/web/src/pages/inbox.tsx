@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'preact/hooks';
-import { useLocation } from 'preact-iso';
 
 type Conversation = {
   id: string;
@@ -34,6 +33,7 @@ type CurrentUser = {
   avatarUrl: string | null;
 };
 
+/** Renders the current user's conversation inbox and active message thread. */
 export function Inbox({ id }: { id?: string }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<FullConversation | null>(null);
@@ -42,7 +42,6 @@ export function Inbox({ id }: { id?: string }) {
   const [error, setError] = useState('');
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
-  const { path } = useLocation();
 
   const loadConversations = async () => {
     try {
@@ -50,8 +49,8 @@ export function Inbox({ id }: { id?: string }) {
       if (!res.ok) throw new Error('Failed to load inbox');
       const data = await res.json();
       setConversations(data.items);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load inbox');
     } finally {
       if (!id) setLoading(false);
     }
@@ -66,8 +65,8 @@ export function Inbox({ id }: { id?: string }) {
       setActiveConversation(data);
       // Refresh list to update unread counts
       loadConversations();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load conversation');
     } finally {
       setLoading(false);
     }
@@ -99,14 +98,14 @@ export function Inbox({ id }: { id?: string }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: replyText.trim() }),
-        credentials: 'include'
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to send message');
-      
+
       setReplyText('');
       loadConversationDetail(id);
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
       setSending(false);
     }
@@ -125,18 +124,20 @@ export function Inbox({ id }: { id?: string }) {
           {conversations.length === 0 ? (
             <p class="text-base-content/50 italic text-sm">No messages yet.</p>
           ) : (
-            conversations.map(conv => (
+            conversations.map((conv) => (
               <a
                 key={conv.id}
                 href={`/inbox/${conv.id}`}
                 class={`block p-4 rounded-xl border transition-colors ${
-                  conv.id === id 
-                    ? 'bg-primary text-primary-content border-primary' 
+                  conv.id === id
+                    ? 'bg-primary text-primary-content border-primary'
                     : 'bg-base-100 border-base-300 hover:bg-base-200'
                 }`}
               >
                 <div class="flex justify-between items-start mb-1">
-                  <span class={`font-bold truncate ${conv.unread_count > 0 && conv.id !== id ? 'text-primary' : ''}`}>
+                  <span
+                    class={`font-bold truncate ${conv.unread_count > 0 && conv.id !== id ? 'text-primary' : ''}`}
+                  >
                     {conv.other_user_name || 'Neighbor'}
                   </span>
                   {conv.unread_count > 0 && conv.id !== id && (
@@ -144,15 +145,21 @@ export function Inbox({ id }: { id?: string }) {
                   )}
                 </div>
                 {conv.listing_id && conv.listing_game_name && (
-                  <p class={`text-xs truncate mb-1 ${conv.id === id ? 'text-primary-content/70' : 'text-base-content/50'}`}>
+                  <p
+                    class={`text-xs truncate mb-1 ${conv.id === id ? 'text-primary-content/70' : 'text-base-content/50'}`}
+                  >
                     {conv.listing_game_name}
                   </p>
                 )}
-                <p class={`text-sm truncate ${conv.id === id ? 'text-primary-content/80' : 'text-base-content/60'}`}>
+                <p
+                  class={`text-sm truncate ${conv.id === id ? 'text-primary-content/80' : 'text-base-content/60'}`}
+                >
                   {conv.last_message_text || 'No messages yet'}
                 </p>
                 {conv.last_message_at && (
-                  <span class={`text-[10px] mt-2 block ${conv.id === id ? 'text-primary-content/60' : 'text-base-content/40'}`}>
+                  <span
+                    class={`text-[10px] mt-2 block ${conv.id === id ? 'text-primary-content/60' : 'text-base-content/40'}`}
+                  >
                     {new Date(conv.last_message_at).toLocaleDateString()}
                   </span>
                 )}
@@ -163,7 +170,9 @@ export function Inbox({ id }: { id?: string }) {
       </div>
 
       {/* Main Content */}
-      <div class={`flex-1 flex flex-col bg-base-100 rounded-2xl border border-base-300 overflow-hidden ${!id ? 'hidden md:flex items-center justify-center italic text-base-content/40' : 'flex'}`}>
+      <div
+        class={`flex-1 flex flex-col bg-base-100 rounded-2xl border border-base-300 overflow-hidden ${!id ? 'hidden md:flex items-center justify-center italic text-base-content/40' : 'flex'}`}
+      >
         {!id ? (
           <p>Select a conversation to start chatting</p>
         ) : loading && !activeConversation ? (
@@ -173,36 +182,67 @@ export function Inbox({ id }: { id?: string }) {
             <div class="p-4 border-b border-base-300 flex items-center justify-between bg-base-200/50">
               <div class="flex items-center gap-3">
                 <a href="/inbox" class="md:hidden btn btn-ghost btn-sm btn-circle">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
                 </a>
                 <div>
                   <h2 class="font-bold">{activeConversation.item.other_user_name || 'Neighbor'}</h2>
-                  {activeConversation.item.listing_id && activeConversation.item.listing_game_name && (
-                    <a href={`/listings/${activeConversation.item.listing_id}`} class="text-xs link link-primary">
-                      {activeConversation.item.listing_created_at
-                        ? `${new Date(activeConversation.item.listing_created_at).toLocaleDateString()} · ${activeConversation.item.listing_game_name}`
-                        : activeConversation.item.listing_game_name}
-                    </a>
-                  )}
+                  {activeConversation.item.listing_id &&
+                    activeConversation.item.listing_game_name && (
+                      <a
+                        href={`/listings/${activeConversation.item.listing_id}`}
+                        class="text-xs link link-primary"
+                      >
+                        {activeConversation.item.listing_created_at
+                          ? `${new Date(activeConversation.item.listing_created_at).toLocaleDateString()} · ${activeConversation.item.listing_game_name}`
+                          : activeConversation.item.listing_game_name}
+                      </a>
+                    )}
                 </div>
               </div>
             </div>
-            
+
             <div class="flex-1 overflow-y-auto p-4 flex flex-col-reverse">
               <div class="space-y-4">
                 {activeConversation.messages.map((msg) => {
                   const fromOther = msg.sender_id !== me?.id;
                   return (
-                    <div key={msg.id} class={`flex items-end gap-2 ${fromOther ? 'justify-start' : 'justify-start flex-row-reverse'}`}>
-                      <MessageAvatar name={msg.sender_name} avatarUrl={msg.sender_avatar_url} title={fromOther ? (msg.sender_name ?? 'Neighbor') : 'Me'} />
-                      <div class={`max-w-[75%] p-3 rounded-2xl text-sm border ${
-                        fromOther
-                          ? 'bg-base-100 text-base-content border-base-300 rounded-bl-none'
-                          : 'bg-primary text-primary-content border-primary rounded-br-none'
-                      }`}>
+                    <div
+                      key={msg.id}
+                      class={`flex items-end gap-2 ${fromOther ? 'justify-start' : 'justify-start flex-row-reverse'}`}
+                    >
+                      <MessageAvatar
+                        name={msg.sender_name}
+                        avatarUrl={msg.sender_avatar_url}
+                        title={fromOther ? (msg.sender_name ?? 'Neighbor') : 'Me'}
+                      />
+                      <div
+                        class={`max-w-[75%] p-3 rounded-2xl text-sm border ${
+                          fromOther
+                            ? 'bg-base-100 text-base-content border-base-300 rounded-bl-none'
+                            : 'bg-primary text-primary-content border-primary rounded-br-none'
+                        }`}
+                      >
                         {msg.text}
-                        <div class={`text-[10px] mt-1 ${fromOther ? 'text-base-content/40' : 'text-primary-content/60'}`}>
-                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <div
+                          class={`text-[10px] mt-1 ${fromOther ? 'text-base-content/40' : 'text-primary-content/60'}`}
+                        >
+                          {new Date(msg.created_at).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
                         </div>
                       </div>
                     </div>
@@ -211,7 +251,10 @@ export function Inbox({ id }: { id?: string }) {
               </div>
             </div>
 
-            <form onSubmit={handleReply} class="p-4 border-t border-base-300 bg-base-100 flex gap-2">
+            <form
+              onSubmit={handleReply}
+              class="p-4 border-t border-base-300 bg-base-100 flex gap-2"
+            >
               <input
                 type="text"
                 class="input input-bordered flex-1"
@@ -221,7 +264,7 @@ export function Inbox({ id }: { id?: string }) {
                 disabled={sending}
               />
               <button type="submit" class="btn btn-primary" disabled={sending || !replyText.trim()}>
-                {sending ? <span class="loading loading-spinner loading-xs"></span> : 'Send'}
+                {sending ? <span class="loading loading-spinner loading-xs" /> : 'Send'}
               </button>
             </form>
           </>
@@ -233,12 +276,28 @@ export function Inbox({ id }: { id?: string }) {
   );
 }
 
-function MessageAvatar({ name, avatarUrl, title }: { name: string | null; avatarUrl: string | null; title: string }) {
+function MessageAvatar({
+  name,
+  avatarUrl,
+  title,
+}: {
+  name: string | null;
+  avatarUrl: string | null;
+  title: string;
+}) {
   const initial = (name ?? 'N').slice(0, 1).toUpperCase();
   return (
-    <div title={title} class="w-8 h-8 shrink-0 rounded-full overflow-hidden border border-base-300 bg-base-200 grid place-items-center">
+    <div
+      title={title}
+      class="w-8 h-8 shrink-0 rounded-full overflow-hidden border border-base-300 bg-base-200 grid place-items-center"
+    >
       {avatarUrl ? (
-        <img alt={name ?? 'User'} src={avatarUrl} referrerpolicy="no-referrer" class="w-full h-full object-cover" />
+        <img
+          alt={name ?? 'User'}
+          src={avatarUrl}
+          referrerpolicy="no-referrer"
+          class="w-full h-full object-cover"
+        />
       ) : (
         <span class="text-xs font-semibold text-base-content/70">{initial}</span>
       )}

@@ -1,5 +1,6 @@
 import { db } from './client';
 
+/** Defines fields accepted when inserting catalog games. */
 export type CreateGameInput = {
   id: number;
   name: string;
@@ -10,6 +11,7 @@ export type CreateGameInput = {
   adjustedRating?: number | null;
 };
 
+/** Represents enriched BoardGameGeek statistics for a game. */
 export type GameStats = {
   minPlayers: number | null;
   maxPlayers: number | null;
@@ -20,6 +22,7 @@ export type GameStats = {
   weight: number | null;
 };
 
+/** Represents a game row returned from SQLite. */
 export type GameRow = {
   id: number;
   image_url: string | null;
@@ -37,12 +40,14 @@ export type GameRow = {
 
 const BATCH_SIZE = 50;
 
+/** Represents a game returned by name search. */
 export type GameSearchResult = {
   id: number;
   name: string;
   year: number | null;
 };
 
+/** Creates database operations for catalog games. */
 export function createGamesStore(database: typeof db) {
   const insertStmt = database.query(
     `INSERT INTO games (id, name, image_url, year, is_expansion, rating, adjusted_rating)
@@ -53,7 +58,7 @@ export function createGamesStore(database: typeof db) {
        year = excluded.year,
        is_expansion = excluded.is_expansion,
        rating = COALESCE(excluded.rating, games.rating),
-       adjusted_rating = COALESCE(excluded.adjusted_rating, games.adjusted_rating)`
+       adjusted_rating = COALESCE(excluded.adjusted_rating, games.adjusted_rating)`,
   );
 
   const findByIdStmt = database.query<GameRow, [number]>(
@@ -61,14 +66,24 @@ export function createGamesStore(database: typeof db) {
             min_players, max_players, min_playtime, max_playtime,
             rating, adjusted_rating, weight
      FROM games
-     WHERE id = ?`
+     WHERE id = ?`,
   );
 
-  const updateImageUrlStmt = database.query(
-    `UPDATE games SET image_url = ? WHERE id = ?`
-  );
+  const updateImageUrlStmt = database.query(`UPDATE games SET image_url = ? WHERE id = ?`);
 
-  const updateStatsStmt = database.query<unknown, [number | null, number | null, number | null, number | null, number | null, number | null, number | null, number]>(
+  const updateStatsStmt = database.query<
+    unknown,
+    [
+      number | null,
+      number | null,
+      number | null,
+      number | null,
+      number | null,
+      number | null,
+      number | null,
+      number,
+    ]
+  >(
     `UPDATE games
      SET min_players = COALESCE(?, min_players),
          max_players = COALESCE(?, max_players),
@@ -77,7 +92,7 @@ export function createGamesStore(database: typeof db) {
          rating = COALESCE(?, rating),
          adjusted_rating = COALESCE(?, adjusted_rating),
          weight = COALESCE(?, weight)
-     WHERE id = ?`
+     WHERE id = ?`,
   );
 
   const listGameIdsMissingStatsStmt = (gameIds: number[]) =>
@@ -88,7 +103,7 @@ export function createGamesStore(database: typeof db) {
            AND (min_players IS NULL OR max_players IS NULL
                 OR min_playtime IS NULL OR max_playtime IS NULL
                 OR rating IS NULL OR adjusted_rating IS NULL
-                OR weight IS NULL)`
+                OR weight IS NULL)`,
       )
       .all(...gameIds);
 
@@ -103,7 +118,7 @@ export function createGamesStore(database: typeof db) {
          ELSE 2
        END,
        name ASC
-     LIMIT ?`
+     LIMIT ?`,
   );
 
   const insertBatchTxn = database.transaction((games: CreateGameInput[]) => {
@@ -115,7 +130,7 @@ export function createGamesStore(database: typeof db) {
         game.year ?? null,
         game.isExpansion ? 1 : 0,
         game.rating ?? null,
-        game.adjustedRating ?? null
+        game.adjustedRating ?? null,
       );
     }
   });
@@ -147,7 +162,7 @@ export function createGamesStore(database: typeof db) {
         stats.rating,
         stats.adjusted_rating,
         stats.weight,
-        gameId
+        gameId,
       );
     },
     listGameIdsMissingStats(gameIds: number[]): number[] {
@@ -167,4 +182,5 @@ export function createGamesStore(database: typeof db) {
 const gamesStore = createGamesStore(db);
 
 // Only export what's used directly - other methods accessed via createGamesStore
+/** Provides shared catalog-game creation and search operations. */
 export const { createGamesBatch, searchGamesByName } = gamesStore;

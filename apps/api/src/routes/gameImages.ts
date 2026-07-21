@@ -1,9 +1,6 @@
 import { BunRequest } from 'bun';
 import { join } from 'node:path';
-import {
-  findGameImage,
-  getGameImageStorageDir,
-} from '../storage/gameImageStorage';
+import { findGameImage, getGameImageStorageDir } from '../storage/gameImageStorage';
 import { RouteDependencies } from '../middleware/dependencies';
 import { notFound } from '../utils/http';
 
@@ -20,13 +17,14 @@ function matchGameImageId(url: URL) {
   return url.pathname.match(/^\/api\/game-images\/([^/]+)$/)?.[1];
 }
 
+/** Creates the handler that serves cached game image variants. */
 export function createGetGameImage({
   findGameImageFn = findGameImage,
   storageDir = getGameImageStorageDir(),
 }: CreateGetGameImageOptions = {}) {
   return async function getGameImage(
     _: BunRequest<'/api/game-images/:id'>,
-    { url }: RouteDependencies
+    { url }: RouteDependencies,
   ) {
     const idParam = matchGameImageId(url);
     if (!idParam || !/^\d+$/.test(idParam)) return notFound('Image not found');
@@ -52,4 +50,5 @@ export function createGetGameImage({
   };
 }
 
+/** Serves cached game image variants using application dependencies. */
 export const getGameImage = createGetGameImage();

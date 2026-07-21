@@ -47,31 +47,45 @@ function parseMessageText(value: unknown): string | Response {
   return text;
 }
 
+/** Creates the handler that lists the authenticated user's inbox. */
 export function createGetConversations({
   conversationsStore = defaultConversationsStore,
 }: ConversationRouteOptions = {}) {
-  return async function getConversations(_: BunRequest<'/api/conversations'>, { auth }: RouteDependencies) {
+  return async function getConversations(
+    _: BunRequest<'/api/conversations'>,
+    { auth }: RouteDependencies,
+  ) {
     return json({ items: conversationsStore.listConversationsForUser(auth.userId) });
   };
 }
 
+/** Lists the authenticated user's inbox using application dependencies. */
 export const getConversations = createGetConversations();
 
+/** Creates the handler that counts unread conversations. */
 export function createGetUnreadCount({
   conversationsStore = defaultConversationsStore,
 }: ConversationRouteOptions = {}) {
-  return async function getUnreadCount(_: BunRequest<'/api/conversations/unread-count'>, { auth }: RouteDependencies) {
+  return async function getUnreadCount(
+    _: BunRequest<'/api/conversations/unread-count'>,
+    { auth }: RouteDependencies,
+  ) {
     return json({ count: conversationsStore.getUnreadConversationCount(auth.userId) });
   };
 }
 
+/** Counts unread conversations using application dependencies. */
 export const getUnreadCount = createGetUnreadCount();
 
+/** Creates the handler that returns a conversation and its messages. */
 export function createGetConversationDetail({
   conversationsStore = defaultConversationsStore,
   messagesStore = defaultMessagesStore,
 }: ConversationRouteOptions = {}) {
-  return async function getConversationDetail(_: BunRequest<'/api/conversations/:id'>, { auth, url }: RouteDependencies) {
+  return async function getConversationDetail(
+    _: BunRequest<'/api/conversations/:id'>,
+    { auth, url }: RouteDependencies,
+  ) {
     const id = matchConversationId(url);
     if (!id) return badRequest('Invalid conversation ID');
 
@@ -85,6 +99,7 @@ export function createGetConversationDetail({
   };
 }
 
+/** Returns a conversation and messages using application dependencies. */
 export const getConversationDetail = createGetConversationDetail();
 
 type PostConversationBody = {
@@ -93,6 +108,7 @@ type PostConversationBody = {
   text: string;
 };
 
+/** Creates the handler that starts a conversation and sends its first message. */
 export function createPostConversation({
   conversationsStore = defaultConversationsStore,
   messagesStore = defaultMessagesStore,
@@ -100,7 +116,10 @@ export function createPostConversation({
   findUser = findUserById,
   createId = () => randomToken(18),
 }: ConversationRouteOptions = {}) {
-  return async function postConversation(request: BunRequest<'/api/conversations'>, { auth }: RouteDependencies) {
+  return async function postConversation(
+    request: BunRequest<'/api/conversations'>,
+    { auth }: RouteDependencies,
+  ) {
     const body = await readJson<PostConversationBody>(request);
     if (!body) return badRequest('Invalid JSON body');
     if (!body.recipient_id) return badRequest('recipient_id is required');
@@ -108,7 +127,8 @@ export function createPostConversation({
     const text = parseMessageText(body.text);
     if (text instanceof Response) return text;
 
-    if (body.recipient_id === auth.userId) return badRequest('Cannot start a conversation with yourself');
+    if (body.recipient_id === auth.userId)
+      return badRequest('Cannot start a conversation with yourself');
     if (!findUser(body.recipient_id)) return badRequest('recipient not found');
 
     const listingId = body.listing_id ?? null;
@@ -117,15 +137,18 @@ export function createPostConversation({
     }
 
     const existing = listingId
-      ? conversationsStore.findExistingBetween(auth.userId, body.recipient_id, listingId)[0] ?? null
+      ? (conversationsStore.findExistingBetween(auth.userId, body.recipient_id, listingId)[0] ??
+        null)
       : null;
 
-    const conversation = existing ?? conversationsStore.createConversation({
-      id: createId(),
-      sender_id: auth.userId,
-      recipient_id: body.recipient_id,
-      listing_id: listingId,
-    });
+    const conversation =
+      existing ??
+      conversationsStore.createConversation({
+        id: createId(),
+        sender_id: auth.userId,
+        recipient_id: body.recipient_id,
+        listing_id: listingId,
+      });
 
     messagesStore.createMessage({
       id: createId(),
@@ -138,18 +161,23 @@ export function createPostConversation({
   };
 }
 
+/** Starts a conversation using application dependencies. */
 export const postConversation = createPostConversation();
 
 type PostMessageBody = {
   text: string;
 };
 
+/** Creates the handler that sends a message in a conversation. */
 export function createPostMessage({
   conversationsStore = defaultConversationsStore,
   messagesStore = defaultMessagesStore,
   createId = () => randomToken(18),
 }: ConversationRouteOptions = {}) {
-  return async function postMessage(request: BunRequest<'/api/conversations/:id/messages'>, { auth, url }: RouteDependencies) {
+  return async function postMessage(
+    request: BunRequest<'/api/conversations/:id/messages'>,
+    { auth, url }: RouteDependencies,
+  ) {
     const id = matchConversationId(url);
     if (!id) return badRequest('Invalid conversation ID');
 
@@ -174,12 +202,17 @@ export function createPostMessage({
   };
 }
 
+/** Sends a conversation message using application dependencies. */
 export const postMessage = createPostMessage();
 
+/** Creates the handler that finds an existing listing conversation. */
 export function createGetExistingConversations({
   conversationsStore = defaultConversationsStore,
 }: ConversationRouteOptions = {}) {
-  return async function getExistingConversations(_: BunRequest<'/api/conversations/existing'>, { auth, url }: RouteDependencies) {
+  return async function getExistingConversations(
+    _: BunRequest<'/api/conversations/existing'>,
+    { auth, url }: RouteDependencies,
+  ) {
     const otherUserId = url.searchParams.get('other_user_id');
     const listingId = url.searchParams.get('listing_id');
 
@@ -187,8 +220,11 @@ export function createGetExistingConversations({
       return badRequest('other_user_id and listing_id are required');
     }
 
-    return json({ items: conversationsStore.findExistingBetween(auth.userId, otherUserId, listingId) });
+    return json({
+      items: conversationsStore.findExistingBetween(auth.userId, otherUserId, listingId),
+    });
   };
 }
 
+/** Finds existing listing conversations using application dependencies. */
 export const getExistingConversations = createGetExistingConversations();

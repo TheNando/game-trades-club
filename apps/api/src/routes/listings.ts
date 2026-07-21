@@ -7,10 +7,7 @@ import { RouteDependencies } from '../middleware/dependencies';
 import { badRequest, json, notFound, readJson } from '../utils/http';
 import { randomToken } from '../utils/security';
 
-type ListingDetailStore = Pick<
-  ReturnType<typeof createListingsStore>,
-  'findListingDetailById'
->;
+type ListingDetailStore = Pick<ReturnType<typeof createListingsStore>, 'findListingDetailById'>;
 
 type CreateGetListingDetailOptions = {
   listingsStore?: ListingDetailStore;
@@ -42,10 +39,7 @@ type ListingsStore = Pick<
   'createListing' | 'listFilteredListings' | 'removeListing' | 'updateListing'
 >;
 
-type GetListingsStore = Pick<
-  ReturnType<typeof createListingsStore>,
-  'listFilteredListings'
->;
+type GetListingsStore = Pick<ReturnType<typeof createListingsStore>, 'listFilteredListings'>;
 
 type CreateGetListingsOptions = {
   listingsStore?: GetListingsStore;
@@ -89,8 +83,9 @@ function parseSearchQuery(value: string | null): string | undefined {
   return query ? query : undefined;
 }
 
+/** Validates and normalizes a request body for listing creation. */
 export function parseCreateListingBody(
-  body: ListingBody | null
+  body: ListingBody | null,
 ): ParsedCreateListingBody | Response {
   if (!body?.condition) return badRequest('condition is required');
   if (!body?.status) return badRequest('status is required');
@@ -140,7 +135,10 @@ function parseFloatQueryParam(value: string | null, fieldName: string): number |
 }
 
 function parseIntListQueryParam(values: string[], fieldName: string): number[] | Response {
-  const flattened = values.flatMap((value) => value.split(',')).map((value) => value.trim()).filter(Boolean);
+  const flattened = values
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim())
+    .filter(Boolean);
   const parsed: number[] = [];
   for (const value of flattened) {
     const num = Number(value);
@@ -151,13 +149,18 @@ function parseIntListQueryParam(values: string[], fieldName: string): number[] |
 }
 
 function parseConditionQueryParam(values: string[]): string[] | Response {
-  const flattened = values.flatMap((value) => value.split(',')).map((value) => value.trim()).filter(Boolean);
+  const flattened = values
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim())
+    .filter(Boolean);
   for (const condition of flattened) {
-    if (!VALID_CONDITIONS.has(condition)) return badRequest(`condition must be one of: ${[...VALID_CONDITIONS].join(', ')}`);
+    if (!VALID_CONDITIONS.has(condition))
+      return badRequest(`condition must be one of: ${[...VALID_CONDITIONS].join(', ')}`);
   }
   return flattened;
 }
 
+/** Parses supported listing filters from a URL query string. */
 export function parseListingFilters(searchParams: URLSearchParams): ListingFilters | Response {
   const filters: ListingFilters = {};
 
@@ -234,12 +237,13 @@ export function parseListingFilters(searchParams: URLSearchParams): ListingFilte
   return filters;
 }
 
+/** Creates the handler that lists filtered marketplace listings. */
 export function createGetListings({
   listingsStore = defaultListingsStore,
 }: CreateGetListingsOptions = {}) {
   return async function getListings(
     _: BunRequest<'/api/listings'>,
-    { auth, url }: RouteDependencies
+    { auth, url }: RouteDependencies,
   ) {
     const filters = parseListingFilters(url.searchParams);
     if (filters instanceof Response) return filters;
@@ -248,14 +252,16 @@ export function createGetListings({
   };
 }
 
+/** Lists filtered marketplace listings using application dependencies. */
 export const getListings = createGetListings();
 
+/** Creates the handler that returns one listing's details. */
 export function createGetListingDetail({
   listingsStore = defaultListingsStore,
 }: CreateGetListingDetailOptions = {}) {
   return async function getListingDetail(
     _: BunRequest<'/api/listings/:id'>,
-    { auth, url }: RouteDependencies
+    { auth, url }: RouteDependencies,
   ) {
     const listingId = matchListingId(url);
     if (!listingId) return badRequest('Invalid listing ID');
@@ -267,8 +273,10 @@ export function createGetListingDetail({
   };
 }
 
+/** Returns one listing's details using application dependencies. */
 export const getListingDetail = createGetListingDetail();
 
+/** Creates the handler that creates a marketplace listing. */
 export function createPostListing({
   createListingId = () => randomToken(18),
   listingsStore = defaultListingsStore,
@@ -277,7 +285,7 @@ export function createPostListing({
 }: CreatePostListingOptions = {}) {
   return async function postListing(
     request: BunRequest<'/api/listings'>,
-    { auth }: RouteDependencies
+    { auth }: RouteDependencies,
   ) {
     const parsed = parseCreateListingBody(await readJson<ListingBody>(request));
     if (parsed instanceof Response) return parsed;
@@ -297,23 +305,22 @@ export function createPostListing({
   };
 }
 
+/** Creates a marketplace listing using application dependencies. */
 export const postListing = createPostListing();
 
-type PatchListingStore = Pick<
-  ReturnType<typeof createListingsStore>,
-  'updateListing'
->;
+type PatchListingStore = Pick<ReturnType<typeof createListingsStore>, 'updateListing'>;
 
 type CreatePatchListingOptions = {
   listingsStore?: PatchListingStore;
 };
 
+/** Creates the handler that updates an owned listing. */
 export function createPatchListing({
   listingsStore = defaultListingsStore,
 }: CreatePatchListingOptions = {}) {
   return async function patchListing(
     request: BunRequest<'/api/listings/:id'>,
-    { auth, url }: RouteDependencies
+    { auth, url }: RouteDependencies,
   ) {
     const listingId = matchListingId(url);
     if (!listingId) return badRequest('Invalid listing ID');
@@ -339,7 +346,8 @@ export function createPatchListing({
     }
 
     const updated = listingsStore.updateListing(auth.userId, listingId, {
-      description: body.description === undefined ? undefined : normalizeOptionalText(body.description),
+      description:
+        body.description === undefined ? undefined : normalizeOptionalText(body.description),
       condition: body.condition,
       game_id: gameId ?? undefined,
       price: price ?? undefined,
@@ -351,23 +359,22 @@ export function createPatchListing({
   };
 }
 
+/** Updates an owned listing using application dependencies. */
 export const patchListing = createPatchListing();
 
-type DeleteListingStore = Pick<
-  ReturnType<typeof createListingsStore>,
-  'removeListing'
->;
+type DeleteListingStore = Pick<ReturnType<typeof createListingsStore>, 'removeListing'>;
 
 type CreateDeleteListingOptions = {
   listingsStore?: DeleteListingStore;
 };
 
+/** Creates the handler that deletes an owned listing. */
 export function createDeleteListing({
   listingsStore = defaultListingsStore,
 }: CreateDeleteListingOptions = {}) {
   return async function deleteListing(
     _: BunRequest<'/api/listings/:id'>,
-    { auth, url }: RouteDependencies
+    { auth, url }: RouteDependencies,
   ) {
     const listingId = matchListingId(url);
     if (!listingId) return badRequest('Invalid listing ID');
@@ -377,4 +384,5 @@ export function createDeleteListing({
   };
 }
 
+/** Deletes an owned listing using application dependencies. */
 export const deleteListing = createDeleteListing();

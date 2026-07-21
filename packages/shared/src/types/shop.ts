@@ -1,3 +1,4 @@
+/** Physical game store available as a pickup location. */
 export type Shop = {
   id: string;
   name: string;
@@ -12,6 +13,7 @@ export type Shop = {
   updated_at: string;
 };
 
+/** Minimal shop data for selection controls. */
 export type ShopOption = {
   id: string;
   name: string;

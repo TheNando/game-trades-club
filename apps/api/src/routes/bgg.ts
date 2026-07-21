@@ -8,10 +8,7 @@ import { DEFAULT_CACHE_TTL_MS, DEFAULT_MAX_ENTRIES, TtlCache } from '../utils/tt
 const IMAGE_TAG_RE = /<image>([^<]+)<\/image>/i;
 const THUMBNAIL_TAG_RE = /<thumbnail>([^<]+)<\/thumbnail>/i;
 
-type GamesStore = Pick<
-  ReturnType<typeof createGamesStore>,
-  'findGameById' | 'updateGameImageUrl'
->;
+type GamesStore = Pick<ReturnType<typeof createGamesStore>, 'findGameById' | 'updateGameImageUrl'>;
 
 type GetBggImageOptions = {
   cacheMaxEntries?: number;
@@ -78,10 +75,7 @@ export function createGetBggImage({
     return extractBggImageUrl(xml);
   }
 
-  return async function getBggImage(
-    _: BunRequest<"/api/bgg/image">,
-    { url }: RouteDependencies
-  ) {
+  return async function getBggImage(_: BunRequest<'/api/bgg/image'>, { url }: RouteDependencies) {
     const id = url.searchParams.get('id') ?? '';
     if (!/^\d+$/.test(id)) return badRequest('Invalid id parameter');
 
@@ -126,4 +120,5 @@ export function createGetBggImage({
   };
 }
 
+/** Resolves a BoardGameGeek image URL using application dependencies. */
 export const getBggImage = createGetBggImage();

@@ -1,11 +1,13 @@
 type UploadStatus = 'pending' | 'uploading' | 'uploaded' | 'failed' | 'cancelled';
 
+/** Tracks an image file and its upload progress for a listing. */
 export type UploadItem = {
   file: File;
   status: UploadStatus;
   error: string | null;
 };
 
+/** Creates pending upload records for selected files. */
 export function createUploadItems(files: File[]): UploadItem[] {
   return files.map((file) => ({
     file,
@@ -14,6 +16,7 @@ export function createUploadItems(files: File[]): UploadItem[] {
   }));
 }
 
+/** Uploads pending images sequentially, stopping after the first failure. */
 export async function runUploadQueue({
   items,
   listingId,
@@ -22,7 +25,7 @@ export async function runUploadQueue({
 }: {
   items: UploadItem[];
   listingId: string;
-  uploadImage: (args: { listingId: string; file: File }) => Promise<void>;
+  uploadImage: (args: { listingId: string; file: File; }) => Promise<void>;
   onItemsChange?: (items: UploadItem[]) => void;
 }) {
   const nextItems = [...items];
@@ -59,8 +62,9 @@ export async function runUploadQueue({
   return nextItems;
 }
 
+/** Marks queued uploads as cancelled without affecting in-progress uploads. */
 export function cancelPendingUploads(items: UploadItem[]) {
   return items.map((item) =>
-    item.status === 'pending' ? { ...item, status: 'cancelled' as const } : item
+    item.status === 'pending' ? { ...item, status: 'cancelled' as const } : item,
   );
 }

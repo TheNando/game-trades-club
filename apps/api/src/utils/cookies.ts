@@ -1,3 +1,4 @@
+/** Parses a Cookie header into decoded name-value pairs. */
 export function parseCookies(cookieHeader: string | null): Record<string, string> {
   if (!cookieHeader) return {};
 
@@ -19,6 +20,7 @@ type CookieOptions = {
   maxAge?: number;
 };
 
+/** Serializes a cookie name, value, and supported attributes for a response header. */
 export function serializeCookie(name: string, value: string, options: CookieOptions = {}): string {
   const parts = [`${name}=${encodeURIComponent(value)}`];
 

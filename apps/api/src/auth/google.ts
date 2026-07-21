@@ -37,10 +37,12 @@ function getPublicOrigin(request: Request, requestUrl: URL): string {
   return requestUrl.origin;
 }
 
+/** Creates the redirect response that begins Google OAuth. */
 export function buildGoogleStartResponse(request: Request, requestUrl: URL): Response {
   const clientId = getRequiredEnv('GOOGLE_CLIENT_ID');
   const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI ?? `${getPublicOrigin(request, requestUrl)}/api/auth/google/callback`;
+    process.env.GOOGLE_REDIRECT_URI ??
+    `${getPublicOrigin(request, requestUrl)}/api/auth/google/callback`;
   const state = randomToken(24);
 
   const authUrl = new URL(GOOGLE_AUTH_URL);
@@ -57,7 +59,7 @@ export function buildGoogleStartResponse(request: Request, requestUrl: URL): Res
   return new Response(null, {
     status: 302,
     headers: {
-      location: authUrl.toString(),
+      'location': authUrl.toString(),
       'set-cookie': serializeCookie(OAUTH_STATE_COOKIE, state, {
         path: '/',
         maxAge: OAUTH_STATE_MAX_AGE,
@@ -69,13 +71,18 @@ export function buildGoogleStartResponse(request: Request, requestUrl: URL): Res
   });
 }
 
-export function validateGoogleCallbackState(request: Request, stateFromQuery: string | null): boolean {
+/** Verifies the OAuth callback state against its cookie. */
+export function validateGoogleCallbackState(
+  request: Request,
+  stateFromQuery: string | null,
+): boolean {
   if (!stateFromQuery) return false;
   const cookies = parseCookies(request.headers.get('cookie'));
   const expectedState = cookies[OAUTH_STATE_COOKIE];
   return !!expectedState && expectedState === stateFromQuery;
 }
 
+/** Creates an expired cookie that clears OAuth callback state. */
 export function buildClearOAuthStateCookie(): string {
   const secure = process.env.NODE_ENV === 'production';
   return serializeCookie(OAUTH_STATE_COOKIE, '', {
@@ -87,15 +94,17 @@ export function buildClearOAuthStateCookie(): string {
   });
 }
 
+/** Exchanges a Google authorization code for a validated profile. */
 export async function exchangeCodeForGoogleProfile(
   request: Request,
   code: string,
-  requestUrl: URL
+  requestUrl: URL,
 ): Promise<GoogleProfile> {
   const clientId = getRequiredEnv('GOOGLE_CLIENT_ID');
   const clientSecret = getRequiredEnv('GOOGLE_CLIENT_SECRET');
   const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI ?? `${getPublicOrigin(request, requestUrl)}/api/auth/google/callback`;
+    process.env.GOOGLE_REDIRECT_URI ??
+    `${getPublicOrigin(request, requestUrl)}/api/auth/google/callback`;
 
   const tokenResponse = await fetch(GOOGLE_TOKEN_URL, {
     method: 'POST',

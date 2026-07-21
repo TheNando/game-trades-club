@@ -82,6 +82,7 @@ minimal additive `ALTER TABLE ... ADD COLUMN` reconciliation for pre-existing
 dev databases. Avoid destructive schema changes.
 
 **Security model** —
+
 - Sessions live in an HTTP-only cookie (`session_id`) backed by the `sessions`
   table; `requireAuth` resolves the cookie to an `AuthContext`.
 - User-owned data is **always** filtered server-side with `user_id = ?`.
@@ -92,6 +93,69 @@ dev databases. Avoid destructive schema changes.
 **Shared types** — Prefer importing types/constants/formatters from
 `@game-trades-club/shared` rather than redefining them. Enum-like values
 (conditions, statuses) have constants + validation helpers there.
+
+## Maintainability Conventions
+
+Apply these conventions to maintained TypeScript and TSX source files. Preserve
+existing product behavior, API contracts, database behavior, and auth behavior
+when applying them.
+
+**Module structure** — Default to this semantic ordering: imports (built-ins,
+external packages, shared aliases, then relative imports), local types,
+constants, private helpers, then public functions/classes/components. Export a
+declaration where it is defined when that makes the public API discoverable; a
+final export block is optional. Re-export-only barrel files may keep re-exports
+together.
+
+**Ordering** — Group members by domain meaning and reading order, not blanket
+alphabetical order. Alphabetize imports and simple unordered collections only.
+Keep related types, constants, and operations together even when that conflicts
+with alphabetical order.
+
+**Functions** — Prefer named `function` declarations for named module-level
+operations, factories, route handlers, and reusable helpers. Use arrow
+functions for callbacks, short transformations, closures, and intentional
+lexical `this`. Do not use hoisting as a reason to call functions before their
+definitions when declaration-before-use is clearer. Keep side effects at clear
+boundaries and prefer pure functions for parsing, formatting, filtering, and
+transformation.
+
+**Names and types** — Use the project's domain vocabulary consistently. Prefer
+expressive names over unexplained abbreviations. Prefix booleans with `is`,
+`has`, `can`, or `should`; include units where applicable, such as `priceCents`
+or `timeoutMs`; distinguish raw, parsed, normalized, and serialized values.
+Use `unknown` rather than `any` for untrusted input. Add explicit return types
+to exported functions, public boundaries, and complex callbacks. Do not rename
+external API or database fields solely to impose a naming style.
+
+**TSDoc** — Every source declaration exported from a module needs concise
+TSDoc, including exported types, constants, functions, classes, components,
+route handlers, and test-facing helpers. Begin with a short purpose or contract
+description, normally one sentence. Add `@param` only when a parameter name is
+not sufficiently expressive or a parameter has a non-obvious constraint, unit,
+or interpretation. Use `@returns`, `@throws`, and `@example` only when they add
+non-obvious information. Document declarations at their source; re-export-only
+barrels (`export *` and direct re-exports) are exempt. Document an exported type
+or function as a whole rather than every property unless a property has
+non-obvious domain semantics.
+
+**Scope and sharing** — Keep implementation details private by default and
+colocate code with its primary consumer. Share values only when they represent
+stable domain meaning or have multiple genuine consumers. Shared-package code
+must remain independent of application-specific code. Do not create generic
+utilities or abstractions solely to remove small amounts of duplication. Keep
+boundaries clear: routes handle HTTP parsing, authorization, and responses;
+stores handle database access; integrations handle external services; UI
+components handle presentation and interaction. Avoid circular dependencies and
+accidental public exports.
+
+**Constants, comments, and tests** — Name repeated domain strings and numeric
+literals, and maintain one source of truth for enum-like values, labels, and
+validation. Validate untrusted input at boundaries and use stronger types
+internally. Do not silently swallow errors. Comments explain rationale,
+invariants, or non-obvious constraints rather than restating code. Test public
+behavior and contracts rather than implementation details, and keep tests and
+focused helpers close to the code they verify.
 
 ## Data Model
 

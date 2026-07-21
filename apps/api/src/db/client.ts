@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite';
-import { mkdir } from "node:fs/promises";
+import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import schema from "./schema.sql" with { type: "file" };
+import schema from './schema.sql' with { type: 'file' };
 import { getDataPath } from '../utils/paths';
 
 const databasePath = join(getDataPath(), 'app.db');
@@ -9,7 +9,8 @@ await mkdir(getDataPath(), { recursive: true });
 
 const schemaSql = await Bun.file(schema).text();
 
-const db = new Database(databasePath, { create: true, strict: true });
+/** Shared SQLite connection initialized with the application schema. */
+export const db = new Database(databasePath, { create: true, strict: true });
 db.run(schemaSql);
 
 // Reconcile additive columns on pre-existing dev databases without dropping data.
@@ -32,5 +33,3 @@ addColumnIfMissing('games', 'max_playtime', 'INTEGER');
 addColumnIfMissing('games', 'rating', 'REAL');
 addColumnIfMissing('games', 'adjusted_rating', 'REAL');
 addColumnIfMissing('games', 'weight', 'REAL');
-
-export { db };

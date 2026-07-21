@@ -138,7 +138,11 @@ describe('gamesFiltersToSearch', () => {
   });
 
   test('includes rating_type in params only when minRating is set', () => {
-    const withRating = gamesFiltersToSearch({ ...emptyGamesFilters(), minRating: '7', ratingType: 'adjusted' });
+    const withRating = gamesFiltersToSearch({
+      ...emptyGamesFilters(),
+      minRating: '7',
+      ratingType: 'adjusted',
+    });
     expect(withRating.get('min_rating')).toBe('7');
     expect(withRating.get('rating_type')).toBe('adjusted');
 

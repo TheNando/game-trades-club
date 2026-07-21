@@ -5,10 +5,7 @@ import { type PublicUserProfile, findUserPublicProfileById } from '../db/usersTa
 import { RouteDependencies } from '../middleware/dependencies';
 import { badRequest, json, notFound } from '../utils/http';
 
-type UserProfileListingsStore = Pick<
-  ReturnType<typeof createListingsStore>,
-  'listListingsByUser'
->;
+type UserProfileListingsStore = Pick<ReturnType<typeof createListingsStore>, 'listListingsByUser'>;
 
 type CreateGetUserProfileOptions = {
   findUserPublicProfile?: (id: string) => PublicUserProfile | null;
@@ -34,13 +31,14 @@ function partitionListings(listings: Listing[]) {
   return { current, past };
 }
 
+/** Creates the handler that returns a public user profile. */
 export function createGetUserProfile({
   findUserPublicProfile = findUserPublicProfileById,
   listingsStore = defaultListingsStore,
 }: CreateGetUserProfileOptions = {}) {
   return async function getUserProfile(
     _: BunRequest<'/api/users/:id'>,
-    { auth, url }: RouteDependencies
+    { auth, url }: RouteDependencies,
   ) {
     const userId = matchUserId(url);
     if (!userId) return badRequest('Invalid user ID');
@@ -48,7 +46,9 @@ export function createGetUserProfile({
     const user = findUserPublicProfile(userId);
     if (!user) return notFound('User not found');
 
-    const { current, past } = partitionListings(listingsStore.listListingsByUser(userId, auth.userId));
+    const { current, past } = partitionListings(
+      listingsStore.listListingsByUser(userId, auth.userId),
+    );
 
     return json({
       user,
@@ -58,4 +58,5 @@ export function createGetUserProfile({
   };
 }
 
+/** Returns a public user profile using application dependencies. */
 export const getUserProfile = createGetUserProfile();
