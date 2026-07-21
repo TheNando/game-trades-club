@@ -22,11 +22,12 @@ type UserProfileResponse = {
 };
 
 function formatMemberSince(value: string): string {
-  const date = new Date(value.replace(' ', 'T') + 'Z');
+  const date = new Date(`${value.replace(' ', 'T')}Z`);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
 
+/** Renders a user's profile and marketplace listings. */
 export function UserProfile({ id }: { id?: string }) {
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +42,6 @@ export function UserProfile({ id }: { id?: string }) {
       .then(setMe)
       .catch(() => setMe(null));
   }, []);
-
 
   useEffect(() => {
     if (!id) {
@@ -166,7 +166,12 @@ function ProfileHeader({
         <div class="flex items-center gap-5">
           <div class="w-20 h-20 rounded-2xl overflow-hidden border border-base-300 bg-base-100 grid place-items-center shadow-sm">
             {user.avatar_url ? (
-              <img alt={displayName} src={user.avatar_url} referrerpolicy="no-referrer" class="w-full h-full object-cover" />
+              <img
+                alt={displayName}
+                src={user.avatar_url}
+                referrerpolicy="no-referrer"
+                class="w-full h-full object-cover"
+              />
             ) : (
               <span class="font-display text-3xl text-base-content/70">{initial}</span>
             )}

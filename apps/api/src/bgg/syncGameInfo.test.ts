@@ -77,7 +77,15 @@ describe('createSyncGameInfoIfMissing', () => {
       ...emptyCredits,
       publishers: [{ bggId: 1, description: null, name: 'Publisher' }],
     };
-    const stats = { minPlayers: 2, maxPlayers: 4, minPlaytime: 30, maxPlaytime: 60, rating: null, adjusted_rating: null, weight: null };
+    const stats = {
+      minPlayers: 2,
+      maxPlayers: 4,
+      minPlaytime: 30,
+      maxPlaytime: 60,
+      rating: null,
+      adjusted_rating: null,
+      weight: null,
+    };
     const imageUrl = 'https://example.com/new.jpg';
     const fetchGameInfoFn = mock(async () => ({ credits, imageUrl, stats }));
 
@@ -108,7 +116,15 @@ describe('createSyncGameInfoIfMissing', () => {
   test('only updates stats when credits already exist but stats are missing', async () => {
     const replaceGameInfo = mock(() => undefined);
     const updateGameStats = mock(() => undefined);
-    const stats = { minPlayers: 1, maxPlayers: 5, minPlaytime: 20, maxPlaytime: 40, rating: null, adjusted_rating: null, weight: null };
+    const stats = {
+      minPlayers: 1,
+      maxPlayers: 5,
+      minPlaytime: 20,
+      maxPlaytime: 40,
+      rating: null,
+      adjusted_rating: null,
+      weight: null,
+    };
     const fetchGameInfoFn = mock(async () => ({
       credits: emptyCredits,
       imageUrl: null,

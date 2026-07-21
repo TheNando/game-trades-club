@@ -1,3 +1,4 @@
+/** BoardGameGeek-enriched board game reference data. */
 export type Game = {
   id: number;
   name: string;
@@ -13,12 +14,14 @@ export type Game = {
   weight: number | null;
 };
 
+/** Minimal game data returned by catalog searches. */
 export type GameSearchResult = {
   id: number;
   name: string;
   year: number | null;
 };
 
+/** Named taxonomy entity available for filtering games. */
 export type TaxonomyOption = {
   id: number;
   name: string;

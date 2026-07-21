@@ -37,6 +37,7 @@ type Listing = {
 
 type ListingResponse = { item: Listing };
 
+/** Renders a listing and its seller, images, and messaging actions. */
 export function ListingDetail({ id }: { id?: string }) {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,7 +145,12 @@ export function ListingDetail({ id }: { id?: string }) {
           href="/games"
           class="inline-flex items-center gap-1.5 text-sm text-base-content/65 hover:text-base-content"
         >
-          <svg viewBox="0 0 24 24" class="w-4 h-4 fill-none stroke-current" stroke-width="2" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            class="w-4 h-4 fill-none stroke-current"
+            stroke-width="2"
+            aria-hidden="true"
+          >
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 12H5M11 18l-6-6 6-6" />
           </svg>
           All listings
@@ -182,7 +188,14 @@ type GalleryProps = {
   fallbackImagePath: string | null;
 };
 
-function ListingGallery({ images, activeImage, onSelect, gameName, gameId, fallbackImagePath }: GalleryProps) {
+function ListingGallery({
+  images,
+  activeImage,
+  onSelect,
+  gameName,
+  gameId,
+  fallbackImagePath,
+}: GalleryProps) {
   const showFallback = activeImage === null && fallbackImagePath !== null;
   return (
     <div class="flex flex-col gap-3">
@@ -213,10 +226,11 @@ function ListingGallery({ images, activeImage, onSelect, gameName, gameId, fallb
                 <button
                   type="button"
                   onClick={() => onSelect(image.id)}
-                  class={`block w-full aspect-square rounded-xl overflow-hidden border transition-colors ${isActive
-                    ? 'border-primary ring-2 ring-primary/40'
-                    : 'border-base-300 hover:border-base-content/30'
-                    }`}
+                  class={`block w-full aspect-square rounded-xl overflow-hidden border transition-colors ${
+                    isActive
+                      ? 'border-primary ring-2 ring-primary/40'
+                      : 'border-base-300 hover:border-base-content/30'
+                  }`}
                   aria-label={`Show image ${image.id}`}
                   aria-pressed={isActive}
                 >
@@ -245,7 +259,14 @@ type SummaryProps = {
   onListingChange: (listing: Listing) => void;
 };
 
-function ListingSummary({ listing, sellerLabel, sellerInitial, isOwner, me, onListingChange }: SummaryProps) {
+function ListingSummary({
+  listing,
+  sellerLabel,
+  sellerInitial,
+  isOwner,
+  me,
+  onListingChange,
+}: SummaryProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [sent, setSent] = useState(false);
@@ -289,9 +310,7 @@ function ListingSummary({ listing, sellerLabel, sellerInitial, isOwner, me, onLi
   return (
     <div class="flex flex-col gap-6">
       <div>
-        <p class="text-xs uppercase tracking-[0.22em] text-primary/80 font-semibold">
-          Listing
-        </p>
+        <p class="text-xs uppercase tracking-[0.22em] text-primary/80 font-semibold">Listing</p>
         <h1 class="font-display text-3xl md:text-4xl font-medium mt-2 leading-tight">
           {listing.game.name}
         </h1>
@@ -363,7 +382,11 @@ function ListingSummary({ listing, sellerLabel, sellerInitial, isOwner, me, onLi
         >
           <div class="w-12 h-12 rounded-full overflow-hidden border border-base-300 bg-base-200 grid place-items-center">
             {listing.seller.avatar_url ? (
-              <img alt={sellerLabel} src={listing.seller.avatar_url} class="w-full h-full object-cover" />
+              <img
+                alt={sellerLabel}
+                src={listing.seller.avatar_url}
+                class="w-full h-full object-cover"
+              />
             ) : (
               <span class="text-base font-semibold text-base-content/70">{sellerInitial}</span>
             )}
@@ -414,7 +437,6 @@ function ListingSummary({ listing, sellerLabel, sellerInitial, isOwner, me, onLi
   );
 }
 
-
 type PreferredShopCardProps = {
   shop: PreferredShop;
 };
@@ -423,15 +445,17 @@ function PreferredShopCard({ shop }: PreferredShopCardProps) {
   const mapsHref = buildGoogleMapsUrl(shop);
   const hasCoords = shop.latitude !== null && shop.longitude !== null;
   const points: ShopMapPoint[] = hasCoords
-    ? [{
-      id: shop.id,
-      name: shop.name,
-      city: shop.city,
-      address: shop.address,
-      website_url: shop.website_url,
-      latitude: shop.latitude as number,
-      longitude: shop.longitude as number,
-    }]
+    ? [
+        {
+          id: shop.id,
+          name: shop.name,
+          city: shop.city,
+          address: shop.address,
+          website_url: shop.website_url,
+          latitude: shop.latitude as number,
+          longitude: shop.longitude as number,
+        },
+      ]
     : [];
 
   return (
@@ -439,10 +463,10 @@ function PreferredShopCard({ shop }: PreferredShopCardProps) {
       <h2 class="font-display text-lg">Suggested meetup</h2>
       <div class="mt-3">
         <p class="font-medium">{shop.name}</p>
-        {shop.address ? (
-          <p class="text-sm text-base-content/70">{shop.address}</p>
-        ) : null}
-        <p class="text-sm text-base-content/70">{formatCityStateZip(shop.city, shop.state, shop.zip)}</p>
+        {shop.address ? <p class="text-sm text-base-content/70">{shop.address}</p> : null}
+        <p class="text-sm text-base-content/70">
+          {formatCityStateZip(shop.city, shop.state, shop.zip)}
+        </p>
         {shop.website_url ? (
           <a
             class="text-sm text-primary hover:underline break-all"
@@ -456,7 +480,11 @@ function PreferredShopCard({ shop }: PreferredShopCardProps) {
       </div>
       {hasCoords ? (
         <div class="mt-4">
-          <ShopMap points={points} className="h-48 w-full rounded-xl border border-base-300" zoom={14} />
+          <ShopMap
+            points={points}
+            className="h-48 w-full rounded-xl border border-base-300"
+            zoom={14}
+          />
         </div>
       ) : null}
       <div class="mt-4 flex flex-wrap gap-2">
@@ -475,7 +503,6 @@ function PreferredShopCard({ shop }: PreferredShopCardProps) {
     </div>
   );
 }
-
 
 type ListingEditFormProps = {
   listing: Listing;
@@ -540,20 +567,23 @@ function ListingEditForm({ listing, onCancel, onSaved }: ListingEditFormProps) {
   };
 
   return (
-    <form class="rounded-2xl border border-base-300 bg-base-100 p-5 flex flex-col gap-4" onSubmit={submit}>
+    <form
+      class="rounded-2xl border border-base-300 bg-base-100 p-5 flex flex-col gap-4"
+      onSubmit={submit}
+    >
       <h2 class="font-display text-lg">Edit listing</h2>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-medium" for="edit-listing-condition">Condition</label>
+          <label class="text-sm font-medium" for="edit-listing-condition">
+            Condition
+          </label>
           <select
             id="edit-listing-condition"
             aria-label="Condition"
             class="select select-bordered rounded-xl"
             value={condition}
-            onInput={(event) =>
-              setCondition((event.currentTarget as HTMLSelectElement).value)
-            }
+            onInput={(event) => setCondition((event.currentTarget as HTMLSelectElement).value)}
           >
             <option value="new">New</option>
             <option value="like_new">Like New</option>
@@ -564,7 +594,9 @@ function ListingEditForm({ listing, onCancel, onSaved }: ListingEditFormProps) {
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label class="text-sm font-medium" for="edit-listing-price">Price ($)</label>
+          <label class="text-sm font-medium" for="edit-listing-price">
+            Price ($)
+          </label>
           <input
             id="edit-listing-price"
             aria-label="Price ($)"
@@ -575,24 +607,22 @@ function ListingEditForm({ listing, onCancel, onSaved }: ListingEditFormProps) {
             step="1"
             required
             value={price}
-            onInput={(event) =>
-              setPrice((event.currentTarget as HTMLInputElement).value)
-            }
+            onInput={(event) => setPrice((event.currentTarget as HTMLInputElement).value)}
           />
         </div>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-sm font-medium" for="edit-listing-description">Description</label>
+        <label class="text-sm font-medium" for="edit-listing-description">
+          Description
+        </label>
         <textarea
           id="edit-listing-description"
           aria-label="Description"
           class="textarea textarea-bordered rounded-xl min-h-32"
           maxLength={1200}
           value={description}
-          onInput={(event) =>
-            setDescription((event.currentTarget as HTMLTextAreaElement).value)
-          }
+          onInput={(event) => setDescription((event.currentTarget as HTMLTextAreaElement).value)}
         />
       </div>
 
@@ -611,11 +641,7 @@ function ListingEditForm({ listing, onCancel, onSaved }: ListingEditFormProps) {
         >
           Cancel
         </button>
-        <button
-          type="submit"
-          class="btn btn-primary rounded-lg"
-          disabled={saving}
-        >
+        <button type="submit" class="btn btn-primary rounded-lg" disabled={saving}>
           {saving ? 'Saving...' : 'Save changes'}
         </button>
       </div>

@@ -26,6 +26,7 @@ type SyncGameInfoIfMissingOptions = {
 const defaultGamesStore = createGamesStore(db);
 const defaultGameInfoStore = createGameInfoStore(db);
 
+/** Creates an on-demand synchronizer for missing game enrichment. */
 export function createSyncGameInfoIfMissing({
   fetchGameInfoFn = fetchGameInfo,
   GameInfoStore = defaultGameInfoStore,
@@ -44,8 +45,7 @@ export function createSyncGameInfoIfMissing({
     }
 
     const missingImageUrl = game.image_url === null;
-    const missingLocalImage =
-      game.image_url !== null && (await findGameImageFn(game.id)) === null;
+    const missingLocalImage = game.image_url !== null && (await findGameImageFn(game.id)) === null;
 
     if (!missingCredits && !missingStats && !missingImageUrl && !missingLocalImage) {
       return false;
@@ -82,4 +82,5 @@ export function createSyncGameInfoIfMissing({
   };
 }
 
+/** Synchronizes missing game enrichment using application dependencies. */
 export const syncGameInfoIfMissing = createSyncGameInfoIfMissing();

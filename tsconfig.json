@@ -7,9 +7,5 @@
     "apps/api/src/**/*",
     "scripts/**/*"
   ],
-  "exclude": [
-    "dist",
-    "apps/web/dist",
-    "node_modules"
-  ]
+  "exclude": ["dist", "apps/web/dist", "node_modules"]
 }

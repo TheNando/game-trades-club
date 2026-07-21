@@ -6,7 +6,7 @@ async function seedGame(database: Awaited<ReturnType<typeof createTestDatabase>>
   database
     .query(
       `INSERT INTO games (id, name, year, is_expansion)
-       VALUES (?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?)`,
     )
     .run(gameId, `Game ${gameId}`, 2024, 0);
 }
@@ -19,9 +19,7 @@ describe('createGameInfoStore', () => {
     const store = createGameInfoStore(database);
 
     store.replaceGameInfo(1, {
-      publishers: [
-        { bggId: 10, description: null, name: 'Capstone Games' },
-      ],
+      publishers: [{ bggId: 10, description: null, name: 'Capstone Games' }],
       designers: [
         { bggId: 20, description: null, name: 'Reiner Knizia' },
         { bggId: 20, description: null, name: 'Reiner Knizia' },
@@ -42,20 +40,20 @@ describe('createGameInfoStore', () => {
     });
 
     const publishers = database
-      .query<{ bgg_id: number | null; description: string | null; name: string; }, []>(
-        'SELECT name, bgg_id, description FROM publishers ORDER BY name ASC'
+      .query<{ bgg_id: number | null; description: string | null; name: string }, []>(
+        'SELECT name, bgg_id, description FROM publishers ORDER BY name ASC',
       )
       .all();
 
     const gamePublishers = database
-      .query<{ game_id: number; publisher_id: number; }, []>(
-        'SELECT game_id, publisher_id FROM game_publishers ORDER BY game_id ASC'
+      .query<{ game_id: number; publisher_id: number }, []>(
+        'SELECT game_id, publisher_id FROM game_publishers ORDER BY game_id ASC',
       )
       .all();
 
     const designers = database
-      .query<{ bgg_id: number | null; name: string; }, []>(
-        'SELECT name, bgg_id FROM designers ORDER BY name ASC'
+      .query<{ bgg_id: number | null; name: string }, []>(
+        'SELECT name, bgg_id FROM designers ORDER BY name ASC',
       )
       .all();
 

@@ -1,23 +1,24 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname } from 'node:path';
 import {
   DEFAULT_REFRESHED_RANKS_CSV_PATH,
   loadGameRanksCsv,
   resolveCsvPath,
   validateRanksCsvHeader,
   type CreateGamesBatch,
-} from "./gameRanks";
+} from './gameRanks';
 
 type RefreshGameRanksOptions = {
   createGamesBatch?: CreateGamesBatch;
   csvUrl?: string;
   fetchFn?: FetchRanksCsv;
-  logger?: Pick<Console, "log"> | null;
+  logger?: Pick<Console, 'log'> | null;
   outputPath?: string;
 };
 
 type FetchRanksCsv = (input: string) => Promise<Response>;
 
+/** Downloads and validates a BoardGameGeek ranks CSV. */
 export async function downloadRanksCsv({
   csvUrl,
   fetchFn = fetch,
@@ -36,6 +37,7 @@ export async function downloadRanksCsv({
   return csvText;
 }
 
+/** Downloads, saves, and loads the latest BoardGameGeek ranks CSV. */
 export async function refreshGameRanks({
   createGamesBatch,
   csvUrl = process.env.BOARDGAMES_RANKS_CSV_URL,
@@ -44,7 +46,7 @@ export async function refreshGameRanks({
   outputPath = DEFAULT_REFRESHED_RANKS_CSV_PATH,
 }: RefreshGameRanksOptions = {}): Promise<void> {
   if (!csvUrl) {
-    throw new Error("BOARDGAMES_RANKS_CSV_URL is required.");
+    throw new Error('BOARDGAMES_RANKS_CSV_URL is required.');
   }
 
   const csvText = await downloadRanksCsv({ csvUrl, fetchFn });
@@ -54,8 +56,8 @@ export async function refreshGameRanks({
   let batchWriter = createGamesBatch;
   if (!batchWriter) {
     const [{ createGamesStore }, { db }] = await Promise.all([
-      import("../apps/api/src/db/gamesTable"),
-      import("../apps/api/src/db/client"),
+      import('../apps/api/src/db/gamesTable'),
+      import('../apps/api/src/db/client'),
     ]);
     batchWriter = createGamesStore(db).createGamesBatch;
   }

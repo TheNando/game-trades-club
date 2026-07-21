@@ -19,8 +19,17 @@ Preact frontend with a Bun API backend using Bun SQLite and Google OAuth.
 - `bun run games:refresh` downloads the configured BGG ranks CSV and bulk-loads it
 - `bun run typecheck` runs TypeScript checks for both apps
 - `bun run test` runs the test suite
+- `bun run lint` checks TypeScript, TSX, and exported declaration documentation
+- `bun run format:check` checks formatting; `bun run format` applies it
 
 Vite is configured to proxy `/api/*` requests to `http://localhost:3000` during local development.
+
+## Development Conventions
+
+- Keep modules organized by imports, local types, constants, private helpers, and public operations.
+- Prefer semantic grouping over blanket alphabetization, and export declarations near their definitions when clear.
+- Document every exported source declaration with concise TSDoc. Add `@param` only for non-obvious constraints, units, or meanings.
+- Preserve API, database, authentication, and ownership contracts when refactoring.
 
 ## Environment
 

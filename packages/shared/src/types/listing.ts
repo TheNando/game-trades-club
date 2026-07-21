@@ -1,5 +1,6 @@
 import type { Shop } from './shop';
 
+/** A seller's marketplace offer for a board game. */
 export type Listing = {
   id: string;
   user_id: string;
@@ -16,8 +17,10 @@ export type Listing = {
   updated_at: string;
 };
 
+/** Supported physical conditions for a listed game copy. */
 export type ListingCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
 
+/** A listing with seller, images, and preferred pickup shop details. */
 export type ListingDetail = Omit<Listing, 'cover_image'> & {
   images: ListingImage[];
   seller: {
@@ -29,6 +32,7 @@ export type ListingDetail = Omit<Listing, 'cover_image'> & {
   preferred_shop: Shop | null;
 };
 
+/** Optional criteria for filtering marketplace listings. */
 export type ListingFilters = {
   conditions?: string[];
   priceMin?: number;
@@ -45,9 +49,11 @@ export type ListingFilters = {
   ratingType?: 'average' | 'adjusted';
 };
 
+/** Metadata for an uploaded listing image. */
 export type ListingImage = {
   id: string;
   has_thumb: boolean;
 };
 
+/** Lifecycle state of a marketplace listing. */
 export type ListingStatus = 'open' | 'pending' | 'complete';

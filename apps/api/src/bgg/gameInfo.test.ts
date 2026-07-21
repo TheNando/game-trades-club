@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { fetchGameInfo } from './gameInfo';
 
-type XmlLink = { type: string; id: string | number; value: string; };
+type XmlLink = { type: string; id: string | number; value: string };
 type XmlStats = {
   minplayers?: string;
   maxplayers?: string;
@@ -19,7 +19,7 @@ function createThingXml({
   links = [],
   stats = {},
   ratings,
-}: { image?: string; links?: XmlLink[]; stats?: XmlStats; ratings?: XmlRatings; } = {}) {
+}: { image?: string; links?: XmlLink[]; stats?: XmlStats; ratings?: XmlRatings } = {}) {
   const linkLines = links
     .map((l) => `    <link type="${l.type}" id="${l.id}" value="${l.value}" />`)
     .join('\n');
@@ -89,7 +89,7 @@ describe('fetchGameInfo', () => {
               { type: 'boardgamemechanic', id: 2040, value: 'Hand Management' },
             ],
           }),
-          { status: 200 }
+          { status: 200 },
         );
       },
     });
@@ -123,10 +123,9 @@ describe('fetchGameInfo', () => {
       gameId: 42,
       gameName: 'Ra',
       fetchFn: async () =>
-        new Response(
-          createThingXml({ image: 'https://example.com/pic.png?a=1&amp;b=2' }),
-          { status: 200 }
-        ),
+        new Response(createThingXml({ image: 'https://example.com/pic.png?a=1&amp;b=2' }), {
+          status: 200,
+        }),
     });
 
     expect(result.imageUrl).toBe('https://example.com/pic.png?a=1&b=2');
@@ -143,8 +142,7 @@ describe('fetchGameInfo', () => {
     const empty = await fetchGameInfo({
       gameId: 42,
       gameName: 'Ra',
-      fetchFn: async () =>
-        new Response(createThingXml({ image: '   ' }), { status: 200 }),
+      fetchFn: async () => new Response(createThingXml({ image: '   ' }), { status: 200 }),
     });
     expect(empty.imageUrl).toBeNull();
   });
@@ -163,7 +161,7 @@ describe('fetchGameInfo', () => {
               { type: 'boardgameexpansion', id: 555, value: 'Also ignored' },
             ],
           }),
-          { status: 200 }
+          { status: 200 },
         ),
     });
 
@@ -185,10 +183,10 @@ describe('fetchGameInfo', () => {
           createThingXml({
             links: [
               { type: 'boardgamepublisher', id: 1, value: 'Tom &amp; Jerry' },
-              { type: 'boardgamedesigner', id: 2, value: "Architectes du Royaume de l&#039;Ouest" },
+              { type: 'boardgamedesigner', id: 2, value: 'Architectes du Royaume de l&#039;Ouest' },
             ],
           }),
-          { status: 200 }
+          { status: 200 },
         ),
     });
 
@@ -207,7 +205,7 @@ describe('fetchGameInfo', () => {
       fetchFn: async () =>
         new Response(
           createThingXml({ stats: { minplayers: '', maxplayers: '0', minplaytime: '45' } }),
-          { status: 200 }
+          { status: 200 },
         ),
     });
 
@@ -231,7 +229,7 @@ describe('fetchGameInfo', () => {
           createThingXml({
             ratings: { average: '7.70626', bayesaverage: '7.5111', averageweight: '2.7633' },
           }),
-          { status: 200 }
+          { status: 200 },
         ),
     });
 
@@ -258,7 +256,7 @@ describe('fetchGameInfo', () => {
         gameId: 42,
         gameName: 'Ra',
         fetchFn: async () => new Response('missing', { status: 404 }),
-      })
+      }),
     ).rejects.toThrow('Game not found on BGG');
   });
 
@@ -268,7 +266,7 @@ describe('fetchGameInfo', () => {
         gameId: 42,
         gameName: 'Ra',
         fetchFn: async () => new Response('broken', { status: 503 }),
-      })
+      }),
     ).rejects.toThrow('Failed to fetch BGG page');
   });
 
@@ -278,11 +276,10 @@ describe('fetchGameInfo', () => {
         gameId: 42,
         gameName: 'Ra',
         fetchFn: async () =>
-          new Response(
-            '<?xml version="1.0" encoding="utf-8"?><items termsofuse="x"/>',
-            { status: 200 }
-          ),
-      })
+          new Response('<?xml version="1.0" encoding="utf-8"?><items termsofuse="x"/>', {
+            status: 200,
+          }),
+      }),
     ).rejects.toThrow("XML data doesn't contain an item.");
   });
 

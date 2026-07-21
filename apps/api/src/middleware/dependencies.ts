@@ -1,20 +1,23 @@
-import { AuthContext, isAuthContext, requireAuth } from "./requireAuth";
+import { AuthContext, isAuthContext, requireAuth } from './requireAuth';
 
+/** Provides common dependencies to route handlers. */
 export type RouteDependencies = {
   auth: AuthContext;
   url: URL;
 };
 
+/** Disables authentication for a route wrapped with {@link withDeps}. */
 export const NO_AUTH = { authorized: false };
 
 const fakeAuth: AuthContext = {
   userId: '',
-  sessionId: ''
+  sessionId: '',
 };
 
+/** Wraps a route handler with URL parsing and authentication. */
 export function withDeps<T extends string>(
   fn: (request: Bun.BunRequest<T>, deps: RouteDependencies) => Promise<Response>,
-  { authorized } = { authorized: true }
+  { authorized } = { authorized: true },
 ) {
   return function (request: Bun.BunRequest<T>) {
     // Create fake authorization for routes that do not require authorization
@@ -24,7 +27,7 @@ export function withDeps<T extends string>(
 
     const args: RouteDependencies = {
       auth,
-      url: new URL(request.url)
+      url: new URL(request.url),
     };
 
     return fn(request, args);

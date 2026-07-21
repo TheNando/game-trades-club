@@ -15,12 +15,13 @@ type CreateGetListingFiltersOptions = {
 
 const defaultListingFiltersStore = createListingFiltersStore(db);
 
+/** Creates the handler that returns available listing filters. */
 export function createGetListingFilters({
   listingFiltersStore = defaultListingFiltersStore,
 }: CreateGetListingFiltersOptions = {}) {
   return async function getListingFilters(
     _: BunRequest<'/api/listing-filters'>,
-    __: RouteDependencies
+    __: RouteDependencies,
   ) {
     return json({
       categories: listingFiltersStore.listCategoriesWithListings(),
@@ -29,4 +30,5 @@ export function createGetListingFilters({
   };
 }
 
+/** Returns available listing filters using application dependencies. */
 export const getListingFilters = createGetListingFilters();

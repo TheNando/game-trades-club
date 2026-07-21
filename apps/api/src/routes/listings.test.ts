@@ -1,6 +1,12 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { createListingsStore } from '../db/listingsTable';
-import { createTestDatabase, seedGame, seedListing, seedListingImage, seedUser } from '../test/createTestDatabase';
+import {
+  createTestDatabase,
+  seedGame,
+  seedListing,
+  seedListingImage,
+  seedUser,
+} from '../test/createTestDatabase';
 import {
   createDeleteListing,
   createGetListingDetail,
@@ -88,7 +94,7 @@ describe('createListingsStore', () => {
       .query(
         `SELECT id, user_id, description, game_id, condition, price, status
          FROM listings
-         WHERE id = ?`
+         WHERE id = ?`,
       )
       .get('listing-1');
 
@@ -256,9 +262,19 @@ describe('createListingsStore', () => {
     database
       .query(
         `INSERT INTO shops (id, name, city, state, zip, address, website_url, latitude, longitude)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run('shop-1', 'Catan Cafe', 'Springfield', 'CA', '94110', '1 Main St', null, 40.7128, -74.006);
+      .run(
+        'shop-1',
+        'Catan Cafe',
+        'Springfield',
+        'CA',
+        '94110',
+        '1 Main St',
+        null,
+        40.7128,
+        -74.006,
+      );
 
     const listings = createListingsStore(database);
     const created = listings.createListing(user.id, {
@@ -294,7 +310,7 @@ describe('createListingsStore', () => {
     database
       .query(
         `INSERT INTO shops (id, name, city, address, website_url, latitude, longitude)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
       )
       .run('shop-1', 'Catan Cafe', 'Springfield', null, null, null, null);
 
@@ -322,12 +338,23 @@ describe('createListingsStore', () => {
     seedUser(database, 'buyer');
     seedGame(database, 1);
     const listings = createListingsStore(database);
-    listings.createListing('owner', { id: 'listing-1', description: null, game_id: 1, condition: 'good', price: 20, status: 'open' });
+    listings.createListing('owner', {
+      id: 'listing-1',
+      description: null,
+      game_id: 1,
+      condition: 'good',
+      price: 20,
+      status: 'open',
+    });
 
     // recipient_last_read_at set in the past so the new message appears unread
-    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id, recipient_last_read_at) VALUES (?, ?, ?, ?, ?)`)
+    database
+      .query(
+        `INSERT INTO conversations (id, sender_id, recipient_id, listing_id, recipient_last_read_at) VALUES (?, ?, ?, ?, ?)`,
+      )
       .run('conv-1', 'buyer', 'owner', 'listing-1', '2020-01-01 00:00:00');
-    database.query(`INSERT INTO messages (id, conversation_id, sender_id, text) VALUES (?, ?, ?, ?)`)
+    database
+      .query(`INSERT INTO messages (id, conversation_id, sender_id, text) VALUES (?, ?, ?, ?)`)
       .run('msg-1', 'conv-1', 'buyer', 'Hello!');
 
     const ownerView = listings.findListingDetailById('listing-1', 'owner');
@@ -346,12 +373,25 @@ describe('createListingsStore', () => {
     seedUser(database, 'buyer');
     seedGame(database, 1);
     const listings = createListingsStore(database);
-    listings.createListing('owner', { id: 'listing-1', description: null, game_id: 1, condition: 'good', price: 20, status: 'open' });
+    listings.createListing('owner', {
+      id: 'listing-1',
+      description: null,
+      game_id: 1,
+      condition: 'good',
+      price: 20,
+      status: 'open',
+    });
 
     const past = '2020-01-01 00:00:00';
-    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id, recipient_last_read_at) VALUES (?, ?, ?, ?, ?)`)
+    database
+      .query(
+        `INSERT INTO conversations (id, sender_id, recipient_id, listing_id, recipient_last_read_at) VALUES (?, ?, ?, ?, ?)`,
+      )
       .run('conv-1', 'buyer', 'owner', 'listing-1', '2099-01-01 00:00:00');
-    database.query(`INSERT INTO messages (id, conversation_id, sender_id, text, created_at) VALUES (?, ?, ?, ?, ?)`)
+    database
+      .query(
+        `INSERT INTO messages (id, conversation_id, sender_id, text, created_at) VALUES (?, ?, ?, ?, ?)`,
+      )
       .run('msg-1', 'conv-1', 'buyer', 'Hello!', past);
 
     const ownerView = listings.findListingDetailById('listing-1', 'owner');
@@ -364,11 +404,22 @@ describe('createListingsStore', () => {
     seedUser(database, 'buyer');
     seedGame(database, 1);
     const listings = createListingsStore(database);
-    listings.createListing('owner', { id: 'listing-1', description: null, game_id: 1, condition: 'good', price: 20, status: 'open' });
+    listings.createListing('owner', {
+      id: 'listing-1',
+      description: null,
+      game_id: 1,
+      condition: 'good',
+      price: 20,
+      status: 'open',
+    });
 
-    database.query(`INSERT INTO conversations (id, sender_id, recipient_id, listing_id, recipient_last_read_at) VALUES (?, ?, ?, ?, ?)`)
+    database
+      .query(
+        `INSERT INTO conversations (id, sender_id, recipient_id, listing_id, recipient_last_read_at) VALUES (?, ?, ?, ?, ?)`,
+      )
       .run('conv-1', 'buyer', 'owner', 'listing-1', '2020-01-01 00:00:00');
-    database.query(`INSERT INTO messages (id, conversation_id, sender_id, text) VALUES (?, ?, ?, ?)`)
+    database
+      .query(`INSERT INTO messages (id, conversation_id, sender_id, text) VALUES (?, ?, ?, ?)`)
       .run('msg-1', 'conv-1', 'buyer', 'Hi!');
 
     const [ownerListing] = listings.listListingsByUser('owner', 'owner');
@@ -385,7 +436,7 @@ describe('createListingsStore', () => {
     database
       .query(
         `INSERT INTO shops (id, name, city, address, website_url, latitude, longitude)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
       )
       .run('shop-1', 'Catan Cafe', 'Springfield', null, null, null, null);
 
@@ -524,12 +575,18 @@ describe('createGetListings', () => {
     seedUser(database);
     seedGame(database, 1);
     seedGame(database, 2);
-    database.run(`UPDATE games SET min_players = 2, max_players = 4, min_playtime = 30, max_playtime = 60 WHERE id = 1`);
-    database.run(`UPDATE games SET min_players = 4, max_players = 8, min_playtime = 90, max_playtime = 120 WHERE id = 2`);
+    database.run(
+      `UPDATE games SET min_players = 2, max_players = 4, min_playtime = 30, max_playtime = 60 WHERE id = 1`,
+    );
+    database.run(
+      `UPDATE games SET min_players = 4, max_players = 8, min_playtime = 90, max_playtime = 120 WHERE id = 2`,
+    );
     seedListing(database, { id: 'listing-cheap', gameId: 1 });
     seedListing(database, { id: 'listing-expensive', gameId: 2 });
     database.run(`UPDATE listings SET price = 10, condition = 'good' WHERE id = 'listing-cheap'`);
-    database.run(`UPDATE listings SET price = 80, condition = 'new' WHERE id = 'listing-expensive'`);
+    database.run(
+      `UPDATE listings SET price = 80, condition = 'new' WHERE id = 'listing-expensive'`,
+    );
 
     const listingsStore = createListingsStore(database);
     const getListings = createGetListings({ listingsStore });
@@ -541,7 +598,7 @@ describe('createGetListings', () => {
     });
 
     expect(response.status).toBe(200);
-    const body = await response.json() as { items: { id: string; }[]; };
+    const body = (await response.json()) as { items: { id: string }[] };
     expect(body.items.map((item) => item.id)).toEqual(['listing-cheap']);
   });
 
@@ -566,10 +623,10 @@ describe('createListingsStore.listFilteredListings', () => {
     seedGame(database, 1);
     seedGame(database, 2);
     database.run(
-      `UPDATE games SET year = 2015, min_players = 2, max_players = 4, min_playtime = 30, max_playtime = 60 WHERE id = 1`
+      `UPDATE games SET year = 2015, min_players = 2, max_players = 4, min_playtime = 30, max_playtime = 60 WHERE id = 1`,
     );
     database.run(
-      `UPDATE games SET year = 2022, min_players = 4, max_players = 8, min_playtime = 90, max_playtime = 120 WHERE id = 2`
+      `UPDATE games SET year = 2022, min_players = 4, max_players = 8, min_playtime = 90, max_playtime = 120 WHERE id = 2`,
     );
     database
       .query(`INSERT INTO categories (id, name) VALUES (?, ?), (?, ?)`)
@@ -592,7 +649,10 @@ describe('createListingsStore.listFilteredListings', () => {
 
   test('returns all listings when no filters are applied', async () => {
     const store = await seedFiltersFixture();
-    const ids = store.listFilteredListings({}).map((item) => item.id).sort();
+    const ids = store
+      .listFilteredListings({})
+      .map((item) => item.id)
+      .sort();
     expect(ids).toEqual(['family-listing', 'war-listing']);
   });
 
@@ -618,7 +678,10 @@ describe('createListingsStore.listFilteredListings', () => {
     const store = await seedFiltersFixture();
     const idsAtThree = store.listFilteredListings({ players: 3 }).map((item) => item.id);
     expect(idsAtThree).toEqual(['family-listing']);
-    const idsAtFour = store.listFilteredListings({ players: 4 }).map((item) => item.id).sort();
+    const idsAtFour = store
+      .listFilteredListings({ players: 4 })
+      .map((item) => item.id)
+      .sort();
     expect(idsAtFour).toEqual(['family-listing', 'war-listing']);
   });
 
@@ -632,7 +695,10 @@ describe('createListingsStore.listFilteredListings', () => {
     const store = await seedFiltersFixture();
     const ids = store.listFilteredListings({ categoryIds: [10] }).map((item) => item.id);
     expect(ids).toEqual(['family-listing']);
-    const bothIds = store.listFilteredListings({ categoryIds: [10, 20] }).map((item) => item.id).sort();
+    const bothIds = store
+      .listFilteredListings({ categoryIds: [10, 20] })
+      .map((item) => item.id)
+      .sort();
     expect(bothIds).toEqual(['family-listing', 'war-listing']);
   });
 
@@ -664,7 +730,10 @@ describe('createListingsStore.listFilteredListings', () => {
     const ids = store.listFilteredListings({ weightMin: 3.0 }).map((item) => item.id);
     expect(ids).toEqual(['heavy-listing']);
 
-    const allIds = store.listFilteredListings({ weightMin: 1.0, weightMax: 4.0 }).map((item) => item.id).sort();
+    const allIds = store
+      .listFilteredListings({ weightMin: 1.0, weightMax: 4.0 })
+      .map((item) => item.id)
+      .sort();
     expect(allIds).toEqual(['heavy-listing', 'light-listing']);
   });
 
@@ -680,13 +749,20 @@ describe('createListingsStore.listFilteredListings', () => {
 
     const store = createListingsStore(database);
 
-    const byAvg = store.listFilteredListings({ minRating: 7.0, ratingType: 'average' }).map((item) => item.id);
+    const byAvg = store
+      .listFilteredListings({ minRating: 7.0, ratingType: 'average' })
+      .map((item) => item.id);
     expect(byAvg).toEqual(['high-rated']);
 
-    const byBayes = store.listFilteredListings({ minRating: 7.5, ratingType: 'adjusted' }).map((item) => item.id);
+    const byBayes = store
+      .listFilteredListings({ minRating: 7.5, ratingType: 'adjusted' })
+      .map((item) => item.id);
     expect(byBayes).toEqual(['high-rated']);
 
-    const lowBar = store.listFilteredListings({ minRating: 6.0, ratingType: 'adjusted' }).map((item) => item.id).sort();
+    const lowBar = store
+      .listFilteredListings({ minRating: 6.0, ratingType: 'adjusted' })
+      .map((item) => item.id)
+      .sort();
     expect(lowBar).toEqual(['high-rated', 'low-rated']);
   });
 
@@ -699,13 +775,21 @@ describe('createListingsStore.listFilteredListings', () => {
     database.run(`UPDATE games SET name = 'Cascadia' WHERE id = 2`);
     seedListing(database, { id: 'azul-listing', gameId: 1 });
     seedListing(database, { id: 'cascadia-listing', gameId: 2 });
-    database.run(`UPDATE listings SET description = 'Tile-laying classic' WHERE id = 'azul-listing'`);
-    database.run(`UPDATE listings SET description = 'Cozy wildlife puzzle' WHERE id = 'cascadia-listing'`);
+    database.run(
+      `UPDATE listings SET description = 'Tile-laying classic' WHERE id = 'azul-listing'`,
+    );
+    database.run(
+      `UPDATE listings SET description = 'Cozy wildlife puzzle' WHERE id = 'cascadia-listing'`,
+    );
 
     const store = createListingsStore(database);
 
-    expect(store.listFilteredListings({ query: 'azu' }).map((item) => item.id)).toEqual(['azul-listing']);
-    expect(store.listFilteredListings({ query: 'WILDLIFE' }).map((item) => item.id)).toEqual(['cascadia-listing']);
+    expect(store.listFilteredListings({ query: 'azu' }).map((item) => item.id)).toEqual([
+      'azul-listing',
+    ]);
+    expect(store.listFilteredListings({ query: 'WILDLIFE' }).map((item) => item.id)).toEqual([
+      'cascadia-listing',
+    ]);
   });
 
   test('treats wildcard characters in search text literally', async () => {
@@ -740,7 +824,7 @@ describe('createGetListingDetail', () => {
     });
 
     expect(response.status).toBe(200);
-    const body = await response.json() as { item: { id: string; seller: { id: string; }; }; };
+    const body = (await response.json()) as { item: { id: string; seller: { id: string } } };
     expect(body.item.id).toBe('listing-1');
     expect(body.item.seller.id).toBe('user-1');
   });
@@ -850,7 +934,6 @@ describe('createPostListing', () => {
     expect(logger.error).toHaveBeenCalled();
   });
 });
-
 
 describe('createPatchListing', () => {
   function patchRequest(listingId: string, body: unknown) {

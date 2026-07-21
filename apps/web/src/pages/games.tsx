@@ -21,7 +21,7 @@ type ListingsResponse = {
   items: Listing[];
 };
 
-type TaxonomyOption = { id: number; name: string; };
+type TaxonomyOption = { id: number; name: string };
 
 type ListingFiltersResponse = {
   categories: TaxonomyOption[];
@@ -41,6 +41,7 @@ function writeFiltersToUrl(state: GamesFilterState) {
   window.history.replaceState(null, '', nextUrl);
 }
 
+/** Renders the searchable, filterable listing catalog. */
 export function Games() {
   const [filters, setFilters] = useState<GamesFilterState>(readFiltersFromUrl);
   const [listings, setListings] = useState<Listing[]>([]);
@@ -100,7 +101,7 @@ export function Games() {
     return () => {
       isMounted = false;
     };
-  }, [queryString]);
+  }, [filters, queryString]);
 
   const updateFilters = (patch: Partial<GamesFilterState>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
@@ -117,15 +118,13 @@ export function Games() {
       <section class="relative overflow-hidden border-b border-base-300 bg-base-200 bg-paper">
         <div class="absolute inset-0 bg-dotgrid opacity-[0.25] pointer-events-none" />
         <div class="relative z-10 max-w-6xl mx-auto px-4 md:px-8 pt-14 pb-10">
-          <p class="text-xs uppercase tracking-[0.22em] text-primary/80 font-semibold">
-            Browse
-          </p>
+          <p class="text-xs uppercase tracking-[0.22em] text-primary/80 font-semibold">Browse</p>
           <h1 class="font-display text-4xl md:text-5xl font-medium mt-2 leading-tight">
             All Listings
           </h1>
           <p class="mt-3 text-base-content/70 max-w-xl">
-            See what neighbors are trading. Pick a game, message the owner, and
-            set up a meetup at a local shop.
+            See what neighbors are trading. Pick a game, message the owner, and set up a meetup at a
+            local shop.
           </p>
         </div>
       </section>
@@ -224,17 +223,19 @@ type FilterSidebarProps = {
   onClear: () => void;
 };
 
-function FilterSidebar({ filters, categories, mechanics, hasFilters, onChange, onClear }: FilterSidebarProps) {
+function FilterSidebar({
+  filters,
+  categories,
+  mechanics,
+  hasFilters,
+  onChange,
+  onClear,
+}: FilterSidebarProps) {
   return (
     <div class="rounded-2xl border border-base-300 bg-base-100 shadow-sm p-4 flex flex-col gap-5">
       <div class="flex items-center justify-between gap-2">
         <h2 class="font-display text-lg">Filters</h2>
-        <button
-          type="button"
-          class="btn btn-ghost btn-xs"
-          onClick={onClear}
-          disabled={!hasFilters}
-        >
+        <button type="button" class="btn btn-ghost btn-xs" onClick={onClear} disabled={!hasFilters}>
           Clear all
         </button>
       </div>
@@ -287,7 +288,9 @@ function FilterSidebar({ filters, categories, mechanics, hasFilters, onChange, o
           class="input input-bordered input-sm w-full"
           placeholder="Number of players"
           value={filters.players}
-          onInput={(event) => onChange({ players: (event.currentTarget as HTMLInputElement).value })}
+          onInput={(event) =>
+            onChange({ players: (event.currentTarget as HTMLInputElement).value })
+          }
         />
       </FilterSection>
 
@@ -299,7 +302,9 @@ function FilterSidebar({ filters, categories, mechanics, hasFilters, onChange, o
           class="input input-bordered input-sm w-full"
           placeholder="e.g. 60"
           value={filters.playtime}
-          onInput={(event) => onChange({ playtime: (event.currentTarget as HTMLInputElement).value })}
+          onInput={(event) =>
+            onChange({ playtime: (event.currentTarget as HTMLInputElement).value })
+          }
         />
       </FilterSection>
 
@@ -324,7 +329,9 @@ function FilterSidebar({ filters, categories, mechanics, hasFilters, onChange, o
           class="input input-bordered input-sm w-full"
           placeholder="e.g. 7.0"
           value={filters.minRating}
-          onInput={(event) => onChange({ minRating: (event.currentTarget as HTMLInputElement).value })}
+          onInput={(event) =>
+            onChange({ minRating: (event.currentTarget as HTMLInputElement).value })
+          }
         />
         <div class="flex rounded-lg border border-base-300 overflow-hidden text-xs mt-1">
           <button
@@ -361,7 +368,7 @@ function FilterSidebar({ filters, categories, mechanics, hasFilters, onChange, o
   );
 }
 
-function FilterSection({ title, children }: { title: string; children: ComponentChildren; }) {
+function FilterSection({ title, children }: { title: string; children: ComponentChildren }) {
   return (
     <div class="flex flex-col gap-2">
       <p class="text-xs uppercase tracking-[0.16em] text-base-content/60 font-semibold">{title}</p>
@@ -379,7 +386,14 @@ type RangeInputsProps = {
   onMaxChange: (value: string) => void;
 };
 
-function RangeInputs({ minValue, maxValue, minPlaceholder, maxPlaceholder, onMinChange, onMaxChange }: RangeInputsProps) {
+function RangeInputs({
+  minValue,
+  maxValue,
+  minPlaceholder,
+  maxPlaceholder,
+  onMinChange,
+  onMaxChange,
+}: RangeInputsProps) {
   return (
     <div class="grid grid-cols-2 gap-2">
       <input

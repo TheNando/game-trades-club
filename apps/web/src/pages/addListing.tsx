@@ -50,7 +50,7 @@ async function uploadListingImage(listingId: string, file: File) {
 
   if (!response.ok) {
     try {
-      const errorBody = (await response.json()) as { error?: string; };
+      const errorBody = (await response.json()) as { error?: string };
       throw new Error(errorBody.error ?? 'Unable to upload image.');
     } catch (error) {
       throw error instanceof Error ? error : new Error('Unable to upload image.');
@@ -58,6 +58,7 @@ async function uploadListingImage(listingId: string, file: File) {
   }
 }
 
+/** Renders the authenticated form for creating a listing. */
 export function AddListing() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -143,13 +144,10 @@ export function AddListing() {
     const timeout = window.setTimeout(async () => {
       setLoadingGames(true);
       try {
-        const response = await fetch(
-          `/api/games?q=${encodeURIComponent(query)}&limit=25`,
-          {
-            credentials: 'include',
-            signal: controller.signal,
-          }
-        );
+        const response = await fetch(`/api/games?q=${encodeURIComponent(query)}&limit=25`, {
+          credentials: 'include',
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           setGameError('Unable to load games right now.');
@@ -276,7 +274,7 @@ export function AddListing() {
 
       if (!response.ok) {
         try {
-          const errorBody = (await response.json()) as { error?: string; };
+          const errorBody = (await response.json()) as { error?: string };
           setSubmitError(errorBody.error ?? 'Unable to create listing.');
         } catch {
           setSubmitError('Unable to create listing.');
@@ -378,8 +376,8 @@ export function AddListing() {
             Add A Listing
           </h1>
           <p class="mt-3 text-base-content/70 max-w-xl">
-            Choose your game, add pricing and images, and publish your listing —
-            a neighbor is probably looking for it already.
+            Choose your game, add pricing and images, and publish your listing — a neighbor is
+            probably looking for it already.
           </p>
         </div>
       </section>
@@ -396,11 +394,7 @@ export function AddListing() {
               You need to sign in with Google before creating a listing.
             </p>
             <div class="mt-6 flex justify-end">
-              <button
-                type="button"
-                class="btn btn-primary rounded-xl"
-                onClick={startGoogleAuth}
-              >
+              <button type="button" class="btn btn-primary rounded-xl" onClick={startGoogleAuth}>
                 Sign in with Google
               </button>
             </div>
@@ -413,7 +407,9 @@ export function AddListing() {
             <div class="p-6 md:p-8 flex flex-col gap-5">
               <fieldset class="fieldset flex flex-col gap-5">
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium" for="listing-game">Game</label>
+                  <label class="text-sm font-medium" for="listing-game">
+                    Game
+                  </label>
                   <input
                     id="listing-game"
                     aria-label="Game"
@@ -438,9 +434,7 @@ export function AddListing() {
                     }}
                   />
                   <p class="text-xs text-base-content/60">
-                    {selectedGame
-                      ? 'Game selected'
-                      : 'Search and choose one result.'}
+                    {selectedGame ? 'Game selected' : 'Search and choose one result.'}
                   </p>
                   <datalist id="game-list">
                     {loadingGames ? (
@@ -459,7 +453,9 @@ export function AddListing() {
 
                 <div class="grid sm:grid-cols-2 gap-5">
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium" for="listing-condition">Condition</label>
+                    <label class="text-sm font-medium" for="listing-condition">
+                      Condition
+                    </label>
                     <select
                       id="listing-condition"
                       aria-label="Condition"
@@ -478,7 +474,9 @@ export function AddListing() {
                   </div>
 
                   <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium" for="listing-price">Price ($)</label>
+                    <label class="text-sm font-medium" for="listing-price">
+                      Price ($)
+                    </label>
                     <input
                       id="listing-price"
                       aria-label="Price ($)"
@@ -490,15 +488,15 @@ export function AddListing() {
                       required
                       placeholder="25"
                       value={price}
-                      onInput={(event) =>
-                        setPrice((event.currentTarget as HTMLInputElement).value)
-                      }
+                      onInput={(event) => setPrice((event.currentTarget as HTMLInputElement).value)}
                     />
                   </div>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium" for="listing-description">Description</label>
+                  <label class="text-sm font-medium" for="listing-description">
+                    Description
+                  </label>
                   <textarea
                     id="listing-description"
                     aria-label="Description"
@@ -513,7 +511,9 @@ export function AddListing() {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium" for="listing-shop">Preferred meetup shop</label>
+                  <label class="text-sm font-medium" for="listing-shop">
+                    Preferred meetup shop
+                  </label>
                   <select
                     id="listing-shop"
                     aria-label="Preferred meetup shop"
@@ -525,7 +525,9 @@ export function AddListing() {
                   >
                     <option value="">No preference</option>
                     {shops.map((shop) => (
-                      <option key={shop.id} value={shop.id}>{formatShopOptionLabel(shop)}</option>
+                      <option key={shop.id} value={shop.id}>
+                        {formatShopOptionLabel(shop)}
+                      </option>
                     ))}
                   </select>
                   <p class="text-xs text-base-content/60">
@@ -534,7 +536,9 @@ export function AddListing() {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <label class="text-sm font-medium" for="listing-images">Images</label>
+                  <label class="text-sm font-medium" for="listing-images">
+                    Images
+                  </label>
                   <input
                     id="listing-images"
                     aria-label="Images"
@@ -610,14 +614,8 @@ export function AddListing() {
               ) : null}
 
               <div class="flex items-center justify-between pt-2 border-t border-base-300">
-                <p class="text-xs text-base-content/55">
-                  Free to list · No shipping fees
-                </p>
-                <button
-                  type="submit"
-                  class="btn btn-primary rounded-xl"
-                  disabled={isSubmitting}
-                >
+                <p class="text-xs text-base-content/55">Free to list · No shipping fees</p>
+                <button type="submit" class="btn btn-primary rounded-xl" disabled={isSubmitting}>
                   {isSubmitting ? 'Publishing...' : 'Publish listing'}
                 </button>
               </div>

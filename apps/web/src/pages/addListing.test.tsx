@@ -36,35 +36,41 @@ describe('<AddListing />', () => {
       }
 
       if (url === '/api/listings') {
-        return jsonResponse({
-          item: {
-            id: 'listing-1',
-            user_id: 'user-1',
-            description: 'Nice copy',
-            game: { id: 1, name: 'Catan' },
-            cover_image: null,
-            condition: 'good',
-            price: 25,
-            status: 'open',
+        return jsonResponse(
+          {
+            item: {
+              id: 'listing-1',
+              user_id: 'user-1',
+              description: 'Nice copy',
+              game: { id: 1, name: 'Catan' },
+              cover_image: null,
+              condition: 'good',
+              price: 25,
+              status: 'open',
+            },
           },
-        }, { status: 201 });
+          { status: 201 },
+        );
       }
 
       if (url === '/api/listing-images') {
         uploadAttempts += 1;
 
         if (uploadAttempts === 1) {
-          return jsonResponse({
-            item: {
-              id: 'image-1',
-              listing_id: 'listing-1',
-              owner_id: 'user-1',
-              original_filename: 'front.png',
-              stored_filename: 'guid-front.png',
-              mime_type: 'image/png',
-              created_at: '2026-03-26 00:00:00',
+          return jsonResponse(
+            {
+              item: {
+                id: 'image-1',
+                listing_id: 'listing-1',
+                owner_id: 'user-1',
+                original_filename: 'front.png',
+                stored_filename: 'guid-front.png',
+                mime_type: 'image/png',
+                created_at: '2026-03-26 00:00:00',
+              },
             },
-          }, { status: 201 });
+            { status: 201 },
+          );
         }
 
         return jsonResponse({ error: 'Unable to upload image.' }, { status: 500 });
@@ -102,9 +108,7 @@ describe('<AddListing />', () => {
     fireEvent.input(screen.getByLabelText('Game'), { target: { value: 'Ca' } });
 
     await waitFor(() => {
-      expect(
-        document.querySelector('#game-list option[label^="Catan"]')
-      ).not.toBeNull();
+      expect(document.querySelector('#game-list option[label^="Catan"]')).not.toBeNull();
     });
 
     fireEvent.input(screen.getByLabelText('Game'), { target: { value: '1' } });
@@ -136,9 +140,7 @@ describe('<AddListing />', () => {
     fireEvent.input(screen.getByLabelText('Game'), { target: { value: 'Ca' } });
 
     await waitFor(() => {
-      expect(
-        document.querySelector('#game-list option[label^="Catan"]')
-      ).not.toBeNull();
+      expect(document.querySelector('#game-list option[label^="Catan"]')).not.toBeNull();
     });
 
     fireEvent.input(screen.getByLabelText('Game'), { target: { value: '1' } });
@@ -165,7 +167,9 @@ describe('<AddListing />', () => {
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Retry failed uploads' })).toBeNull();
       expect(screen.queryByRole('button', { name: 'Cancel remaining uploads' })).toBeNull();
-      expect(screen.getByText('Listing created. Remaining image uploads cancelled.')).not.toBeNull();
+      expect(
+        screen.getByText('Listing created. Remaining image uploads cancelled.'),
+      ).not.toBeNull();
     });
   });
 });

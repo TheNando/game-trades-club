@@ -1,37 +1,37 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @plugin "daisyui" {
   themes: false;
 }
 
 @plugin "daisyui/theme" {
-  name: "daylight";
+  name: 'daylight';
   default: true;
   prefersdark: false;
   color-scheme: light;
 
   --color-base-100: oklch(98% 0.012 80);
-  --color-base-200: oklch(95% 0.020 78);
+  --color-base-200: oklch(95% 0.02 78);
   --color-base-300: oklch(90% 0.028 75);
   --color-base-content: oklch(24% 0.025 60);
 
   --color-primary: oklch(62% 0.175 30);
-  --color-primary-content: oklch(98% 0.010 80);
-  --color-secondary: oklch(48% 0.100 145);
-  --color-secondary-content: oklch(98% 0.010 80);
-  --color-accent: oklch(78% 0.140 80);
-  --color-accent-content: oklch(22% 0.040 60);
+  --color-primary-content: oklch(98% 0.01 80);
+  --color-secondary: oklch(48% 0.1 145);
+  --color-secondary-content: oklch(98% 0.01 80);
+  --color-accent: oklch(78% 0.14 80);
+  --color-accent-content: oklch(22% 0.04 60);
   --color-neutral: oklch(28% 0.022 60);
   --color-neutral-content: oklch(96% 0.012 80);
 
-  --color-info: oklch(68% 0.120 220);
-  --color-info-content: oklch(98% 0.010 220);
-  --color-success: oklch(58% 0.130 145);
-  --color-success-content: oklch(98% 0.010 145);
-  --color-warning: oklch(75% 0.150 70);
-  --color-warning-content: oklch(22% 0.040 60);
-  --color-error: oklch(58% 0.180 25);
-  --color-error-content: oklch(98% 0.010 25);
+  --color-info: oklch(68% 0.12 220);
+  --color-info-content: oklch(98% 0.01 220);
+  --color-success: oklch(58% 0.13 145);
+  --color-success-content: oklch(98% 0.01 145);
+  --color-warning: oklch(75% 0.15 70);
+  --color-warning-content: oklch(22% 0.04 60);
+  --color-error: oklch(58% 0.18 25);
+  --color-error-content: oklch(98% 0.01 25);
 
   --radius-selector: 0.75rem;
   --radius-field: 0.625rem;
@@ -44,7 +44,7 @@
 }
 
 @plugin "daisyui/theme" {
-  name: "tabletop";
+  name: 'tabletop';
   prefersdark: true;
   color-scheme: dark;
 
@@ -53,23 +53,23 @@
   --color-base-300: oklch(30% 0.032 170);
   --color-base-content: oklch(94% 0.018 80);
 
-  --color-primary: oklch(72% 0.170 35);
-  --color-primary-content: oklch(18% 0.030 30);
+  --color-primary: oklch(72% 0.17 35);
+  --color-primary-content: oklch(18% 0.03 30);
   --color-secondary: oklch(74% 0.115 150);
-  --color-secondary-content: oklch(18% 0.030 150);
-  --color-accent: oklch(82% 0.140 85);
-  --color-accent-content: oklch(20% 0.040 70);
+  --color-secondary-content: oklch(18% 0.03 150);
+  --color-accent: oklch(82% 0.14 85);
+  --color-accent-content: oklch(20% 0.04 70);
   --color-neutral: oklch(16% 0.018 170);
   --color-neutral-content: oklch(94% 0.018 80);
 
-  --color-info: oklch(78% 0.120 220);
-  --color-info-content: oklch(18% 0.030 220);
-  --color-success: oklch(74% 0.140 150);
-  --color-success-content: oklch(18% 0.030 150);
-  --color-warning: oklch(82% 0.150 75);
-  --color-warning-content: oklch(20% 0.040 70);
-  --color-error: oklch(70% 0.180 25);
-  --color-error-content: oklch(18% 0.030 25);
+  --color-info: oklch(78% 0.12 220);
+  --color-info-content: oklch(18% 0.03 220);
+  --color-success: oklch(74% 0.14 150);
+  --color-success-content: oklch(18% 0.03 150);
+  --color-warning: oklch(82% 0.15 75);
+  --color-warning-content: oklch(20% 0.04 70);
+  --color-error: oklch(70% 0.18 25);
+  --color-error-content: oklch(18% 0.03 25);
 
   --radius-selector: 0.75rem;
   --radius-field: 0.625rem;
@@ -82,8 +82,8 @@
 }
 
 @theme {
-  --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
-  --font-sans: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 html,
@@ -101,45 +101,65 @@ html {
 body {
   margin: 0;
   font-family: var(--font-sans);
-  font-feature-settings: "ss01", "cv11";
+  font-feature-settings: 'ss01', 'cv11';
 }
 
 .font-display {
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-variation-settings: "SOFT" 50, "WONK" 0;
+  font-variation-settings:
+    'SOFT' 50,
+    'WONK' 0;
   letter-spacing: -0.015em;
 }
 
 .font-display-wonk {
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-variation-settings: "SOFT" 100, "WONK" 1;
+  font-variation-settings:
+    'SOFT' 100,
+    'WONK' 1;
 }
 
 /* Atmospheric warm wash for hero sections */
 .bg-paper {
   background-image:
-    radial-gradient(ellipse 70% 55% at 15% -10%, color-mix(in oklch, var(--color-primary) 22%, transparent), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 110% 20%, color-mix(in oklch, var(--color-accent) 20%, transparent), transparent 60%),
-    radial-gradient(ellipse 80% 60% at 50% 120%, color-mix(in oklch, var(--color-secondary) 18%, transparent), transparent 60%);
+    radial-gradient(
+      ellipse 70% 55% at 15% -10%,
+      color-mix(in oklch, var(--color-primary) 22%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 110% 20%,
+      color-mix(in oklch, var(--color-accent) 20%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 80% 60% at 50% 120%,
+      color-mix(in oklch, var(--color-secondary) 18%, transparent),
+      transparent 60%
+    );
 }
 
 /* Tabletop dot grid */
 .bg-dotgrid {
-  background-image: radial-gradient(color-mix(in oklch, var(--color-base-content) 14%, transparent) 1px,
-      transparent 1.4px);
+  background-image: radial-gradient(
+    color-mix(in oklch, var(--color-base-content) 14%, transparent) 1px,
+    transparent 1.4px
+  );
   background-size: 22px 22px;
   background-position: 0 0;
 }
 
 /* Hairline ruled-paper lines */
 .bg-ruled {
-  background-image: linear-gradient(to bottom,
-      transparent 0,
-      transparent calc(2rem - 1px),
-      color-mix(in oklch, var(--color-base-content) 8%, transparent) calc(2rem - 1px),
-      color-mix(in oklch, var(--color-base-content) 8%, transparent) 2rem);
+  background-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(2rem - 1px),
+    color-mix(in oklch, var(--color-base-content) 8%, transparent) calc(2rem - 1px),
+    color-mix(in oklch, var(--color-base-content) 8%, transparent) 2rem
+  );
   background-size: 100% 2rem;
 }
 
@@ -150,7 +170,7 @@ body {
 }
 
 .grain::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -162,9 +182,11 @@ body {
 
 /* A friendly underline used for inline emphasis */
 .deco-underline {
-  background-image: linear-gradient(to right,
-      color-mix(in oklch, var(--color-accent) 60%, transparent),
-      color-mix(in oklch, var(--color-primary) 70%, transparent));
+  background-image: linear-gradient(
+    to right,
+    color-mix(in oklch, var(--color-accent) 60%, transparent),
+    color-mix(in oklch, var(--color-primary) 70%, transparent)
+  );
   background-repeat: no-repeat;
   background-size: 100% 0.32em;
   background-position: 0 88%;
@@ -189,7 +211,6 @@ body {
 }
 
 @keyframes float-y {
-
   0%,
   100% {
     transform: translateY(0);
@@ -206,7 +227,6 @@ body {
 
 /* Dice icon hover animation */
 @keyframes hover-float {
-
   0%,
   100% {
     transform: translateY(0);
@@ -225,35 +245,43 @@ body {
 @keyframes quick-spin {
   0% {
     transform: rotate(0deg);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    box-shadow:
+      0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 4px 6px -4px rgb(0 0 0 / 0.1);
   }
 
   15% {
-    box-shadow: 0 0 0 0 rgb(0 0 0 / 0), 0 0 0 0 rgb(0 0 0 / 0);
+    box-shadow:
+      0 0 0 0 rgb(0 0 0 / 0),
+      0 0 0 0 rgb(0 0 0 / 0);
   }
 
   85% {
-    box-shadow: 0 0 0 0 rgb(0 0 0 / 0), 0 0 0 0 rgb(0 0 0 / 0);
+    box-shadow:
+      0 0 0 0 rgb(0 0 0 / 0),
+      0 0 0 0 rgb(0 0 0 / 0);
   }
 
   100% {
     transform: rotate(360deg);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    box-shadow:
+      0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 4px 6px -4px rgb(0 0 0 / 0.1);
   }
 }
 
 .spin {
-  animation: quick-spin 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation: quick-spin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Smooth color transition for card accent colors */
 .card-accent-transition {
-  transition: background-color 0.6s cubic-bezier(0.4, 0.0, 0.2, 1),
-    color 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transition:
+    background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .rise-in,
   .float-y,
   .hover-float,

@@ -1,5 +1,6 @@
 import type { Database } from 'bun:sqlite';
 
+/** Represents a persisted conversation between two users. */
 export type ConversationRecord = {
   id: string;
   sender_id: string;
@@ -11,6 +12,7 @@ export type ConversationRecord = {
   recipient_last_read_at: string;
 };
 
+/** Represents a conversation enriched for inbox display. */
 export type ConversationListItem = ConversationRecord & {
   last_message_text: string | null;
   last_message_at: string | null;
@@ -22,16 +24,19 @@ export type ConversationListItem = ConversationRecord & {
   listing_created_at: string | null;
 };
 
+/** Represents a conversation with its linked listing details. */
 export type ConversationDetail = ConversationRecord & {
   listing_game_name: string | null;
   listing_created_at: string | null;
 };
 
-const conversationColumns = 'id, sender_id, recipient_id, listing_id, created_at, updated_at, sender_last_read_at, recipient_last_read_at';
+const conversationColumns =
+  'id, sender_id, recipient_id, listing_id, created_at, updated_at, sender_last_read_at, recipient_last_read_at';
 
+/** Creates database operations for user conversations. */
 export function createConversationsStore(database: Database) {
   const findByIdStmt = database.query<ConversationRecord, [string]>(
-    `SELECT ${conversationColumns} FROM conversations WHERE id = ?`
+    `SELECT ${conversationColumns} FROM conversations WHERE id = ?`,
   );
 
   const findDetailByIdStmt = database.query<ConversationDetail, [string]>(
@@ -42,12 +47,12 @@ export function createConversationsStore(database: Database) {
      FROM conversations c
      LEFT JOIN listings l ON l.id = c.listing_id
      LEFT JOIN games g ON g.id = l.game_id
-     WHERE c.id = ?`
+     WHERE c.id = ?`,
   );
 
   const createStmt = database.query(
     `INSERT INTO conversations (id, sender_id, recipient_id, listing_id)
-     VALUES (?, ?, ?, ?)`
+     VALUES (?, ?, ?, ?)`,
   );
 
   const updateReadAtStmt = database.query(
@@ -55,18 +60,24 @@ export function createConversationsStore(database: Database) {
      SET sender_last_read_at = CASE WHEN sender_id = ? THEN CURRENT_TIMESTAMP ELSE sender_last_read_at END,
          recipient_last_read_at = CASE WHEN recipient_id = ? THEN CURRENT_TIMESTAMP ELSE recipient_last_read_at END,
          updated_at = CURRENT_TIMESTAMP
-     WHERE id = ?`
+     WHERE id = ?`,
   );
 
-  const findExistingStmt = database.query<ConversationRecord, [string, string, string, string, string]>(
+  const findExistingStmt = database.query<
+    ConversationRecord,
+    [string, string, string, string, string]
+  >(
     `SELECT ${conversationColumns}
      FROM conversations
      WHERE ((sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?))
        AND listing_id = ?
-     ORDER BY created_at DESC`
+     ORDER BY created_at DESC`,
   );
 
-  const listForUserStmt = database.query<ConversationListItem, [string, string, string, string, string, string]>(
+  const listForUserStmt = database.query<
+    ConversationListItem,
+    [string, string, string, string, string, string]
+  >(
     `SELECT
       c.*,
       m.text as last_message_text,
@@ -91,10 +102,10 @@ export function createConversationsStore(database: Database) {
     LEFT JOIN listings l ON l.id = c.listing_id
     LEFT JOIN games g ON g.id = l.game_id
     WHERE c.sender_id = ? OR c.recipient_id = ?
-    ORDER BY COALESCE(m.created_at, c.created_at) DESC`
+    ORDER BY COALESCE(m.created_at, c.created_at) DESC`,
   );
 
-  const unreadCountStmt = database.query<{ count: number; }, [string, string, string, string]>(
+  const unreadCountStmt = database.query<{ count: number }, [string, string, string, string]>(
     `SELECT COUNT(*) as count
      FROM conversations c
      WHERE (c.sender_id = ? OR c.recipient_id = ?)
@@ -103,7 +114,7 @@ export function createConversationsStore(database: Database) {
          WHERE m.conversation_id = c.id
            AND m.sender_id != ?
            AND m.created_at > (CASE WHEN c.sender_id = ? THEN c.sender_last_read_at ELSE c.recipient_last_read_at END)
-       )`
+       )`,
   );
 
   return {
@@ -115,7 +126,12 @@ export function createConversationsStore(database: Database) {
       return findDetailByIdStmt.get(id) ?? null;
     },
 
-    createConversation(input: { id: string; sender_id: string; recipient_id: string; listing_id: string | null; }): ConversationRecord {
+    createConversation(input: {
+      id: string;
+      sender_id: string;
+      recipient_id: string;
+      listing_id: string | null;
+    }): ConversationRecord {
       createStmt.run(input.id, input.sender_id, input.recipient_id, input.listing_id);
       return findByIdStmt.get(input.id)!;
     },
@@ -134,6 +150,6 @@ export function createConversationsStore(database: Database) {
 
     findExistingBetween(user1: string, user2: string, listingId: string): ConversationRecord[] {
       return findExistingStmt.all(user1, user2, user2, user1, listingId);
-    }
+    },
   };
 }

@@ -14,6 +14,7 @@ import { NotFound } from './pages/_404';
 
 import './style.css';
 
+/** Renders the application's route hierarchy and persistent header. */
 export function App() {
   return (
     <LocationProvider>

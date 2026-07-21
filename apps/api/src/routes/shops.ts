@@ -70,7 +70,7 @@ function parseCoordinate(
   value: string | number | null | undefined,
   fieldName: string,
   min: number,
-  max: number
+  max: number,
 ): number | null | Response {
   if (value === undefined || value === null || value === '') return null;
 
@@ -87,6 +87,7 @@ function parseCoordinate(
   return parsed;
 }
 
+/** Validates and normalizes a request body for a shop. */
 export function parseCreateShopBody(body: ShopBody | null): ParsedCreateShopBody | Response {
   if (!body) return badRequest('Invalid JSON body');
 
@@ -118,28 +119,23 @@ export function parseCreateShopBody(body: ShopBody | null): ParsedCreateShopBody
   };
 }
 
-export function createGetShops({
-  shopsStore = defaultShopsStore,
-}: CreateGetShopsOptions = {}) {
-  return async function getShops(
-    _: BunRequest<'/api/shops'>,
-    __: RouteDependencies
-  ) {
+/** Creates the handler that lists game shops. */
+export function createGetShops({ shopsStore = defaultShopsStore }: CreateGetShopsOptions = {}) {
+  return async function getShops(_: BunRequest<'/api/shops'>, __: RouteDependencies) {
     return json({ items: shopsStore.listAllShops() });
   };
 }
 
+/** Lists game shops using application dependencies. */
 export const getShops = createGetShops();
 
+/** Creates the admin handler that creates a game shop. */
 export function createPostShop({
   createShopId = () => randomToken(18),
   findUser,
   shopsStore = defaultShopsStore,
 }: CreatePostShopOptions = {}) {
-  return async function postShop(
-    request: BunRequest<'/api/shops'>,
-    { auth }: RouteDependencies
-  ) {
+  return async function postShop(request: BunRequest<'/api/shops'>, { auth }: RouteDependencies) {
     const denied = requireAdmin(auth, { findUser });
     if (denied) return denied;
 
@@ -155,15 +151,17 @@ export function createPostShop({
   };
 }
 
+/** Creates a game shop using application dependencies. */
 export const postShop = createPostShop();
 
+/** Creates the admin handler that updates a game shop. */
 export function createPatchShop({
   findUser,
   shopsStore = defaultShopsStore,
 }: CreatePatchShopOptions = {}) {
   return async function patchShop(
     request: BunRequest<'/api/shops/:id'>,
-    { auth, url }: RouteDependencies
+    { auth, url }: RouteDependencies,
   ) {
     const denied = requireAdmin(auth, { findUser });
     if (denied) return denied;
@@ -181,15 +179,17 @@ export function createPatchShop({
   };
 }
 
+/** Updates a game shop using application dependencies. */
 export const patchShop = createPatchShop();
 
+/** Creates the admin handler that deletes a game shop. */
 export function createDeleteShop({
   findUser,
   shopsStore = defaultShopsStore,
 }: CreateDeleteShopOptions = {}) {
   return async function deleteShop(
     _: BunRequest<'/api/shops/:id'>,
-    { auth, url }: RouteDependencies
+    { auth, url }: RouteDependencies,
   ) {
     const denied = requireAdmin(auth, { findUser });
     if (denied) return denied;
@@ -202,4 +202,5 @@ export function createDeleteShop({
   };
 }
 
+/** Deletes a game shop using application dependencies. */
 export const deleteShop = createDeleteShop();

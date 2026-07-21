@@ -18,7 +18,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 - [x] Owner controls on `/listings/:id` (edit description / price / condition, delete) when the viewer owns the listing. Add a "Profile" link to the signed-in user menu so users can find their own listings via the existing user profile page. Status transitions are intentionally excluded for now — they'll be driven by the future offer flow.
 - [x] Public user profile pages (member since, current listings, trade history).
 - [x] Messaging / contact flow between buyer and seller. The landing page promises "message the owner"; nothing implements it.
-- [x] Search bar on `/games`. 
+- [x] Search bar on `/games`.
 - [x] Filters on `/games`: condition, price range, category, mechanic, player count, year.
 - [x] Close the game-stats data gaps. Coverage is handled by the existing listing-creation BGG sync when `rating`/`adjusted_rating` are missing, while normal browsing/filtering still avoids BGG XML calls. Staleness is handled by `bun run games:refresh`, which downloads a configured ranks CSV snapshot and reruns the bulk loader.
 - [ ] Sort options on `/games` (newest, price asc/desc).

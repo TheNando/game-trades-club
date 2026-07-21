@@ -18,10 +18,12 @@ const mimeTypeByExtension = new Map<string, string>([
   ['.webp', 'image/webp'],
 ]);
 
+/** Returns the directory used for cached BoardGameGeek images. */
 export function getGameImageStorageDir() {
   return join(getDataPath(), 'game-images');
 }
 
+/** Identifies stored original and thumbnail image paths. */
 export type GameImagePaths = {
   originalFilename: string;
   originalAbsolutePath: string;
@@ -29,6 +31,7 @@ export type GameImagePaths = {
   thumbAbsolutePath: string;
 };
 
+/** Identifies an existing cached game image and thumbnail. */
 export type FoundGameImage = {
   originalFilename: string;
   mimeType: string;
@@ -57,13 +60,11 @@ type EnsureBggGameImageOptions = {
   storageDir?: string;
 };
 
+/** Downloads a BoardGameGeek image and generates its thumbnail. */
 export async function ensureBggGameImage(
   gameId: number,
   imageUrl: string,
-  {
-    fetchFn = fetch,
-    storageDir = getGameImageStorageDir(),
-  }: EnsureBggGameImageOptions = {}
+  { fetchFn = fetch, storageDir = getGameImageStorageDir() }: EnsureBggGameImageOptions = {},
 ): Promise<GameImagePaths | null> {
   const response = await fetchFn(imageUrl);
   if (!response.ok) return null;
@@ -104,9 +105,10 @@ export async function ensureBggGameImage(
   };
 }
 
+/** Finds a cached game image and its optional thumbnail. */
 export async function findGameImage(
   gameId: number,
-  storageDir = getGameImageStorageDir()
+  storageDir = getGameImageStorageDir(),
 ): Promise<FoundGameImage | null> {
   for (const extension of ['.jpg', '.png', '.webp']) {
     const originalFilename = `${gameId}${extension}`;

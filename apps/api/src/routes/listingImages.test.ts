@@ -109,7 +109,14 @@ describe('createPostListingImage', () => {
       new File(['jpeg-data'], 'cover.JPG', { type: 'image/jpeg' }),
     ]);
     const response = await handler(request as never, deps);
-    const body = await response.json() as { item: { listing_id: string; owner_id: string; original_filename: string; stored_filename: string; }; };
+    const body = (await response.json()) as {
+      item: {
+        listing_id: string;
+        owner_id: string;
+        original_filename: string;
+        stored_filename: string;
+      };
+    };
 
     expect(response.status).toBe(201);
     expect(body.item.listing_id).toBe('listing-1');
@@ -211,7 +218,7 @@ describe('createGetListingImage', () => {
 
   function buildVariantRequest(imageId: string, variant: string) {
     const request = new Request(
-      `http://example.test/api/listing-images/${imageId}?variant=${variant}`
+      `http://example.test/api/listing-images/${imageId}?variant=${variant}`,
     );
     return {
       request,
@@ -243,9 +250,7 @@ describe('createGetListingImage', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('image/jpeg');
-    expect(response.headers.get('cache-control')).toBe(
-      'public, max-age=31536000, immutable'
-    );
+    expect(response.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
     const bodyText = new TextDecoder().decode(new Uint8Array(await response.arrayBuffer()));
     expect(bodyText).toBe('jpeg-bytes');
 

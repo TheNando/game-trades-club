@@ -10,6 +10,7 @@ import 'leaflet/dist/leaflet.css';
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
+/** Describes a shop marker displayed on the map. */
 export type ShopMapPoint = {
   id: string;
   name: string;
@@ -27,9 +28,11 @@ type ShopMapProps = {
 };
 
 const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const TILE_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const FALLBACK_CENTER: [number, number] = [0, 0];
 
+/** Renders an interactive map with markers for shop locations. */
 export function ShopMap({ points, className, zoom }: ShopMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -61,7 +64,7 @@ export function ShopMap({ points, className, zoom }: ShopMapProps) {
     markersRef.current = [];
 
     const validPoints = points.filter(
-      (point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude)
+      (point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude),
     );
 
     for (const point of validPoints) {
@@ -80,7 +83,9 @@ export function ShopMap({ points, className, zoom }: ShopMapProps) {
     }
   }, [points, zoom]);
 
-  return <div ref={containerRef} class={className ?? 'h-64 w-full rounded-2xl border border-base-300'} />;
+  return (
+    <div ref={containerRef} class={className ?? 'h-64 w-full rounded-2xl border border-base-300'} />
+  );
 }
 
 function escapeHtml(value: string): string {
@@ -95,7 +100,9 @@ function renderPopup(point: ShopMapPoint): string {
   const name = escapeHtml(point.name);
   const city = escapeHtml(point.city);
   const address = point.address ? escapeHtml(point.address) : '';
-  const query = encodeURIComponent([point.address, point.city].filter(Boolean).join(', ') || point.name);
+  const query = encodeURIComponent(
+    [point.address, point.city].filter(Boolean).join(', ') || point.name,
+  );
   const mapsHref = `https://www.google.com/maps/search/?api=1&query=${query}`;
 
   return `

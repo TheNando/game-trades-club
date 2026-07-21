@@ -19,7 +19,14 @@ type ExistingConversation = {
   listing_id: string | null;
 };
 
-export function MessageForm({ recipientId, recipientName, listingId: initialListingId, onSuccess, onCancel }: Props) {
+/** Renders a form for starting a conversation with another user. */
+export function MessageForm({
+  recipientId,
+  recipientName,
+  listingId: initialListingId,
+  onSuccess,
+  onCancel,
+}: Props) {
   const [text, setText] = useState('');
   const [listingId, setListingId] = useState<string | null>(initialListingId ?? null);
   const [listings, setListings] = useState<ListingOption[]>([]);
@@ -31,17 +38,19 @@ export function MessageForm({ recipientId, recipientName, listingId: initialList
     if (!initialListingId) {
       // Load recipient's open listings
       fetch(`/api/listings?user_id=${encodeURIComponent(recipientId)}&status=open`)
-        .then(res => res.json())
-        .then(data => setListings(data.items || []))
+        .then((res) => res.json())
+        .then((data) => setListings(data.items || []))
         .catch(console.error);
     }
   }, [recipientId, initialListingId]);
 
   useEffect(() => {
     if (listingId) {
-      fetch(`/api/conversations/existing?other_user_id=${encodeURIComponent(recipientId)}&listing_id=${encodeURIComponent(listingId)}`)
-        .then(res => res.json())
-        .then(data => setExistingConversations(data.items || []))
+      fetch(
+        `/api/conversations/existing?other_user_id=${encodeURIComponent(recipientId)}&listing_id=${encodeURIComponent(listingId)}`,
+      )
+        .then((res) => res.json())
+        .then((data) => setExistingConversations(data.items || []))
         .catch(console.error);
     } else {
       setExistingConversations([]);
@@ -73,8 +82,8 @@ export function MessageForm({ recipientId, recipientName, listingId: initialList
 
       const data = await response.json();
       onSuccess?.(data.item.id);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
       setLoading(false);
     }
@@ -83,12 +92,12 @@ export function MessageForm({ recipientId, recipientName, listingId: initialList
   return (
     <div class="bg-base-100 p-6 rounded-xl border border-base-300 shadow-sm">
       <h3 class="text-lg font-bold mb-4">Message {recipientName}</h3>
-      
+
       {existingConversations.length > 0 && (
         <div class="mb-6 p-4 bg-info/10 text-info-content rounded-lg border border-info/20 text-sm">
           <p class="font-semibold mb-2">You've talked to {recipientName} about this before:</p>
           <ul class="space-y-1">
-            {existingConversations.map(conv => (
+            {existingConversations.map((conv) => (
               <li key={conv.id}>
                 <a href={`/inbox/${conv.id}`} class="link link-primary">
                   Resume conversation from {new Date(conv.created_at).toLocaleDateString()}
@@ -105,14 +114,16 @@ export function MessageForm({ recipientId, recipientName, listingId: initialList
             <label class="label">
               <span class="label-text">Attach a listing (optional)</span>
             </label>
-            <select 
+            <select
               class="select select-bordered w-full"
               value={listingId || ''}
               onChange={(e) => setListingId((e.target as HTMLSelectElement).value || null)}
             >
               <option value="">None</option>
-              {listings.map(l => (
-                <option key={l.id} value={l.id}>{l.game.name}</option>
+              {listings.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.game.name}
+                </option>
               ))}
             </select>
           </div>
@@ -122,7 +133,7 @@ export function MessageForm({ recipientId, recipientName, listingId: initialList
           <label class="label">
             <span class="label-text">Message</span>
           </label>
-          <textarea 
+          <textarea
             class="textarea textarea-bordered h-32 w-full"
             placeholder={`Hi ${recipientName}, I'm interested in...`}
             value={text}
@@ -140,7 +151,7 @@ export function MessageForm({ recipientId, recipientName, listingId: initialList
             </button>
           )}
           <button type="submit" class="btn btn-primary px-8" disabled={loading || !text.trim()}>
-            {loading ? <span class="loading loading-spinner loading-xs"></span> : 'Send Message'}
+            {loading ? <span class="loading loading-spinner loading-xs" /> : 'Send Message'}
           </button>
         </div>
       </form>
