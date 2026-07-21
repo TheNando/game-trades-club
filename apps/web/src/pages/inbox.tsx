@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 
 type Conversation = {
   id: string;
@@ -43,7 +43,7 @@ export function Inbox({ id }: { id?: string }) {
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
 
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     try {
       const res = await fetch('/api/conversations', { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to load inbox');
@@ -54,23 +54,26 @@ export function Inbox({ id }: { id?: string }) {
     } finally {
       if (!id) setLoading(false);
     }
-  };
+  }, [id]);
 
-  const loadConversationDetail = async (convId: string) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/conversations/${convId}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to load conversation');
-      const data = await res.json();
-      setActiveConversation(data);
-      // Refresh list to update unread counts
-      loadConversations();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load conversation');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loadConversationDetail = useCallback(
+    async (convId: string) => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/conversations/${convId}`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to load conversation');
+        const data = await res.json();
+        setActiveConversation(data);
+        // Refresh list to update unread counts
+        loadConversations();
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to load conversation');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadConversations],
+  );
 
   useEffect(() => {
     loadConversations();
@@ -78,7 +81,7 @@ export function Inbox({ id }: { id?: string }) {
       .then((res) => (res.ok ? res.json() : null))
       .then(setMe)
       .catch(() => setMe(null));
-  }, []);
+  }, [loadConversations]);
 
   useEffect(() => {
     if (id) {
@@ -86,7 +89,7 @@ export function Inbox({ id }: { id?: string }) {
     } else {
       setActiveConversation(null);
     }
-  }, [id]);
+  }, [id, loadConversationDetail]);
 
   const handleReply = async (e: Event) => {
     e.preventDefault();
@@ -118,7 +121,7 @@ export function Inbox({ id }: { id?: string }) {
   return (
     <div class="max-w-6xl mx-auto px-4 md:px-8 py-8 flex flex-col md:flex-row gap-6 h-[calc(100vh-8rem)]">
       {/* Sidebar */}
-      <div class={`w-full md:w-80 flex-shrink-0 flex flex-col ${id ? 'hidden md:flex' : 'flex'}`}>
+      <div class={`w-full md:w-80 shrink-0 flex flex-col ${id ? 'hidden md:flex' : 'flex'}`}>
         <h1 class="text-2xl font-bold mb-6">Messages</h1>
         <div class="flex-1 overflow-y-auto space-y-2 pr-2">
           {conversations.length === 0 ? (

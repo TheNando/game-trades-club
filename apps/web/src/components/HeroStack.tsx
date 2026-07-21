@@ -150,7 +150,8 @@ export function HeroStack() {
 
   const [card1, card2, card3] = useMemo(() => {
     return getRandomCards(HERO_CARDS, HERO_SLOTS);
-  }, [seed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed]); // seed is used to trigger re-randomization
 
   const rollDie = () => {
     setIsSpinning(true);

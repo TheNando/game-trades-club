@@ -101,7 +101,7 @@ export function Games() {
     return () => {
       isMounted = false;
     };
-  }, [queryString]);
+  }, [filters, queryString]);
 
   const updateFilters = (patch: Partial<GamesFilterState>) => {
     setFilters((prev) => ({ ...prev, ...patch }));

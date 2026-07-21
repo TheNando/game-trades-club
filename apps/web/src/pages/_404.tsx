@@ -4,7 +4,7 @@ export function NotFound() {
     <section class="relative overflow-hidden min-h-[70vh] bg-base-200 bg-paper grain">
       <div class="absolute inset-0 bg-dotgrid opacity-[0.3] pointer-events-none" />
       <div class="relative z-10 max-w-3xl mx-auto px-6 py-24 md:py-32 text-center">
-        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-base-100 border border-base-300 shadow-sm rotate-[-6deg] mb-8">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-base-100 border border-base-300 shadow-sm -rotate-6 mb-8">
           <span class="font-display text-4xl text-primary">?</span>
         </div>
         <p class="text-xs uppercase tracking-[0.22em] text-base-content/55 font-semibold">
