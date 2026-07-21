@@ -52,8 +52,8 @@ export function createGamesStore(database: typeof db) {
        image_url = COALESCE(excluded.image_url, games.image_url),
        year = excluded.year,
        is_expansion = excluded.is_expansion,
-       rating = excluded.rating,
-       adjusted_rating = excluded.adjusted_rating`
+       rating = COALESCE(excluded.rating, games.rating),
+       adjusted_rating = COALESCE(excluded.adjusted_rating, games.adjusted_rating)`
   );
 
   const findByIdStmt = database.query<GameRow, [number]>(
@@ -70,8 +70,13 @@ export function createGamesStore(database: typeof db) {
 
   const updateStatsStmt = database.query<unknown, [number | null, number | null, number | null, number | null, number | null, number | null, number | null, number]>(
     `UPDATE games
-     SET min_players = ?, max_players = ?, min_playtime = ?, max_playtime = ?,
-         rating = ?, adjusted_rating = ?, weight = ?
+     SET min_players = COALESCE(?, min_players),
+         max_players = COALESCE(?, max_players),
+         min_playtime = COALESCE(?, min_playtime),
+         max_playtime = COALESCE(?, max_playtime),
+         rating = COALESCE(?, rating),
+         adjusted_rating = COALESCE(?, adjusted_rating),
+         weight = COALESCE(?, weight)
      WHERE id = ?`
   );
 
@@ -82,6 +87,7 @@ export function createGamesStore(database: typeof db) {
          WHERE id IN (${gameIds.map(() => '?').join(', ')})
            AND (min_players IS NULL OR max_players IS NULL
                 OR min_playtime IS NULL OR max_playtime IS NULL
+                OR rating IS NULL OR adjusted_rating IS NULL
                 OR weight IS NULL)`
       )
       .all(...gameIds);
@@ -160,5 +166,5 @@ export function createGamesStore(database: typeof db) {
 
 const gamesStore = createGamesStore(db);
 
-// Only export what's used in routes - other methods accessed via createGamesStore
-export const { searchGamesByName } = gamesStore;
+// Only export what's used directly - other methods accessed via createGamesStore
+export const { createGamesBatch, searchGamesByName } = gamesStore;

@@ -8,7 +8,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 - [x] Clean up stale trade/offers/wishlist direction. Direction picked: **listings marketplace first**. Dead route/schema/table stubs removed from `apps/api/src/index.ts`, `apps/api/src/db/schema.sql`, and `apps/api/src/{routes,db}/`. Future trade/offer/wishlist work is tracked under "Trades workflow" below.
 - [x] Enforce typecheck and tests in CI (`bun run typecheck`, `bun run test`).
 - [ ] Reintroduce a schema migration system once there's a live database worth preserving (deferred until v1; `schema.sql` is currently the single source of truth and dev DBs are disposable).
-- [ ] Document and automate backups for `data/app.db` and `data/listing-images/`.
+- [ ] Document and automate backups for the `DATA_PATH` directory.
 
 ## Core marketplace gaps
 
@@ -20,7 +20,7 @@ A living checklist of features, fixes, and improvements. Check items off as they
 - [x] Messaging / contact flow between buyer and seller. The landing page promises "message the owner"; nothing implements it.
 - [x] Search bar on `/games`. 
 - [x] Filters on `/games`: condition, price range, category, mechanic, player count, year.
-- [ ] Close the game-stats data gaps. `rating`/`adjusted_rating` are bulk-loaded from `scripts/boardgames_ranks.csv` (with `weight` still backfilled per-game from the BGG API on listing creation). Two follow-ups: (1) **Coverage gap** — games absent from the CSV have no rating/adjusted_rating until a BGG sync fires; decide on a fallback (e.g. populate ratings during the same BGG sync that fetches weight, or fetch the CSV row on demand). (2) **Staleness** — the CSV is a static snapshot, so ratings freeze at export time; add a feature to periodically re-fetch/refresh the ranks CSV and re-run the loader to keep stats current. No decision now; tracked for later.
+- [x] Close the game-stats data gaps. Coverage is handled by the existing listing-creation BGG sync when `rating`/`adjusted_rating` are missing, while normal browsing/filtering still avoids BGG XML calls. Staleness is handled by `bun run games:refresh`, which downloads a configured ranks CSV snapshot and reruns the bulk loader.
 - [ ] Sort options on `/games` (newest, price asc/desc).
 - [ ] Add `city` / location to `users` and scope listings by city — the core "neighbors in your city" pitch.
 - [x] Pickup-shop directory (`shops` table) and shop picker on each listing; map view.

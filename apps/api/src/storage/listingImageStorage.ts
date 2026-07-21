@@ -1,6 +1,7 @@
 import { mkdir, rm } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { join } from 'node:path';
+import { getDataPath } from '../utils/paths';
 
 const supportedImageExtensions = new Map<string, string>([
   ['image/jpeg', '.jpg'],
@@ -19,7 +20,7 @@ const THUMB_MAX_DIMENSION = 200;
 const THUMB_WEBP_QUALITY = 78;
 
 export function getListingImageUploadDir() {
-  return process.env.LISTING_IMAGE_UPLOAD_DIR ?? './data/listing-images';
+  return join(getDataPath(), 'listing-images');
 }
 
 export function isSupportedListingImage(file: File) {
