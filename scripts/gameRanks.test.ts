@@ -50,6 +50,13 @@ describe('game ranks CSV helpers', () => {
     ]);
   });
 
+  test('rejects malformed, non-positive, and unsafe game IDs', () => {
+    for (const id of ['12oops', '0', '-1', '9007199254740992']) {
+      const csv = `${RANKS_CSV_HEADER}\n${id},Azul,2017,100,6.98765,7.12345,1000,0,,,,,,,,\n`;
+      expect(() => parseGameRanksCsv(csv)).toThrow(`Invalid game ID: ${id}`);
+    }
+  });
+
   test('rejects CSV files with an unexpected header', () => {
     expect(() => validateRanksCsvHeader('id,name\n1,Azul\n')).toThrow(
       'Ranks CSV header does not match'
@@ -70,6 +77,14 @@ describe('game ranks CSV helpers', () => {
       [{ id: 1 }, { id: 2 }],
       [{ id: 3 }],
     ]);
+  });
+
+  test('rejects non-positive and non-integer batch sizes before parsing', () => {
+    for (const batchSize of [0, -1, 1.5]) {
+      expect(() => loadGameRanksCsv('invalid CSV', () => {}, { batchSize })).toThrow(
+        'batchSize must be a positive integer.'
+      );
+    }
   });
 
   test('resolves CSV path from CLI args and defaults', () => {

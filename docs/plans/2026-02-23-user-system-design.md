@@ -72,6 +72,8 @@ Required variables:
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_REDIRECT_URI`
 - `SESSION_SECRET`
+
+Optional variables:
 - `DATA_PATH` (default `./data`; contains the SQLite database and application
   generated files)
 

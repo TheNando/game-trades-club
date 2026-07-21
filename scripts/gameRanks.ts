@@ -65,14 +65,21 @@ export function parseGameRanksCsv(csvText: string): CreateGameInput[] {
     skipFirstRow: true,
   }) as CsvGame[];
 
-  return games.map((game) => ({
-    id: Number.parseInt(game.id, 10),
-    name: game.name.trim(),
-    year: game.yearpublished ? Number.parseInt(game.yearpublished, 10) : null,
-    isExpansion: game.is_expansion === "1",
-    rating: parseRating(game.average),
-    adjustedRating: parseRating(game.bayesaverage),
-  }));
+  return games.map((game) => {
+    const id = Number(game.id);
+    if (!/^\d+$/.test(game.id) || !Number.isSafeInteger(id) || id <= 0) {
+      throw new Error(`Invalid game ID: ${game.id}`);
+    }
+
+    return {
+      id,
+      name: game.name.trim(),
+      year: game.yearpublished ? Number.parseInt(game.yearpublished, 10) : null,
+      isExpansion: game.is_expansion === "1",
+      rating: parseRating(game.average),
+      adjustedRating: parseRating(game.bayesaverage),
+    };
+  });
 }
 
 export function loadGameRanksCsv(
@@ -84,6 +91,10 @@ export function loadGameRanksCsv(
     progressInterval = PROGRESS_INTERVAL,
   }: LoadGameRanksOptions = {}
 ): LoadGameRanksResult {
+  if (!Number.isInteger(batchSize) || batchSize <= 0) {
+    throw new Error("batchSize must be a positive integer.");
+  }
+
   const games = parseGameRanksCsv(csvText);
   const total = games.length;
   let inserted = 0;

@@ -1,11 +1,10 @@
-import { fileURLToPath } from "node:url";
 import { createGamesStore } from "../apps/api/src/db/gamesTable";
 import { db } from "../apps/api/src/db/client";
-import { loadGameRanksCsv, resolveCsvPath } from "./gameRanks";
-
-export const DEFAULT_RANKS_CSV_PATH = fileURLToPath(
-  new URL("./boardgames_ranks.csv", import.meta.url)
-);
+import {
+  DEFAULT_REFRESHED_RANKS_CSV_PATH,
+  loadGameRanksCsv,
+  resolveCsvPath,
+} from "./gameRanks";
 
 export async function loadGameRanksFromPath(csvPath: string): Promise<void> {
   const gamesFile = await Bun.file(csvPath).text();
@@ -16,7 +15,7 @@ export async function loadGameRanksFromPath(csvPath: string): Promise<void> {
 if (import.meta.main) {
   const csvPath = resolveCsvPath({
     args: process.argv.slice(2),
-    defaultPath: DEFAULT_RANKS_CSV_PATH,
+    defaultPath: DEFAULT_REFRESHED_RANKS_CSV_PATH,
   });
 
   await loadGameRanksFromPath(csvPath);
