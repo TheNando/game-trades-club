@@ -1,4 +1,6 @@
 import { BunRequest } from 'bun';
+import { MAX_LISTING_IMAGES } from '@game-trades-club/shared/constants';
+import { listingImageUploadSchema } from '@game-trades-club/shared/validation';
 import { join } from 'node:path';
 import { db } from '../db/client';
 import { createListingImagesStore } from '../db/listingImagesTable';
@@ -10,10 +12,13 @@ import {
   removeListingImageFile,
   saveListingImage,
 } from '../storage/listingImageStorage';
-import { badRequest, json, notFound, serverError } from '../utils/http';
+import { badRequest, json, notFound, serverError, validationError } from '../utils/http';
 
 type ListingsStore = Pick<ReturnType<typeof createListingsStore>, 'findListingByIdForUser'>;
-type ListingImagesStore = Pick<ReturnType<typeof createListingImagesStore>, 'createListingImage'>;
+type ListingImagesStore = Pick<
+  ReturnType<typeof createListingImagesStore>,
+  'countListingImages' | 'createListingImage'
+>;
 type ListingImagesReadStore = Pick<
   ReturnType<typeof createListingImagesStore>,
   'findListingImageById'
@@ -53,18 +58,22 @@ export function createPostListingImage({
       .filter((value): value is File => value instanceof File && value.size > 0);
 
     if (files.length === 0) return badRequest('image is required');
+    if (files.length > MAX_LISTING_IMAGES) {
+      return badRequest(`You can upload up to ${MAX_LISTING_IMAGES} images.`);
+    }
     if (files.length > 1) return badRequest('Only one image may be uploaded at a time');
 
-    const listingId = formData.get('listing_id');
-    if (typeof listingId !== 'string' || listingId.trim() === '') {
-      return badRequest('listing_id is required');
-    }
+    const metadata = listingImageUploadSchema.safeParse({ listing_id: formData.get('listing_id') });
+    if (!metadata.success) return validationError(metadata.error);
 
     const file = files[0];
     if (!isSupportedListingImage(file)) return badRequest('Unsupported image type');
 
-    const listing = listingsStore.findListingByIdForUser(listingId, auth.userId);
+    const listing = listingsStore.findListingByIdForUser(metadata.data.listing_id, auth.userId);
     if (!listing) return notFound('Listing not found');
+    if (listingImagesStore.countListingImages(listing.id) + files.length > MAX_LISTING_IMAGES) {
+      return badRequest(`You can upload up to ${MAX_LISTING_IMAGES} images.`);
+    }
 
     const savedFile = await saveListingImage(uploadDir, file);
 
@@ -80,6 +89,14 @@ export function createPostListingImage({
         height: savedFile.height,
         mime_type: savedFile.mimeType,
       });
+
+      if (!item) {
+        await removeListingImageFile(savedFile.absolutePath);
+        if (savedFile.thumbAbsolutePath) {
+          await removeListingImageFile(savedFile.thumbAbsolutePath);
+        }
+        return badRequest(`You can upload up to ${MAX_LISTING_IMAGES} images.`);
+      }
 
       return json({ item }, { status: 201 });
     } catch {

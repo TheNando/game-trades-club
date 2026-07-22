@@ -61,6 +61,42 @@ describe('parseCreateListingBody', () => {
     });
     expect(parsed).toMatchObject({ preferred_shop_id: null });
   });
+
+  test('rejects unknown condition and status values', () => {
+    const invalidCondition = parseCreateListingBody({
+      game_id: 1,
+      condition: 'mint',
+      price: 10,
+      status: 'open',
+    });
+    const invalidStatus = parseCreateListingBody({
+      game_id: 1,
+      condition: 'good',
+      price: 10,
+      status: 'sold',
+    });
+
+    expect(invalidCondition).toBeInstanceOf(Response);
+    expect(invalidStatus).toBeInstanceOf(Response);
+  });
+
+  test('rejects negative prices and non-positive game IDs', () => {
+    const negativePrice = parseCreateListingBody({
+      game_id: 1,
+      condition: 'good',
+      price: -1,
+      status: 'open',
+    });
+    const zeroGameId = parseCreateListingBody({
+      game_id: 0,
+      condition: 'good',
+      price: 10,
+      status: 'open',
+    });
+
+    expect(negativePrice).toBeInstanceOf(Response);
+    expect(zeroGameId).toBeInstanceOf(Response);
+  });
 });
 
 describe('createListingsStore', () => {
@@ -505,6 +541,12 @@ describe('parseListingFilters', () => {
     const params = new URLSearchParams();
     params.set('price_min', 'cheap');
     const result = parseListingFilters(params);
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(400);
+  });
+
+  test('rejects out-of-range numeric params', () => {
+    const result = parseListingFilters(new URLSearchParams({ price_min: '-1' }));
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(400);
   });

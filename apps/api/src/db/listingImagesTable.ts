@@ -1,4 +1,5 @@
 import type { Database } from 'bun:sqlite';
+import { MAX_LISTING_IMAGES } from '@game-trades-club/shared/constants';
 
 /** Represents metadata for a stored listing image. */
 export type ListingImage = {
@@ -29,8 +30,9 @@ export function createListingImagesStore(database: Database) {
        width,
        height,
        mime_type
-     )
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
+      WHERE (SELECT COUNT(*) FROM listing_images WHERE listing_id = ?) < ?`,
   );
 
   const findStmt = database.query<ListingImage, [string]>(
@@ -39,10 +41,13 @@ export function createListingImagesStore(database: Database) {
      FROM listing_images
      WHERE id = ?`,
   );
+  const countByListingStmt = database.query<{ count: number }, [string]>(
+    'SELECT COUNT(*) AS count FROM listing_images WHERE listing_id = ?',
+  );
 
   return {
-    createListingImage(input: CreateListingImageInput) {
-      createStmt.run(
+    createListingImage(input: CreateListingImageInput): ListingImage | null {
+      const result = createStmt.run(
         input.id,
         input.listing_id,
         input.owner_id,
@@ -52,12 +57,17 @@ export function createListingImagesStore(database: Database) {
         input.width,
         input.height,
         input.mime_type,
+        input.listing_id,
+        MAX_LISTING_IMAGES,
       );
 
-      return findStmt.get(input.id)!;
+      return result.changes === 1 ? findStmt.get(input.id)! : null;
     },
     findListingImageById(id: string): ListingImage | null {
       return findStmt.get(id) ?? null;
+    },
+    countListingImages(listingId: string): number {
+      return countByListingStmt.get(listingId)?.count ?? 0;
     },
   };
 }

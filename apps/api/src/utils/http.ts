@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+
 /** Creates a JSON response while preserving caller-provided response options. */
 export function json(data: unknown, init?: ResponseInit): Response {
   const headers = new Headers(init?.headers);
@@ -15,6 +17,11 @@ export function json(data: unknown, init?: ResponseInit): Response {
 /** Creates a 400 JSON error response. */
 export function badRequest(message: string): Response {
   return json({ error: message }, { status: 400 });
+}
+
+/** Converts a Zod validation failure into a 400 JSON error response. */
+export function validationError(error: z.ZodError): Response {
+  return badRequest(error.issues[0]?.message ?? 'Invalid request');
 }
 
 /** Creates a 401 JSON error response. */

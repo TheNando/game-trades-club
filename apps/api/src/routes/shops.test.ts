@@ -174,6 +174,16 @@ describe('parseCreateShopBody', () => {
     expect(result).toBeInstanceOf(Response);
     expect((result as Response).status).toBe(400);
   });
+
+  test('rejects text fields above their configured limit', () => {
+    const result = parseCreateShopBody({
+      name: 'Catan Cafe',
+      city: 'Springfield',
+      address: 'x'.repeat(501),
+    });
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(400);
+  });
 });
 
 describe('createGetShops', () => {
