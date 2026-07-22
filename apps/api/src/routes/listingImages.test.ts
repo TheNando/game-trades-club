@@ -92,6 +92,28 @@ describe('createPostListingImage', () => {
     await rm(uploadDir, { recursive: true, force: true });
   });
 
+  test('rejects image collections above the listing image limit', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    const uploadDir = await createUploadDir();
+    const handler = createPostListingImage({
+      listingsStore: createListingsStore(database),
+      listingImagesStore: createListingImagesStore(database),
+      uploadDir,
+    });
+    const files = Array.from(
+      { length: 4 },
+      (_, index) => new File(['a'], `image-${index}.png`, { type: 'image/png' }),
+    );
+    const { request, deps } = createImageRequest('listing-1', files);
+    const response = await handler(request as never, deps);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'You can upload up to 3 images.' });
+    await rm(uploadDir, { recursive: true, force: true });
+  });
+
   test('stores one image with a guid filename and original extension', async () => {
     const database = await createTestDatabase();
     seedUser(database);

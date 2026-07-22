@@ -198,6 +198,23 @@ describe('createPostConversation', () => {
     const res = await handler(req as never, makeDeps('user-a', new URL(req.url)));
     expect(res.status).toBe(400);
   });
+
+  test('returns 400 when recipient_id has an invalid type', async () => {
+    const { conversationsStore, messagesStore, listingsStore } = await setupStores();
+    const handler = createPostConversation({
+      conversationsStore,
+      messagesStore,
+      listingsStore,
+      findUser: (id) => ({ id }),
+    });
+    const req = new Request('http://t/api/conversations', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ recipient_id: 42, text: 'hello' }),
+    });
+    const res = await handler(req as never, makeDeps('user-a', new URL(req.url)));
+    expect(res.status).toBe(400);
+  });
 });
 
 describe('createPostMessage', () => {

@@ -1,5 +1,11 @@
 import { BunRequest } from 'bun';
-import { VALID_CONDITIONS } from '@game-trades-club/shared/constants';
+import {
+  createListingSchema,
+  listingQuerySchema,
+  updateListingSchema,
+  type CreateListingRequest,
+} from '@game-trades-club/shared/validation';
+import { z } from 'zod';
 import { db } from '../db/client';
 import { createListingsStore, type ListingFilters } from '../db/listingsTable';
 import { syncGameInfoIfMissing } from '../bgg/syncGameInfo';
@@ -11,27 +17,6 @@ type ListingDetailStore = Pick<ReturnType<typeof createListingsStore>, 'findList
 
 type CreateGetListingDetailOptions = {
   listingsStore?: ListingDetailStore;
-};
-
-type ListingBody = {
-  description?: string;
-  game_id?: string | number;
-  condition?: string;
-  price?: string | number;
-  status?: 'open' | 'pending' | 'complete';
-  preferred_shop_id?: string | null;
-  image_ids?: string;
-  image_url?: string;
-  image_thumbnail_url?: string;
-};
-
-type ParsedCreateListingBody = {
-  description: string | null;
-  game_id: number;
-  condition: string;
-  price: number;
-  status: 'open' | 'pending' | 'complete';
-  preferred_shop_id: string | null;
 };
 
 type ListingsStore = Pick<
@@ -58,80 +43,16 @@ function matchListingId(url: URL) {
   return url.pathname.match(/^\/api\/listings\/([^/]+)$/)?.[1];
 }
 
-function parseIntegerField(value: string | number | undefined, fieldName: string) {
-  if (value === undefined || value === null || value === '') return null;
-
-  const normalized = typeof value === 'string' ? value.trim() : value;
-  if (normalized === '') return null;
-
-  const parsed = typeof normalized === 'number' ? normalized : Number(normalized);
-
-  if (!Number.isInteger(parsed)) {
-    return badRequest(`${fieldName} must be an integer`);
-  }
-
-  return parsed;
-}
-
-function normalizeOptionalText(value: string | undefined) {
-  const normalized = value?.trim();
-  return normalized ? normalized : null;
-}
-
-function parseSearchQuery(value: string | null): string | undefined {
-  const query = value?.trim();
-  return query ? query : undefined;
+function validationError(error: z.ZodError): Response {
+  return badRequest(error.issues[0]?.message ?? 'Invalid request');
 }
 
 /** Validates and normalizes a request body for listing creation. */
 export function parseCreateListingBody(
-  body: ListingBody | null,
-): ParsedCreateListingBody | Response {
-  if (!body?.condition) return badRequest('condition is required');
-  if (!body?.status) return badRequest('status is required');
-
-  const gameId = parseIntegerField(body.game_id, 'game_id');
-  if (gameId instanceof Response) return gameId;
-  if (gameId === null) return badRequest('game_id is required');
-  if (gameId <= 0) return badRequest('game_id must be greater than zero');
-
-  const price = parseIntegerField(body.price, 'price');
-  if (price instanceof Response) return price;
-  if (price === null) return badRequest('price is required');
-  if (price < 0) return badRequest('price must be zero or greater');
-
-  const preferredShopId = parsePreferredShopId(body.preferred_shop_id);
-  if (preferredShopId instanceof Response) return preferredShopId;
-
-  return {
-    description: normalizeOptionalText(body.description),
-    game_id: gameId,
-    condition: body.condition,
-    price,
-    status: body.status,
-    preferred_shop_id: preferredShopId,
-  };
-}
-
-function parsePreferredShopId(value: string | null | undefined): string | null | Response {
-  if (value === undefined || value === null) return null;
-  if (typeof value !== 'string') return badRequest('preferred_shop_id must be a string');
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
-}
-
-function parseIntQueryParam(value: string | null, fieldName: string): number | null | Response {
-  if (value === null || value.trim() === '') return null;
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed)) return badRequest(`${fieldName} must be an integer`);
-  return parsed;
-}
-
-function parseFloatQueryParam(value: string | null, fieldName: string): number | null | Response {
-  if (value === null || value.trim() === '') return null;
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return badRequest(`${fieldName} must be a number`);
-  return parsed;
+  body: unknown,
+): CreateListingRequest | Response {
+  const parsed = createListingSchema.safeParse(body);
+  return parsed.success ? parsed.data : validationError(parsed.error);
 }
 
 function parseIntListQueryParam(values: string[], fieldName: string): number[] | Response {
@@ -153,58 +74,34 @@ function parseConditionQueryParam(values: string[]): string[] | Response {
     .flatMap((value) => value.split(','))
     .map((value) => value.trim())
     .filter(Boolean);
-  for (const condition of flattened) {
-    if (!VALID_CONDITIONS.has(condition))
-      return badRequest(`condition must be one of: ${[...VALID_CONDITIONS].join(', ')}`);
-  }
+  const parsed = createListingSchema.shape.condition.array().safeParse(flattened);
+  if (!parsed.success) return validationError(parsed.error);
   return flattened;
 }
 
 /** Parses supported listing filters from a URL query string. */
 export function parseListingFilters(searchParams: URLSearchParams): ListingFilters | Response {
+  const query = listingQuerySchema.safeParse(Object.fromEntries(searchParams));
+  if (!query.success) return validationError(query.error);
+
   const filters: ListingFilters = {};
 
-  const query = parseSearchQuery(searchParams.get('q'));
-  if (query !== undefined) filters.query = query;
+  if (query.data.q) filters.query = query.data.q;
 
-  const userId = searchParams.get('user_id');
-  if (userId) filters.userId = userId;
+  if (query.data.user_id) filters.userId = query.data.user_id;
 
-  const status = searchParams.get('status');
-  if (status !== null && status !== '') {
-    if (status !== 'open' && status !== 'pending' && status !== 'complete') {
-      return badRequest('status must be "open", "pending", or "complete"');
-    }
-    filters.status = status;
-  }
+  if (query.data.status) filters.status = query.data.status;
 
   const conditions = parseConditionQueryParam(searchParams.getAll('condition'));
   if (conditions instanceof Response) return conditions;
   if (conditions.length > 0) filters.conditions = conditions;
 
-  const priceMin = parseIntQueryParam(searchParams.get('price_min'), 'price_min');
-  if (priceMin instanceof Response) return priceMin;
-  if (priceMin !== null) filters.priceMin = priceMin;
-
-  const priceMax = parseIntQueryParam(searchParams.get('price_max'), 'price_max');
-  if (priceMax instanceof Response) return priceMax;
-  if (priceMax !== null) filters.priceMax = priceMax;
-
-  const yearMin = parseIntQueryParam(searchParams.get('year_min'), 'year_min');
-  if (yearMin instanceof Response) return yearMin;
-  if (yearMin !== null) filters.yearMin = yearMin;
-
-  const yearMax = parseIntQueryParam(searchParams.get('year_max'), 'year_max');
-  if (yearMax instanceof Response) return yearMax;
-  if (yearMax !== null) filters.yearMax = yearMax;
-
-  const players = parseIntQueryParam(searchParams.get('players'), 'players');
-  if (players instanceof Response) return players;
-  if (players !== null) filters.players = players;
-
-  const playtime = parseIntQueryParam(searchParams.get('playtime'), 'playtime');
-  if (playtime instanceof Response) return playtime;
-  if (playtime !== null) filters.playtime = playtime;
+  if (query.data.price_min != null) filters.priceMin = query.data.price_min;
+  if (query.data.price_max != null) filters.priceMax = query.data.price_max;
+  if (query.data.year_min != null) filters.yearMin = query.data.year_min;
+  if (query.data.year_max != null) filters.yearMax = query.data.year_max;
+  if (query.data.players != null) filters.players = query.data.players;
+  if (query.data.playtime != null) filters.playtime = query.data.playtime;
 
   const categoryIds = parseIntListQueryParam(searchParams.getAll('category'), 'category');
   if (categoryIds instanceof Response) return categoryIds;
@@ -214,25 +111,10 @@ export function parseListingFilters(searchParams: URLSearchParams): ListingFilte
   if (mechanicIds instanceof Response) return mechanicIds;
   if (mechanicIds.length > 0) filters.mechanicIds = mechanicIds;
 
-  const weightMin = parseFloatQueryParam(searchParams.get('weight_min'), 'weight_min');
-  if (weightMin instanceof Response) return weightMin;
-  if (weightMin !== null) filters.weightMin = weightMin;
-
-  const weightMax = parseFloatQueryParam(searchParams.get('weight_max'), 'weight_max');
-  if (weightMax instanceof Response) return weightMax;
-  if (weightMax !== null) filters.weightMax = weightMax;
-
-  const minRating = parseFloatQueryParam(searchParams.get('min_rating'), 'min_rating');
-  if (minRating instanceof Response) return minRating;
-  if (minRating !== null) filters.minRating = minRating;
-
-  const ratingTypeValue = searchParams.get('rating_type');
-  if (ratingTypeValue !== null) {
-    if (ratingTypeValue !== 'average' && ratingTypeValue !== 'adjusted') {
-      return badRequest('rating_type must be "average" or "adjusted"');
-    }
-    filters.ratingType = ratingTypeValue;
-  }
+  if (query.data.weight_min != null) filters.weightMin = query.data.weight_min;
+  if (query.data.weight_max != null) filters.weightMax = query.data.weight_max;
+  if (query.data.min_rating != null) filters.minRating = query.data.min_rating;
+  if (query.data.rating_type) filters.ratingType = query.data.rating_type;
 
   return filters;
 }
@@ -287,12 +169,17 @@ export function createPostListing({
     request: BunRequest<'/api/listings'>,
     { auth }: RouteDependencies,
   ) {
-    const parsed = parseCreateListingBody(await readJson<ListingBody>(request));
+    const parsed = parseCreateListingBody(await readJson<unknown>(request));
     if (parsed instanceof Response) return parsed;
 
     const listing = listingsStore.createListing(auth.userId, {
       id: createListingId(),
-      ...parsed,
+      description: parsed.description ?? null,
+      game_id: parsed.game_id!,
+      condition: parsed.condition,
+      price: parsed.price!,
+      status: parsed.status,
+      preferred_shop_id: parsed.preferred_shop_id ?? null,
     });
 
     try {
@@ -325,34 +212,17 @@ export function createPatchListing({
     const listingId = matchListingId(url);
     if (!listingId) return badRequest('Invalid listing ID');
 
-    const body = await readJson<ListingBody>(request);
-    if (!body) return badRequest('Invalid JSON body');
-
-    const gameId = parseIntegerField(body.game_id, 'game_id');
-    if (gameId instanceof Response) return gameId;
-    if (gameId !== null && gameId <= 0) return badRequest('game_id must be greater than zero');
-
-    const price = parseIntegerField(body.price, 'price');
-    if (price instanceof Response) return price;
-    if (price !== null && price < 0) {
-      return badRequest('price must be zero or greater');
-    }
-
-    let preferredShopId: string | null | undefined = undefined;
-    if ('preferred_shop_id' in body) {
-      const parsed = parsePreferredShopId(body.preferred_shop_id);
-      if (parsed instanceof Response) return parsed;
-      preferredShopId = parsed;
-    }
+    const result = updateListingSchema.safeParse(await readJson<unknown>(request));
+    if (!result.success) return validationError(result.error);
+    const body = result.data;
 
     const updated = listingsStore.updateListing(auth.userId, listingId, {
-      description:
-        body.description === undefined ? undefined : normalizeOptionalText(body.description),
+      description: body.description,
       condition: body.condition,
-      game_id: gameId ?? undefined,
-      price: price ?? undefined,
+      game_id: body.game_id ?? undefined,
+      price: body.price ?? undefined,
       status: body.status,
-      preferred_shop_id: preferredShopId,
+      preferred_shop_id: body.preferred_shop_id,
     });
 
     return updated ? new Response(null, { status: 204 }) : notFound();
