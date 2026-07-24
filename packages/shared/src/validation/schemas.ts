@@ -100,7 +100,9 @@ const optionalCoordinate = (fieldName: string, min: number, max: number) =>
 
 /** Runtime schema for listing creation requests. */
 export const createListingSchema = z.object({
-  description: optionalTrimmedText(MAX_LISTING_DESCRIPTION_LENGTH).transform((value) => value ?? null),
+  description: optionalTrimmedText(MAX_LISTING_DESCRIPTION_LENGTH).transform(
+    (value) => value ?? null,
+  ),
   game_id: requiredInteger('game_id', 1, Number.MAX_SAFE_INTEGER, 'game_id must be at least 1'),
   condition: z.enum(CONDITION_VALUES),
   price: requiredInteger('price', 0, MAX_LISTING_PRICE_CENTS, 'price must be zero or greater'),
@@ -188,8 +190,18 @@ export const listingQuerySchema = z.object({
   q: z.string().trim().max(200).optional(),
   user_id: z.string().trim().min(1).max(MAX_IDENTIFIER_LENGTH).optional(),
   status: z.enum(listingStatusValues).optional(),
-  price_min: optionalInteger('price_min', 0, MAX_LISTING_PRICE_CENTS, 'price_min must be at least 0'),
-  price_max: optionalInteger('price_max', 0, MAX_LISTING_PRICE_CENTS, 'price_max must be at least 0'),
+  price_min: optionalInteger(
+    'price_min',
+    0,
+    MAX_LISTING_PRICE_CENTS,
+    'price_min must be at least 0',
+  ),
+  price_max: optionalInteger(
+    'price_max',
+    0,
+    MAX_LISTING_PRICE_CENTS,
+    'price_max must be at least 0',
+  ),
   year_min: optionalInteger('year_min', 0, 10_000, 'year_min must be at least 0'),
   year_max: optionalInteger('year_max', 0, 10_000, 'year_max must be at least 0'),
   players: optionalInteger('players', 1, 100, 'players must be at least 1'),

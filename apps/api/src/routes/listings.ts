@@ -43,9 +43,7 @@ function matchListingId(url: URL) {
 }
 
 /** Validates and normalizes a request body for listing creation. */
-export function parseCreateListingBody(
-  body: unknown,
-): CreateListingRequest | Response {
+export function parseCreateListingBody(body: unknown): CreateListingRequest | Response {
   const parsed = createListingSchema.safeParse(body);
   return parsed.success ? parsed.data : validationError(parsed.error);
 }

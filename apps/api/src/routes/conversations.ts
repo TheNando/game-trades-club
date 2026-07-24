@@ -191,9 +191,7 @@ export function createGetExistingConversations({
     _: BunRequest<'/api/conversations/existing'>,
     { auth, url }: RouteDependencies,
   ) {
-    const parsed = existingConversationQuerySchema.safeParse(
-      Object.fromEntries(url.searchParams),
-    );
+    const parsed = existingConversationQuerySchema.safeParse(Object.fromEntries(url.searchParams));
     if (!parsed.success) return validationError(parsed.error);
 
     return json({

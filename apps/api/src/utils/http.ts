@@ -52,4 +52,3 @@ export async function readJson<T>(request: Request): Promise<T | null> {
     return null;
   }
 }
-
