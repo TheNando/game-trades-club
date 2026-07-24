@@ -4,14 +4,13 @@ import {
   createMessageSchema,
   existingConversationQuerySchema,
 } from '@game-trades-club/shared/validation';
-import { z } from 'zod';
 import { db } from '../db/client';
 import { createConversationsStore } from '../db/conversationsTable';
 import { createListingsStore } from '../db/listingsTable';
 import { createMessagesStore } from '../db/messagesTable';
 import { findUserById } from '../db/usersTable';
 import { RouteDependencies } from '../middleware/dependencies';
-import { badRequest, json, notFound, readJson } from '../utils/http';
+import { badRequest, json, notFound, readJson, validationError } from '../utils/http';
 import { randomToken } from '../utils/security';
 
 type ConversationsStore = ReturnType<typeof createConversationsStore>;
@@ -40,10 +39,6 @@ function isMember(conversation: { sender_id: string; recipient_id: string }, use
 
 function forbidden() {
   return json({ error: 'Forbidden' }, { status: 403 });
-}
-
-function validationError(error: z.ZodError): Response {
-  return badRequest(error.issues[0]?.message ?? 'Invalid request');
 }
 
 /** Creates the handler that lists the authenticated user's inbox. */

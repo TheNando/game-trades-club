@@ -5,12 +5,11 @@ import {
   updateListingSchema,
   type CreateListingRequest,
 } from '@game-trades-club/shared/validation';
-import { z } from 'zod';
 import { db } from '../db/client';
 import { createListingsStore, type ListingFilters } from '../db/listingsTable';
 import { syncGameInfoIfMissing } from '../bgg/syncGameInfo';
 import { RouteDependencies } from '../middleware/dependencies';
-import { badRequest, json, notFound, readJson } from '../utils/http';
+import { badRequest, json, notFound, readJson, validationError } from '../utils/http';
 import { randomToken } from '../utils/security';
 
 type ListingDetailStore = Pick<ReturnType<typeof createListingsStore>, 'findListingDetailById'>;
@@ -41,10 +40,6 @@ const defaultListingsStore = createListingsStore(db);
 
 function matchListingId(url: URL) {
   return url.pathname.match(/^\/api\/listings\/([^/]+)$/)?.[1];
-}
-
-function validationError(error: z.ZodError): Response {
-  return badRequest(error.issues[0]?.message ?? 'Invalid request');
 }
 
 /** Validates and normalizes a request body for listing creation. */

@@ -114,6 +114,32 @@ describe('createPostListingImage', () => {
     await rm(uploadDir, { recursive: true, force: true });
   });
 
+  test('rejects an upload when the listing already has the maximum images', async () => {
+    const database = await createTestDatabase();
+    seedUser(database);
+    seedListing(database);
+    seedListingImage(database, { id: 'image-1' });
+    seedListingImage(database, { id: 'image-2', storedFilename: 'cover-2.png' });
+    seedListingImage(database, { id: 'image-3', storedFilename: 'cover-3.png' });
+    const uploadDir = await createUploadDir();
+    const handler = createPostListingImage({
+      listingsStore: createListingsStore(database),
+      listingImagesStore: createListingImagesStore(database),
+      uploadDir,
+    });
+
+    const { request, deps } = createImageRequest('listing-1', [
+      new File(['png-data'], 'cover.png', { type: 'image/png' }),
+    ]);
+    const response = await handler(request as never, deps);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'You can upload up to 3 images.' });
+    expect(await readdir(uploadDir)).toEqual([]);
+
+    await rm(uploadDir, { recursive: true, force: true });
+  });
+
   test('stores one image with a guid filename and original extension', async () => {
     const database = await createTestDatabase();
     seedUser(database);
@@ -206,6 +232,9 @@ describe('createPostListingImage', () => {
     const handler = createPostListingImage({
       listingsStore: createListingsStore(database),
       listingImagesStore: {
+        countListingImages() {
+          return 0;
+        },
         createListingImage() {
           throw new Error('insert failed');
         },

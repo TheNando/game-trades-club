@@ -1,11 +1,10 @@
 import { BunRequest } from 'bun';
 import { shopSchema, type ShopRequest } from '@game-trades-club/shared/validation';
-import { z } from 'zod';
 import { db } from '../db/client';
 import { createShopsStore } from '../db/shopsTable';
 import { RouteDependencies } from '../middleware/dependencies';
 import { requireAdmin, type RequireAdminOptions } from '../middleware/requireAdmin';
-import { badRequest, json, notFound, readJson } from '../utils/http';
+import { badRequest, json, notFound, readJson, validationError } from '../utils/http';
 import { randomToken } from '../utils/security';
 
 type ShopsStore = Pick<
@@ -34,10 +33,6 @@ const defaultShopsStore = createShopsStore(db);
 
 function matchShopId(url: URL) {
   return url.pathname.match(/^\/api\/shops\/([^/]+)$/)?.[1];
-}
-
-function validationError(error: z.ZodError): Response {
-  return badRequest(error.issues[0]?.message ?? 'Invalid request');
 }
 
 /** Validates and normalizes a request body for a shop. */
